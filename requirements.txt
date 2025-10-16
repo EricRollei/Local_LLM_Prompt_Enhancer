@@ -1,0 +1,20 @@
+# Requirements for Eric's Prompt Enhancers for ComfyUI
+# Most dependencies are already provided by ComfyUI
+
+# Core dependency for LLM API calls
+requests>=2.25.0
+
+# Image processing (usually included with ComfyUI)
+# Pillow>=8.0.0
+
+# Tensor operations (usually included with ComfyUI)
+# torch>=1.10.0
+# numpy>=1.19.0
+
+# Note: PyTorch, NumPy, and Pillow are typically already installed
+# with ComfyUI. Only install if you encounter import errors.
+
+# Optional: LLM Backends (install separately)
+# LM Studio: https://lmstudio.ai/ (recommended)
+# Ollama: https://ollama.ai/
+
