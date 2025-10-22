@@ -1,0 +1,37 @@
+[project]
+name = "local_llm_prompt_enhancer"
+description = "A comprehensive suite of AI-powered prompt enhancement nodes for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation."
+version = "1.0.0"
+license = {file = "LICENSE"} 
+# classifiers = [
+#     # For OS-independent nodes (works on all operating systems)
+#     "Operating System :: OS Independent",
+#
+#     # OR for OS-specific nodes, specify the supported systems:
+#     "Operating System :: Microsoft :: Windows",  # Windows specific
+#     "Operating System :: POSIX :: Linux",  # Linux specific
+#     "Operating System :: MacOS",  # macOS specific
+#
+#     # GPU Accelerator support. Pick the ones that are supported by your extension.
+#     "Environment :: GPU :: NVIDIA CUDA",    # NVIDIA CUDA support
+#     "Environment :: GPU :: AMD ROCm",       # AMD ROCm support
+#     "Environment :: GPU :: Intel Arc",      # Intel Arc support
+#     "Environment :: NPU :: Huawei Ascend",  # Huawei Ascend support
+#     "Environment :: GPU :: Apple Metal",    # Apple Metal support
+# ]
+
+dependencies = ["# Requirements for Eric's Prompt Enhancers for ComfyUI", "# Most dependencies are already provided by ComfyUI", "# Core dependency for LLM API calls", "requests>=2.25.0", "# Image processing (usually included with ComfyUI)", "# Pillow>=8.0.0", "# Tensor operations (usually included with ComfyUI)", "# torch>=1.10.0", "# numpy>=1.19.0", "# Note: PyTorch, NumPy, and Pillow are typically already installed", "# with ComfyUI. Only install if you encounter import errors.", "# Optional: LLM Backends (install separately)", "# LM Studio: https://lmstudio.ai/ (recommended)", "# Ollama: https://ollama.ai/"]
+
+[project.urls]
+Repository = "https://github.com/EricRollei/Local_LLM_Prompt_Enhancer"
+#  Used by Comfy Registry https://registry.comfy.org
+Documentation = "https://github.com/EricRollei/Local_LLM_Prompt_Enhancer/wiki"
+"Bug Tracker" = "https://github.com/EricRollei/Local_LLM_Prompt_Enhancer/issues"
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "Local_LLM_Prompt_Enhancer"
+Icon = ""
+includes = [] 
+# "requires-comfyui" = ">=1.0.0"  # ComfyUI version compatibility
+
