@@ -4,6 +4,62 @@ All notable changes to Eric's Prompt Enhancers for ComfyUI.
 
 ---
 
+## [1.8.0] - 2025-10-24
+
+### Major Redesign - Advanced Prompt Expander Node
+
+#### Fixed - Critical Usability Issues
+1. **No Way to Modify Existing Prompts**
+   - Added `operation_mode` dropdown with 4 modes:
+     - `expand_from_idea`: Original behavior (expand short concepts)
+     - `refine_existing`: Polish and improve existing prompts
+     - `modify_style`: Change aesthetic while keeping subject
+     - `add_details`: Add richer descriptions to existing content
+   
+2. **Confusing Tier System**
+   - Replaced `expansion_tier` with `detail_level` using intuitive names:
+     - `concise` (150-200 words) - replaces "basic"
+     - `moderate` (250-350 words) - replaces "enhanced"
+     - `detailed` (400-500 words) - replaces "advanced" (DEFAULT)
+     - `exhaustive` (600-1000 words) - replaces "cinematic"
+   - Removed confusing "auto" option
+   - Added clear tooltips explaining each option
+   - Backward compatible - old tier names still work internally
+
+3. **Image-to-Video Mode Without Image Input**
+   - Added optional `reference_image` input (IMAGE type)
+   - Integrated Qwen3-VL vision analysis for image captioning
+   - Automatic mode detection (text-to-video vs image-to-video)
+   - Removed manual "mode" dropdown - now auto-detected
+   - Status display shows "(with image)" when image is provided
+
+#### Added
+- `_apply_operation_mode()` - Applies operation-specific instructions to LLM
+- `_process_reference_image()` - Qwen3-VL integration for image analysis
+- Tier name mapping in expansion_engine.py for backward compatibility
+- Enhanced status messages showing operation mode, detail level, and image usage
+- Updated metadata for saved files
+
+#### Documentation
+- `docs/ADVANCED_NODE_REDESIGN.md` - Complete redesign documentation
+- `BUGFIX_SUMMARY.md` - Quick reference for fixes
+
+### Fixed - All Nodes (Emphasis & Alternation Syntax)
+- **Emphasis Syntax Preservation**: Fixed `(keyword:1.5)` being mangled by LLM
+  - Added `_preserve_emphasis_syntax()` and `_restore_emphasis_syntax()` methods
+  - Emphasis patterns protected with placeholders during LLM processing
+  - Applied to: prompt_expander_node.py and prompt_expander_node_advanced.py
+  
+- **Alternation Syntax Support**: Added `{option1|option2|option3}` random selection
+  - Added `_process_alternations()` method
+  - Handles nested alternations up to 10 levels
+  - Applied to: prompt_expander_node.py and prompt_expander_node_advanced.py
+
+#### Documentation
+- `docs/BUGFIX_ADVANCED_NODE.md` - Technical details of emphasis/alternation fixes
+
+---
+
 ## [1.7.0] - 2025-10-16
 
 ### Added - Text-to-Image Node v1.7

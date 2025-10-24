@@ -1,611 +1,521 @@
-# Eric's Prompt Enhancers for ComfyUI# Eric's Prompt Enhancers for ComfyUI
+# Eric's Prompt Enhancers for ComfyUI
 
+[![License](https://img.shields.io/badge/License-Dual%20(NC%2FCommercial)-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.8.0-green.svg)](CHANGELOG.md)
+[![ComfyUI](https://img.shields.io/badge/ComfyUI-Compatible-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
 
-
-[![License](https://img.shields.io/badge/License-Dual%20(NC%2FCommercial)-blue.svg)](LICENSE)A comprehensive suite of AI-powered prompt enhancement nodes for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation.
-
-[![Version](https://img.shields.io/badge/version-1.7.0-green.svg)](CHANGELOG.md)
-
-[![ComfyUI](https://img.shields.io/badge/ComfyUI-Compatible-orange.svg)](https://github.com/comfyanonymous/ComfyUI)## 🎯 All Nodes (Under "Eric Prompt Enhancers" Category)
-
-
-
-A comprehensive suite of **5 AI-powered prompt enhancement nodes** for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation.### 1. Video Prompt Expander
-
-Simple video prompt expansion with presets and expansion tiers.
+A comprehensive suite of **5 AI-powered prompt enhancement nodes** for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation.
 
 ![Eric's Prompt Enhancers](https://img.shields.io/badge/Nodes-5-brightgreen) ![Platforms](https://img.shields.io/badge/Image%20Platforms-8-blue) ![Video Support](https://img.shields.io/badge/Video-✓-success)
 
-### 2. Video Prompt Expander (Advanced)
+---
 
----Granular control over video aesthetics with detailed settings.
+## 📦 Quick Start
 
+```bash
+cd ComfyUI/custom_nodes/
+git clone https://github.com/EricRollei/Local_LLM_Prompt_Enhancer.git video_prompter
+cd video_prompter
+pip install -r requirements.txt
+```
 
+Restart ComfyUI. All nodes will appear under: **Add Node → Eric Prompt Enhancers**
 
-## 🎯 All Nodes### 3. Image-to-Video Prompt Expander
+---
 
-Vision model analyzes images and adds motion descriptions.
+## 🎯 The 5 Nodes
 
 Find all nodes under the **"Eric Prompt Enhancers"** category in ComfyUI.
 
-### 4. Image-to-Image Prompt Expander
+### 1. 🎬 Video Prompt Expander
 
-### 1. 🎬 Video Prompt ExpanderPlatform-aware image-to-image prompt generation (Flux, SDXL, Hunyuan, Qwen, Wan).
+Simple video prompt expansion with style presets.
 
-Simple video prompt expansion with style presets and expansion tiers.
+- **4 Detail Levels**: Concise, Moderate, Detailed, Exhaustive
+- **6 Style Presets**: Cinematic, Surreal, Action, Stylized, Noir, Random
+- **Auto-Variation**: Generate up to 3 unique variations
+- **Best for**: Quick video prompt expansion from short ideas
 
-- **5 Expansion Tiers**: Auto, Basic, Enhanced, Advanced, Cinematic### 5. Text-to-Image Prompt Enhancer ⭐ NEW
+### 2. 🎬 Video Prompt Expander (Advanced) ⭐ NEW v1.8
 
-- **6 Style Presets**: Cinematic, Surreal, Action, Stylized, Noir, RandomAdvanced multi-platform image prompt enhancement with extensive controls.
+Granular control over video aesthetics with **50+ detailed settings**.
 
-- **Auto-Detection**: Analyzes input complexity and selects optimal tier
+**NEW in v1.8:**
+- **4 Operation Modes**: 
+  - `expand_from_idea` - Expand short concepts
+  - `refine_existing` - Polish existing prompts
+  - `modify_style` - Change aesthetic while keeping subject
+  - `add_details` - Enrich existing prompts
+- **Clear Detail Levels**: Concise, Moderate, Detailed, Exhaustive (with tooltips!)
+- **Optional Image Input**: Analyze images with Qwen3-VL for image-to-video workflows
+- **Auto Mode Detection**: Automatically switches to image-to-video when image provided
 
-**Supports:** Flux, SDXL, Pony Diffusion, Illustrious XL, Chroma, Qwen Image, Qwen Edit, Wan Image
+**Controls:**
+- **Lighting**: Light source (10 options), Lighting type (13 options), Time of day (9 options)
+- **Camera**: Shot size (10 options), Composition (8 options), Lens (6 options), Angle (10 options), Movement (17 options)
+- **Visual**: Color tone (7 options), Visual style (15 options), Visual effects (11 options)
+- **Character**: Emotion (13 options)
 
-### 2. 🎬 Video Prompt Expander (Advanced)
+**Best for**: Professional video generation with precise aesthetic control
 
-Granular control over video aesthetics with **50+ detailed settings**.## ✨ Key Features
+### 3. 🖼️➡️🎬 Image-to-Video Prompt Expander
 
-- **Lighting Controls**: Light source, lighting type, time of day
+Vision model analyzes images and adds motion descriptions for video generation.
 
-- **Camera Controls**: Shot size, composition, lens, angle, movement### Video Nodes
+- **Automatic Scene Understanding**: Qwen3-VL vision analysis
+- **Motion Description Generation**: AI-generated movement and action
+- **Style Integration**: Combines visual analysis with expansion tiers
+- **Best for**: Converting static images into video prompts
 
-- **Color/Style**: Color tone, visual style, visual effects- 🎬 **5 Expansion Tiers**: Auto, Basic, Enhanced, Advanced, Cinematic
+### 4. 🖼️➡️🖼️ Image-to-Image Prompt Expander
 
-- **Motion/Emotion**: Character emotion, movement dynamics- 🎨 **6 Style Presets**: Cinematic, Surreal, Action, Stylized, Noir, Random
+Platform-aware image-to-image prompt generation.
 
-- 🎯 **Auto-Detection**: Analyzes input complexity
+- **5 Platforms**: Flux Redux, SDXL Img2Img, Hunyuan Img2Img, Qwen Edit, Wan Edit
+- **Transformation Controls**: Style transfer, detail level, creativity settings
+- **Vision Analysis**: Understands source image characteristics
+- **Best for**: Image transformation and editing workflows
 
-### 3. 🖼️➡️🎬 Image-to-Video Prompt Expander- 🔄 **Multiple Variations**: Generate up to 3 variations
+### 5. 📝➡️🖼️ Text-to-Image Prompt Enhancer (v1.7)
 
-Vision model analyzes images and adds motion descriptions for video generation.- � **Vision Support**: Analyze images for video generation
+Advanced multi-platform image prompt enhancement with extensive creative controls.
 
-- **Image Analysis**: Automatic scene understanding
-
-- **Motion Addition**: AI-generated motion descriptions### Image Nodes (NEW!)
-
-- **Style Integration**: Combines visual analysis with expansion tiers- 🖼️ **8 Platform Support**: Flux, SDXL, Pony, Illustrious, Chroma, Qwen, Wan
-
-- 🎨 **Advanced Controls**: Camera, lighting, weather, time of day
-
-### 4. 🖼️➡️🖼️ Image-to-Image Prompt Expander- � **Wildcard Random**: Auto-variety in batch generation
-
-Platform-aware image-to-image prompt generation.- 📸 **Reference Images**: Optional 1-2 image inputs
-
-- **5 Platforms**: Flux Redux, SDXL Img2Img, Hunyuan Img2Img, Qwen Edit, Wan Edit- 🏷️ **Platform-Specific**: Automatic token optimization per platform
-
-- **Transformation Controls**: Style transfer, detail level, creativity
-
-- **Vision Analysis**: Understands source image characteristics### Universal
-
-- 🤖 **Local LLM Support**: LM Studio and Ollama
-
-### 5. ⭐ 📝➡️🖼️ Text-to-Image Prompt Enhancer **(NEW v1.7)**- 📝 **Keyword Integration**: Add LoRA triggers and custom terms
-
-Advanced multi-platform image prompt enhancement with extensive creative controls.- � **File Export**: Save prompts with metadata
-
-- **8 Platforms**: Flux, SDXL, Pony Diffusion, Illustrious XL, Chroma, Qwen Image, Qwen Edit, Wan Image- ➖ **Smart Negatives**: Platform-optimized negative prompts
-
+- **8 Platforms**: Flux, SDXL, Pony Diffusion, Illustrious XL, Chroma, Qwen Image, Qwen Edit, Wan Image
 - **Reference Images**: Optional 1-2 image inputs with visual analysis
-
-- **Genre Styles**: 22 styles (cinematic, horror, cyberpunk, etc.)## Installation
-
-- **Prompt Length Control**: Very Short to Very Long (20-400 tokens)
-
-- **Subject Controls**: Framing (14 options) and Pose (17 options)1. Navigate to your ComfyUI custom nodes directory:
-
-- **Advanced Settings**: Camera, lighting, weather, time, composition, color mood```bash
-
-- **Special Syntax**: Emphasis `(keyword:1.5)` and Alternation `{a|b|c}`cd ComfyUI/custom_nodes/
-
-```
+- **Genre Styles**: 22 styles (cinematic, horror, cyberpunk, steampunk, noir, fantasy, etc.)
+- **Prompt Length**: 6 options (very_short to very_long, 20-400 tokens)
+- **Subject Controls**: Framing (14 options), Pose (17 options)
+- **Advanced Settings**: Camera angle, composition, lighting (source/quality), weather, time, color mood
+- **Special Syntax**: Emphasis `(keyword:1.5)` and Alternation `{a|b|c}` support
+- **Best for**: Professional image generation with platform-specific optimization
 
 ---
-
-2. The node is already installed in: `video_prompter/`
 
 ## ✨ Key Features
 
-3. Restart ComfyUI
-
 ### 🤖 Local LLM Support
 
-- **LM Studio**: OpenAI-compatible API (recommended)4. All nodes will appear under: **Add Node → Eric Prompt Enhancers**
-
+- **LM Studio**: OpenAI-compatible API (recommended)
 - **Ollama**: Simple CLI-based LLM server
+- **Qwen3-VL (Optional)**: Local vision model for image analysis
+- **Privacy**: All processing happens locally, no data sent to cloud
 
-- **Privacy**: All processing happens locally, no data sent to cloud services## Requirements
+### 🎨 Platform-Specific Optimization
 
+Each platform has unique requirements and prompting styles:
 
-
-### 🎨 Platform-Specific Optimization### Python Dependencies
-
-Each platform has unique requirements and prompting styles:```bash
-
-pip install requests
-
-| Platform | Style | Optimal Length | Specialization |```
-
+| Platform | Style | Optimal Length | Specialization |
 |----------|-------|----------------|----------------|
-
-| **Flux** | Natural language | 75-150 tokens | Photography, artistic |### LLM Backend Setup
-
+| **Flux** | Natural language | 75-150 tokens | Photography, artistic |
 | **SDXL** | Natural/tags hybrid | 40-75 tokens | Versatile, balanced |
-
-| **Pony Diffusion** | Booru tags | Tag count | Anime, characters |**Option 1: LM Studio**
-
-| **Illustrious XL** | Danbooru tags | Tag count | Detailed anime |1. Download from: https://lmstudio.ai/
-
-| **Chroma/Meissonic** | Detailed natural | 100-200 tokens | Complex scenes |2. Load a model (recommended: Llama 3 or similar)
-
-| **Qwen Image** | Technical descriptions | Medium | General purpose |3. Start the server (default: http://localhost:1234)
-
+| **Pony Diffusion** | Booru tags | Tag count | Anime, characters |
+| **Illustrious XL** | Danbooru tags | Tag count | Detailed anime |
+| **Chroma/Meissonic** | Detailed natural | 100-200 tokens | Complex scenes |
+| **Qwen Image** | Technical descriptions | Medium | General purpose |
 | **Qwen Edit** | Edit instructions | Medium | Image editing |
+| **Wan Image** | Cinematography | 60-120 tokens | Professional video stills |
 
-| **Wan Image** | Cinematography | 60-120 tokens | Professional video stills |**Option 2: Ollama**
+### 🔧 Special Syntax (NEW v1.6.1)
 
-1. Install from: https://ollama.ai/
-
-### 🎯 Advanced Controls (Text-to-Image v1.7)2. Pull a model: `ollama pull llama3`
-
-- **Prompt Length**: 6 options (very_short to very_long)3. Server runs automatically (default: http://localhost:11434)
-
-- **Genre/Style**: 22 genres (surreal, cinematic, horror, cyberpunk, noir, etc.)
-
-- **Subject Framing**: 14 shot types (close-up, wide shot, cowboy shot, etc.)## Node Inputs
-
-- **Subject Pose**: 17 poses (standing, action, contrapposto, etc.)
-
-- **Camera**: Angle, composition (11 options each)### Core Inputs
-
-- **Lighting**: Source, quality, time of day, weather (8-13 options each)- **basic_prompt**: Your simple video idea
-
-- **Color**: Art style, color mood (18, 10 options)- **preset**: Style preset (custom/cinematic/surreal/action/stylized/noir/random)
-
-- **Detail Level**: 6 options from simplified to intricate- **expansion_tier**: Detail level (auto/basic/enhanced/advanced/cinematic)
-
-- **mode**: text-to-video or image-to-video
-
-All controls support: `auto` (intelligent defaults), `random` (variety), `none` (disable), or specific values.
-
-### LLM Configuration
-
-### 🔧 Special Syntax Support- **llm_backend**: lm_studio or ollama
-
-- **model_name**: Model identifier (e.g., "llama3")
-
-**Emphasis (Weight Control)**- **api_endpoint**: API URL (default LM Studio: http://localhost:1234/v1)
-
-```- **temperature**: 0.1-2.0 (lower = focused, higher = creative)
-
-(keyword:1.5)    # Increase importance
-
-(keyword:0.5)    # Decrease importance### Keywords
-
-```- **positive_keywords**: Comma-separated must-include terms (LoRA triggers, etc.)
-
-- **negative_keywords**: Comma-separated terms to avoid
+**Emphasis (Weight Control)**
+```
+(keyword:1.5)    # Increase importance 1.5x
+(keyword:0.5)    # Decrease importance 0.5x
+(red hair:2.0)   # Double the weight
+```
 
 **Alternation (Random Selection)**
-
-```### Output Options
-
-{cat|dog|rabbit}           # Picks one randomly- **num_variations**: Generate 1-3 variations
-
-{red|blue|green} dress     # Random color- **save_to_file**: Save prompts to disk
-
-```- **filename_base**: Base name for saved files
-
-
-
-**Combined**## Node Outputs
-
+```
+{cat|dog|rabbit}                    # Picks one randomly
+{red|blue|green} dress              # Random color
+{elegant|casual} woman with (detailed face:1.5)
 ```
 
-{elegant|casual} woman with (detailed face:1.5) and {blonde|red} (hair:1.2)1. **positive_prompt_1**: First enhanced prompt
-
-```2. **positive_prompt_2**: Second variation (if requested)
-
-3. **positive_prompt_3**: Third variation (if requested)
-
----4. **negative_prompt**: Auto-generated negative prompt
-
-5. **breakdown**: Detailed analysis of expansion
-
-## 📦 Installation6. **status**: Success/error messages and file save location
-
-
-
-### Method 1: Git Clone (Recommended)## Expansion Tiers
-
-
-
-```bash### Basic
-
-cd ComfyUI/custom_nodes/**Formula**: Subject + Scene + Motion
-
-git clone https://github.com/EricRollei/video_prompter.git- Simple expansion with essential details
-
-```- Clear subject, setting, and action
-
-- ~50-100 words
-
-### Method 2: Manual Install
-
-### Enhanced
-
-1. Download this repository as ZIP**Formula**: Subject + Scene + Motion + Basic Aesthetics
-
-2. Extract to `ComfyUI/custom_nodes/video_prompter/`- Detailed descriptions with characteristics
-
-3. Restart ComfyUI- Basic shot size and lighting
-
-- ~100-200 words
-
-### Dependencies
-
-### Advanced
-
-Install Python requirements:**Formula**: Full Details + Complete Aesthetics + Camera Work
-
-- Professional cinematography terms
-
-```bash- Specific lighting, composition, lens choices
-
-cd ComfyUI/custom_nodes/video_prompter/- Camera angles and movements
-
-pip install -r requirements.txt- ~200-350 words
-
+**Combined**
 ```
+A {tall|short} woman with (dark hair:1.4) wearing a {red|blue|green} (dress:1.2)
+```
+
+### 🎯 Intelligent Features
+
+- **Auto-Detection**: Analyzes input complexity and selects optimal detail level (Video nodes)
+- **Multiple Variations**: Generate up to 3 unique variations in one run
+- **Keyword Integration**: Automatically include LoRA triggers and custom terms
+- **Smart Negatives**: Platform-optimized negative prompts
+- **File Export**: Save prompts with complete metadata
+- **Wildcard Support**: Random element selection for variety
+
+---
+
+## 🚀 Installation
+
+### Prerequisites
+
+- **ComfyUI**: Installed and working
+- **Python 3.8+**: Usually included with ComfyUI
+- **LLM Backend**: LM Studio or Ollama (see setup below)
+
+### Step 1: Install the Node
+
+**Method 1: Git Clone (Recommended)**
+
+```bash
+cd ComfyUI/custom_nodes/
+git clone https://github.com/EricRollei/Local_LLM_Prompt_Enhancer.git video_prompter
+cd video_prompter
+pip install -r requirements.txt
+```
+
+**Method 2: Manual Install**
+
+1. Download this repository as ZIP
+2. Extract to `ComfyUI/custom_nodes/video_prompter/`
+3. Install dependencies:
+   ```bash
+   cd ComfyUI/custom_nodes/video_prompter/
+   pip install -r requirements.txt
+   ```
+
+### Step 2: Setup LLM Backend
+
+Choose **one** of these options:
+
+**Option 1: LM Studio (Recommended)**
+
+1. Download from: https://lmstudio.ai/
+2. Load a model (recommended: Llama 3 8B or similar)
+3. Start the server (Settings → Server → Start Server)
+4. Default endpoint: `http://localhost:1234/v1`
+
+**Option 2: Ollama**
+
+1. Install from: https://ollama.ai/
+2. Pull a model: `ollama pull llama3`
+3. Server runs automatically at: `http://localhost:11434`
+
+### Step 3: Restart ComfyUI
+
+All nodes will appear under: **Add Node → Eric Prompt Enhancers**
+
+### Optional: Qwen3-VL Vision Model
+
+For image analysis in Image-to-Video and Image-to-Image nodes:
+
+```bash
+pip install transformers>=4.42.0 accelerate>=0.30.0 huggingface_hub>=0.23.0 bitsandbytes>=0.43.0
+```
+
+See [VISION_BACKEND_GUIDE.md](VISION_BACKEND_GUIDE.md) for details.
+
+---
+
+## 📖 Usage Guide
+
+### Basic Workflow (Video Prompt Expander)
+
+1. **Add Node**: Right-click → Eric Prompt Enhancers → Video Prompt Expander
+2. **Enter Prompt**: "A cat playing piano in a cozy room"
+3. **Select Preset**: Choose "cinematic" for film-like quality
+4. **Choose Detail Level**: "detailed" for ~400-500 words
+5. **Configure LLM**:
+   - Backend: `lm_studio`
+   - Model: `llama3`
+   - Endpoint: `http://localhost:1234/v1`
+6. **Generate**: Run the workflow
+7. **Use Output**: Connect `positive_prompt_1` to your video generator
+
+### Advanced Workflow (Advanced Node)
+
+1. **Add Node**: Video Prompt Expander (Advanced)
+2. **Choose Operation Mode**:
+   - `expand_from_idea`: For short concepts
+   - `refine_existing`: For polishing existing prompts
+   - `modify_style`: To change aesthetic
+   - `add_details`: To enrich prompts
+3. **Select Detail Level**: Choose based on desired output length
+4. **Set Aesthetic Controls**: Configure camera, lighting, style, etc.
+5. **Optional**: Add reference image for image-to-video mode
+6. **Generate**: Prompts incorporate your specific controls
+
+### Image-to-Video Workflow
+
+1. **Add Node**: Image-to-Video Prompt Expander (or Advanced with image)
+2. **Connect Image**: Link your image to the `reference_image` input
+3. **Add Direction**: "Camera slowly zooms in on the subject"
+4. **Generate**: Vision model analyzes image and incorporates it into prompt
+
+### Text-to-Image Workflow
+
+1. **Add Node**: Text-to-Image Prompt Enhancer
+2. **Select Platform**: Choose your target platform (Flux, SDXL, etc.)
+3. **Set Length**: Choose prompt length (medium recommended)
+4. **Configure Controls**: Set genre, framing, lighting, etc.
+5. **Use Syntax**: Add emphasis `(keyword:1.5)` and alternations `{a|b}`
+6. **Generate**: Get platform-optimized prompts
+
+---
+
+## 📝 Detail Levels Explained
+
+### Concise (~150-200 words)
+- Essential details only
+- Clear subject, basic setting, simple action
+- **Use when**: You want compact prompts or API token savings
+
+### Moderate (~250-350 words)
+- Good balance of detail
+- Subject characteristics, environment description, basic aesthetics
+- **Use when**: Standard detailed descriptions needed
+
+### Detailed (~400-500 words) - **DEFAULT**
+- Rich, comprehensive description
+- Full cinematography, specific lighting, camera work
+- **Use when**: Professional video generation
+
+### Exhaustive (~600-1000 words)
+- Maximum detail for cinematic quality
+- Director-level descriptions, complete technical details
+- **Use when**: Masterful, film-quality output required
+
+---
+
+## 🎨 Style Presets
 
 ### Cinematic
+Professional film quality with emphasis on lighting, composition, and smooth camera movements.
+- Edge lighting, soft lighting, warm colors
+- Professional framing, balanced composition
 
-**Requirements:****Formula**: Masterful Description + All Professional Elements
+### Surreal
+Dreamlike, unusual scenes with artistic emphasis.
+- Unexpected combinations, creative camera angles
+- Artistic lighting, ethereal atmosphere
 
-- Python 3.8+- Director-level shot description
-
-- PyTorch (usually included with ComfyUI)- Complete lighting setup with technical details
-
-- NumPy (usually included with ComfyUI)- Precise camera movements and choreography
-
-- Pillow/PIL (usually included with ComfyUI)- Color grading and atmospheric elements
-
-- requests (for LLM API calls)- ~350-500+ words
-
-
-
----## Presets Explained
-
-
-
-## ⚙️ Setup### Cinematic
-
-Professional film quality with emphasis on lighting, composition, and camera movement.
-
-### LLM Backend Setup (Required)- Edge lighting, soft lighting, warm colors
-
-- Smooth camera movements
-
-Choose **one** of these options:- Professional framing
-
-
-
-#### Option 1: LM Studio (Recommended)### Surreal
-
-Dreamlike, otherworldly aesthetics with unusual elements.
-
-1. **Download**: [https://lmstudio.ai/](https://lmstudio.ai/)- Unnatural lighting and mixed sources
-
-2. **Install** and launch LM Studio- Floating, ethereal movements
-
-3. **Download a model** (search for "llama" or "mistral", recommended: Llama 3.2 8B)- Saturated or desaturated colors
-
-4. **Start the server**: Click "↔" (Server) tab → "Start Server"
-
-   - Default: `http://localhost:1234/v1`### Action
-
-5. **Note the model name** (e.g., "llama3")High-energy, dynamic sequences with rapid motion.
-
-- Fast camera movement, tracking shots
-
-See [docs/LM_STUDIO_SETUP.md](docs/LM_STUDIO_SETUP.md) for details.- High contrast, dramatic lighting
-
-- Explosive, kinetic action
-
-#### Option 2: Ollama
+### Action
+High-energy motion and dynamic camera work.
+- Fast movement, intense action
+- Dynamic angles, motion blur
 
 ### Stylized
-
-1. **Install**: [https://ollama.ai/](https://ollama.ai/)Artistic visual style over realism.
-
-2. **Pull a model**: `ollama pull llama3`- Strong visual identity
-
-3. **Server runs automatically** at `http://localhost:11434/v1`- Consistent color palette
-
-- Graphic, illustrative elements
-
----
+Artistic interpretation with strong visual identity.
+- Bold choices, distinctive look
+- Creative freedom, unique aesthetics
 
 ### Noir
+Dark, moody film noir aesthetic.
+- High contrast, dramatic shadows
+- Low-key lighting, mystery atmosphere
 
-## 🚀 Quick StartDark, moody, high-contrast aesthetic.
+### Random
+AI selects random aesthetic elements while respecting your core concept.
+- Variety for batch generation
+- Creative combinations
 
-- High contrast, hard lighting
+---
 
-1. **Add Node**: Right-click → Add Node → Eric Prompt Enhancers- Deep shadows and chiaroscuro
+## 🔧 Configuration
 
-2. **Enter Prompt**: "a woman in a garden"- Desaturated or black and white
+### Common Settings
 
-3. **Configure LLM**: Backend (lm_studio), Model Name (llama3), API Endpoint- Low angles and dutch angles
+**LLM Configuration**
+- `llm_backend`: `lm_studio` or `ollama`
+- `model_name`: Your loaded model (e.g., "llama3")
+- `api_endpoint`: LLM server URL
+- `temperature`: 0.1-2.0 (0.7 recommended, lower = focused, higher = creative)
 
-4. **Set Options**: Platform, style, settings
+**Keywords**
+- `positive_keywords`: Comma-separated must-include terms (LoRA triggers, style terms)
+- `negative_keywords`: Comma-separated terms to avoid
 
-5. **Connect Output**: Link to your generation node### Random
+**Output**
+- `num_variations`: Generate 1-3 variations
+- `save_to_file`: Save prompts to disk with metadata
+- `filename_base`: Base name for saved files
 
-6. **Generate**: Run workflowRandomly selects complementary elements from the Wan 2.2 guide for creative exploration.
+### Node Outputs
 
+All nodes return:
+1. **positive_prompt_1/2/3**: Enhanced prompt variations
+2. **negative_prompt**: Auto-generated platform-specific negatives
+3. **breakdown/settings_used**: Detailed analysis of what was applied
+4. **status**: Success messages, errors, file save location
 
+---
 
-### Example Output## Usage Examples
+## 📚 Documentation
 
+### Quick References
+- [QUICKSTART.md](docs/QUICKSTART.md) - Get started in 5 minutes
+- [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) - Fast reference guide
+- [QUICK_REF_V17.md](docs/QUICK_REF_V17.md) - Text-to-Image quick reference
 
+### Node Guides
+- [TXT2IMG_GUIDE.md](docs/TXT2IMG_GUIDE.md) - Text-to-Image node complete guide
+- [IMG2IMG_GUIDE.md](docs/IMG2IMG_GUIDE.md) - Image-to-Image workflows
+- [NODE_COMPARISON.md](docs/NODE_COMPARISON.md) - Which node to use when
+- [ADVANCED_NODE_REDESIGN.md](docs/ADVANCED_NODE_REDESIGN.md) - Advanced node v1.8 redesign details
 
-```### Example 1: Basic Text-to-Video
+### Setup Guides
+- [LM_STUDIO_SETUP.md](docs/LM_STUDIO_SETUP.md) - LM Studio configuration
+- [VISION_BACKEND_GUIDE.md](VISION_BACKEND_GUIDE.md) - Qwen3-VL setup for image analysis
+- [CONFIGURATION.md](docs/CONFIGURATION.md) - Advanced configuration options
 
-Input: "a woman in a garden"```
+### Platform & Technical
+- [WAN_GUIDE_REFERENCE.md](docs/WAN_GUIDE_REFERENCE.md) - Wan 2.2 video prompt guide
+- [WILDCARD_GUIDE.md](docs/WILDCARD_GUIDE.md) - Wildcard syntax examples
 
-Platform: fluxInput: "A cat playing piano"
+### Updates & Fixes
+- [CHANGELOG.md](CHANGELOG.md) - Complete version history
+- [UPDATE_V17_ENHANCED_CONTROLS.md](docs/UPDATE_V17_ENHANCED_CONTROLS.md) - v1.7 features
+- [BUGFIX_ADVANCED_NODE.md](docs/BUGFIX_ADVANCED_NODE.md) - v1.8 bug fixes
+- [BUGFIX_V161.md](docs/BUGFIX_V161.md) - v1.6.1 syntax fixes
 
-Genre: cinematicPreset: Cinematic
+---
 
-Length: mediumTier: Auto (detects "Enhanced")
+## 🆕 What's New in v1.8.0
 
+### Advanced Prompt Expander Node - Complete Redesign
 
+**3 Major Usability Improvements:**
 
-Output: "Cinematic medium shot portrait of an elegant woman in a lush garden Output: "A fluffy orange tabby cat sits at a polished black grand piano in a warmly lit living room. The cat's paws press down on the ivory keys with surprising dexterity. Soft afternoon light streams through a nearby window, creating edge lighting on the cat's fur. Medium close-up shot, eye-level angle. The camera slowly pushes in as the cat continues to play. Warm color palette, soft lighting, clean single shot."
+1. **Operation Modes** - Now you can modify existing prompts!
+   - `expand_from_idea` - Original expansion behavior
+   - `refine_existing` - Polish and improve prompts
+   - `modify_style` - Change aesthetic while keeping subject
+   - `add_details` - Add descriptive richness
 
-bathed in warm golden hour sunlight, captured from a low angle, graceful pose, ```
+2. **Clear Detail Levels** - No more confusing tiers!
+   - Renamed to: Concise, Moderate, Detailed, Exhaustive
+   - Added tooltips explaining each option
+   - Removed confusing "auto" mode
 
-detailed botanical environment with soft bokeh, professional photography quality, 
+3. **Image Input Support** - Image-to-video actually works!
+   - Optional `reference_image` input
+   - Qwen3-VL vision analysis integration
+   - Automatic mode detection (text vs image-to-video)
+   - Status shows when image is being used
 
-(detailed face:1.4), flowing dress, film-like aesthetics"### Example 2: Image-to-Video with Keywords
+**Bonus:** All video nodes now support emphasis `(keyword:1.5)` and alternation `{a|b|c}` syntax!
 
-``````
+See [docs/ADVANCED_NODE_REDESIGN.md](docs/ADVANCED_NODE_REDESIGN.md) for complete details.
 
-Input: "The woman turns and walks toward the camera"
+---
 
----Mode: Image-to-Video
+## 💡 Tips & Best Practices
 
-Preset: Noir
+### For Best Results
 
-## 📚 DocumentationPositive Keywords: myLoRA_trigger, detailed_face
+1. **Start Simple**: Begin with basic prompts, let the LLM expand
+2. **Use Presets**: They provide consistent, proven aesthetic directions
+3. **Experiment with Temperature**: 0.7 is balanced, 0.3-0.5 for consistency, 0.8-1.2 for variety
+4. **Leverage Keywords**: Add LoRA triggers and style terms to positive_keywords
+5. **Save Your Prompts**: Enable save_to_file to build a library
+6. **Use Variations**: Generate 3 variations to pick the best
+7. **Platform Matters**: Choose the right platform for your model
 
-Tier: Advanced
+### Common Workflows
 
-Comprehensive guides in [docs/](docs/):
-
-Output: "The woman slowly turns her head, edge lighting creating dramatic shadows across her face, myLoRA_trigger, detailed_face. She begins walking directly toward the camera with deliberate, purposeful steps. Her silhouette is backlit by a single streetlight, creating a strong rim light effect. The camera remains static as she approaches, her features gradually emerging from shadow. High contrast lighting, desaturated colors, low angle shot. The scene has a tense, mysterious atmosphere."
-
-### Getting Started```
-
-- [QUICKSTART.md](docs/QUICKSTART.md) - Fast introduction
-
-- [LM_STUDIO_SETUP.md](docs/LM_STUDIO_SETUP.md) - LM Studio setup### Example 3: Multiple Variations for Action
-
-- [CONFIGURATION.md](docs/CONFIGURATION.md) - Settings explained```
-
-Input: "Superhero landing from the sky"
-
-### Node GuidesPreset: Action
-
-- [TXT2IMG_GUIDE.md](docs/TXT2IMG_GUIDE.md) - Text-to-Image (20+ pages)Variations: 3
-
-- [IMG2IMG_GUIDE.md](docs/IMG2IMG_GUIDE.md) - Image-to-ImageTier: Cinematic
-
-- [WILDCARD_GUIDE.md](docs/WILDCARD_GUIDE.md) - Random wildcards
-
-Results in 3 different takes:
-
-### Reference- Variation 1: Emphasizes impact crater and dust
-
-- [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) - All nodes- Variation 2: Focuses on dynamic camera arc around landing
-
-- [NODE_COMPARISON.md](docs/NODE_COMPARISON.md) - Which node to use- Variation 3: Features slow-motion with particle effects
-
+**Quick Video Prompt**
+```
+Node: Video Prompt Expander
+Input: "cyberpunk street scene"
+Preset: stylized
+Detail: moderate
 ```
 
-### Updates
-
-- [CHANGELOG.md](CHANGELOG.md) - Version history## Workflow Integration
-
-- [UPDATE_V17_ENHANCED_CONTROLS.md](docs/UPDATE_V17_ENHANCED_CONTROLS.md) - v1.7
-
-### Basic Workflow
-
----```
-
-[AI Video Prompt Expander]
-
-## 🔄 Version History    ↓ (positive_prompt_1)
-
-[Video Generation Node]
-
-### v1.7.0 (October 2025) - Enhanced Controls    ↓
-
-- ✅ Fixed reference image usage[Output]
-
-- ✨ Prompt length control (6 options)```
-
-- ✨ Genre/style control (22 genres)
-
-- ✨ Subject framing (14 types)### Advanced Workflow with Variations
-
-- ✨ Subject pose (17 options)```
-
-[AI Video Prompt Expander] (num_variations: 3)
-
-### v1.6.1 (October 2025) - Bug Fixes    ↓ (positive_prompt_1) → [Video Gen 1]
-
-- 🐛 Fixed settings leaking into output    ↓ (positive_prompt_2) → [Video Gen 2]  
-
-- 🐛 Fixed emphasis syntax `(keyword:1.5)`    ↓ (positive_prompt_3) → [Video Gen 3]
-
-- ✨ Added alternation `{a|b|c}`    ↓ (negative_prompt) → [All Video Gens]
-
+**Professional Image Generation**
+```
+Node: Text-to-Image Enhancer
+Platform: Flux
+Input: "portrait of a (warrior:1.3) with {red|blue|purple} armor"
+Length: long
+Genre: fantasy
 ```
 
-### v1.6.0 (October 2025) - Text-to-Image
-
-- ✨ New Text-to-Image node## File Output
-
-- 🎨 8 platform support
-
-- 📸 Reference imagesWhen **save_to_file** is enabled, prompts are saved to:
-
+**Refine Existing Prompt**
+```
+Node: Video Prompt Expander (Advanced)
+Operation: refine_existing
+Input: [Your existing 300-word prompt]
+Detail: detailed
 ```
 
-See [CHANGELOG.md](CHANGELOG.md) for complete history.ComfyUI/output/video_prompts/[filename_base]_[timestamp].txt
-
+**Image-to-Video with Direction**
+```
+Node: Video Prompt Expander (Advanced)
+Reference Image: [Your image]
+Input: "Camera slowly dollies in while subject looks up"
+Operation: expand_from_idea
 ```
 
 ---
 
-File includes:
+## 🐛 Troubleshooting
 
-## 🛠️ Troubleshooting- Enhanced positive prompt
+### LLM Connection Failed
 
-- Negative prompt
+- Check LLM backend is running (LM Studio or Ollama)
+- Verify endpoint URL matches your LLM server
+- Test in browser: http://localhost:1234/v1 (LM Studio) or http://localhost:11434 (Ollama)
 
-### LLM Connection- Detailed breakdown
+### Empty Output
 
-- Check server is running (LM Studio "Running" status)- Metadata (preset, tier, model, temperature)
+- Check temperature isn't too high (>1.5)
+- Verify model is loaded in LLM backend
+- Check ComfyUI console for error messages
 
-- Verify endpoint URL matches- Original input
+### Emphasis Syntax Not Working
 
-- Model name exact match (case-sensitive)
+- Make sure you're using parentheses with colon: `(keyword:1.5)`
+- Syntax is preserved in v1.6.1+ for video nodes, v1.7+ for image nodes
 
-## Troubleshooting
+### Image Analysis Not Working
 
-### Output Quality
-
-- Adjust `prompt_length` for target size### "Cannot connect to LM Studio/Ollama"
-
-- Verify `genre_style` matches mood- Ensure LM Studio or Ollama is running
-
-- Update to v1.6.1+ for bug fixes- Check the API endpoint URL
-
-- Verify the model is loaded
-
-### Node Not Appearing
-
-- Restart ComfyUI after installation### "Request timed out"
-
-- Check "Eric Prompt Enhancers" category- LLM might be slow on complex prompts
-
-- Run `pip install -r requirements.txt`- Try lowering the tier
-
-- Reduce temperature
-
----- Use a smaller/faster model
-
-
-
-## 📄 License### "Missing keywords in output"
-
-- Keywords are automatically appended if missing
-
-**Dual License:**- Check the positive_keywords field spelling
-
-- Verify keywords are comma-separated
-
-### Non-Commercial Use
-
-[Creative Commons Attribution-NonCommercial 4.0 International](http://creativecommons.org/licenses/by-nc/4.0/)### Empty outputs
-
-- Check LLM backend connection
-
-### Commercial Use- Review status output for error messages
-
-Separate license required. Contact:- Try with a simpler input prompt first
-
-- **Email**: eric@historic.camera or eric@rollei.us
-
-- **GitHub**: [@EricRollei](https://github.com/EricRollei)## Tips for Best Results
-
-
-
-See [LICENSE](LICENSE) for full terms.1. **Start Simple**: Begin with basic concepts and let the node expand them
-
-2. **Use Auto Tier**: Let the node detect appropriate complexity
-
----3. **Experiment with Presets**: Different presets dramatically change the output
-
-4. **Adjust Temperature**: Lower (0.3-0.5) for consistency, higher (0.8-1.2) for creativity
-
-## 🙏 Credits5. **Combine Keywords**: Use positive_keywords for LoRA triggers and style terms
-
-6. **Save Good Prompts**: Enable save_to_file to build a library
-
-### Author7. **Generate Variations**: Use multiple variations to explore different interpretations
-
-**Eric Hiss** ([@EricRollei](https://github.com/EricRollei))
-
-## Wan 2.2 Guide Reference
-
-### Dependencies
-
-- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) - GPL-3.0This node implements the comprehensive Wan 2.2 prompting framework including:
-
-- [PyTorch](https://pytorch.org/) - BSD-style
-
-- [NumPy](https://numpy.org/) - BSD- **Aesthetic Control**: Lighting sources/types, time of day, shot sizes, composition, lenses, camera angles
-
-- [Pillow](https://python-pillow.org/) - HPND- **Dynamic Control**: Motion types, character emotions, camera movements
-
-- [requests](https://requests.readthedocs.io/) - Apache 2.0- **Stylization**: Visual styles (3D, 2D, watercolor, etc.), visual effects
-
-
-
-### LLM BackendsFor more details, see the original guide: https://wan.video/
-
-- [LM Studio](https://lmstudio.ai/) - Proprietary
-
-- [Ollama](https://ollama.ai/) - MIT## Credits
-
-
-
-### Platforms- Based on the Wan 2.2 Video Generation Prompting Guide
-
-- **Flux** by Black Forest Labs- Developed for ComfyUI integration
-
-- **SDXL** by Stability AI- Supports LM Studio and Ollama backends
-
-- **Pony Diffusion** by Astralite
-
-- **Illustrious XL** by OnomaAI Research## Version
-
-- **Chroma/Meissonic** by Tencent AI Lab
-
-- **Qwen** by Alibaba Cloud**v1.0** - Initial release with full Wan 2.2 framework integration
-
-- **Wan** by Wuhan AI Institute
-
-## License
+- Install vision dependencies: `pip install transformers accelerate huggingface_hub bitsandbytes`
+- Check Qwen3-VL model is downloaded
+- See [VISION_BACKEND_GUIDE.md](VISION_BACKEND_GUIDE.md)
 
 ---
 
-MIT License - Free to use and modify
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+---
+
+## 📄 License
+
+Dual License:
+- **Non-Commercial**: Free for personal/research use
+- **Commercial**: Contact for licensing
+
+See [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- ComfyUI community for the amazing platform
+- LM Studio and Ollama teams for excellent LLM backends
+- Qwen3-VL team for the vision model
+- All users who provided feedback and bug reports
+
+---
 
 ## 📞 Support
 
----
-
-- **GitHub Issues**: [Report bugs here](https://github.com/EricRollei/video_prompter/issues)
-
-- **Email**: eric@historic.camera, eric@rollei.us**Questions or Issues?** Check the status output for detailed error messages, or review the saved prompt files for debugging information.
-
-- **Documentation**: Check [docs/](docs/) folder
+- **Issues**: [GitHub Issues](https://github.com/EricRollei/Local_LLM_Prompt_Enhancer/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/EricRollei/Local_LLM_Prompt_Enhancer/discussions)
 
 ---
 
-**Made with ❤️ by Eric Hiss | Star ⭐ if you find this useful!**
+**Version**: 1.8.0  
+**Last Updated**: October 24, 2025  
+**Author**: Eric Rollei  
+**Repository**: https://github.com/EricRollei/Local_LLM_Prompt_Enhancer

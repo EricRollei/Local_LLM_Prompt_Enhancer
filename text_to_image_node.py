@@ -8,10 +8,11 @@ import torch
 import numpy as np
 from PIL import Image
 import io
-import base64
 import random
-from typing import Tuple, Optional, Dict, List
+import re
+from typing import Tuple, Optional, Dict, List, Any, Union
 from .llm_backend import LLMBackend
+from .qwen3_vl_backend import caption_with_qwen3_vl
 from .platforms import get_platform_config, get_negative_prompt_for_platform
 from .utils import save_prompts_to_file, parse_keywords
 
@@ -69,21 +70,263 @@ class TextToImagePromptEnhancer:
             "surreal", "cinematic", "dramatic", "action", "humorous",
             "indie", "horror", "scifi", "romantic", "artistic",
             "documentary", "minimalist", "maximalist", "vintage", "modern",
-            "fantasy", "noir", "cyberpunk"
+            "fantasy", "noir", "cyberpunk", "steampunk", "dieselpunk",
+            "mythic", "gothic", "art deco", "retro futurism"
+        ]
+        
+        self.historical_periods = [
+            "prehistoric era", "ancient civilizations", "classical antiquity",
+            "medieval era", "renaissance", "baroque period", "industrial revolution",
+            "victorian era", "edwardian era", "roaring twenties", "mid-century modern",
+            "1960s counterculture", "1980s neon wave", "1990s digital dawn",
+            "modern day", "near future", "far future", "cyberpunk future",
+            "post-apocalyptic era", "fantasy realm", "science fiction epoch"
         ]
         
         self.subject_framings = [
             "extreme close-up", "close-up", "medium close-up",
             "medium shot", "medium wide", "wide shot",
             "full body", "cowboy shot", "bust shot",
-            "head and shoulders", "three-quarter"
+            "head and shoulders", "three-quarter", "establishing shot",
+            "aerial overview", "profile view"
         ]
         
         self.subject_poses = [
             "standing", "sitting", "lying down", "kneeling", "crouching",
             "action pose", "portrait pose", "dynamic", "static",
-            "asymmetric", "contrapposto", "relaxed", "tense"
+            "asymmetric", "contrapposto", "relaxed", "tense",
+            "walking", "running", "jumping", "dancing", "floating"
         ]
+        
+        self.creative_randomness_modes = {
+            "off": "Stay close to user wording with minimal embellishment.",
+            "subtle": "Add gentle flourishes that enhance mood without changing subject focus.",
+            "moderate": "Introduce fresh context, supporting details, or small narrative beats.",
+            "bold": "Transform the prompt into a vivid scene with new narrative hooks and world-building.",
+            "storyteller": "Invent an imaginative mini-story or scenario that surprises while honoring the subject.",
+            "chaotic": "Push boundaries with experimental, dreamlike, or surreal twists." 
+        }
+        
+        self.random_story_settings = [
+            "abandoned futuristic metropolis", "misty forest crossroads",
+            "luminous underwater research lab", "quiet suburban street at dawn",
+            "ancient floating temple", "deserted lunar colony", "ornate victorian ballroom",
+            "hidden speakeasy behind a bookstore", "glitching neon arcade",
+            "forgotten museum of impossible inventions", "bioluminescent cavern",
+            "storm-lashed airship deck", "sunset-drenched mountain pass",
+            "labyrinthine library of living books", "gravity-defying market square"
+        ]
+        
+        self.random_story_companions = [
+            "a time-traveling archivist", "an eccentric inventor", "a sentient automaton",
+            "a mysterious stranger in vintage attire", "a playful cosmic entity",
+            "a band of skyship pirates", "a chorus of bioluminescent sprites",
+            "a rival artist seeking inspiration", "a loyal cybernetic fox",
+            "an undercover interstellar diplomat"
+        ]
+        
+        self.random_story_conflicts = [
+            "searching for the last fragment of a lost melody",
+            "racing against an impending temporal storm",
+            "unlocking a doorway hidden inside a beam of light",
+            "negotiating peace between rival realities",
+            "decoding whispers carried by the rain",
+            "restoring color to a world frozen in monochrome",
+            "solving a puzzle etched into the constellations",
+            "protecting a fragile artifact of collective memories"
+        ]
+        
+        self.reference_usage_labels = {
+            "caption": "scene overview",
+            "style": "artistic style and texture",
+            "lighting": "lighting qualities and direction",
+            "genre": "genre or mood cues",
+            "time_period": "time period context",
+            "subject": "primary subject appearance",
+            "objects": "notable secondary objects",
+            "color": "color palette or grading",
+            "composition": "framing and spatial layout"
+        }
+
+        self.reference_directive_choices = [
+            "none",
+            "auto",
+            "recreate",
+            "reinterpret",
+            "subject only",
+            "style only",
+            "lighting only",
+            "composition",
+            "genre"
+        ]
+
+        self._seed_state: Dict[str, Any] = {
+            "last_seed": None,
+            "last_mode": None,
+            "last_input": None
+        }
+
+        self.reference_directive_configs = {
+            "none": {
+                "display": "None",
+                "user_guidance": "Use this reference for broad inspiration using its full caption.",
+                "user_summary": "Incorporate helpful elements from the reference caption without enforcing a specific focus.",
+                "include_categories": ["caption"],
+                "exclude_categories": [],
+                "llm_instruction": (
+                    "Absorb the entire reference caption as general inspiration. Keep the meaningful traits but avoid over-emphasizing any single element."
+                ),
+                "analysis_focus": (
+                    "Summarize the overall subject, setting, lighting, mood, and notable items so the prompt can mirror the scene holistically."
+                )
+            },
+            "auto": {
+                "display": "Auto",
+                "user_guidance": "Adapt helpful traits from the reference based on context.",
+                "user_summary": "Auto-balances useful cues from the reference.",
+                "include_categories": [
+                    "caption",
+                    "style",
+                    "lighting",
+                    "color",
+                    "genre",
+                    "composition",
+                    "subject",
+                    "objects",
+                    "time_period"
+                ],
+                "exclude_categories": [],
+                "llm_instruction": (
+                    "Absorb the full caption from this reference to strengthen the user's brief. "
+                    "Borrow cues that align with the goal and adjust anything that conflicts."
+                ),
+                "analysis_focus": (
+                    "Identify the most influential subject, style, lighting, composition, and supporting details from the"
+                    " complete caption that will benefit the final prompt."
+                )
+            },
+            "recreate": {
+                "display": "Recreate",
+                "user_guidance": "Match the reference closely across subject, palette, lighting, and mood.",
+                "user_summary": "Recreate the reference look as faithfully as possible.",
+                "include_categories": "all",
+                "exclude_categories": [],
+                "llm_instruction": (
+                    "Reproduce this reference almost verbatim. Maintain subject identity, palette, lighting, composition, "
+                    "and supporting props unless the main prompt explicitly overrides them."
+                ),
+                "analysis_focus": (
+                    "List the critical traits that must be preserved exactly: subject identity, pose, palette, lighting,"
+                    " composition, and key props or environment cues."
+                )
+            },
+            "reinterpret": {
+                "display": "Reinterpret",
+                "user_guidance": "Use the reference as inspiration; preserve core subject or mood, but embrace smart variations.",
+                "user_summary": "Keep the spirit of the reference while allowing tasteful changes.",
+                "include_categories": [
+                    "caption",
+                    "subject",
+                    "objects",
+                    "genre",
+                    "style",
+                    "lighting",
+                    "color",
+                    "composition",
+                    "time_period"
+                ],
+                "exclude_categories": [],
+                "llm_instruction": (
+                    "Preserve the recognizable subject or atmosphere from this reference using the full caption as context, yet "
+                    "refresh style, palette, or composition when it improves alignment with the user's prompt."
+                ),
+                "analysis_focus": (
+                    "Summarize the anchor traits (subject identity, mood, palette cues) drawn from the entire caption while"
+                    " noting which aspects feel flexible for reinterpretation."
+                )
+            },
+            "subject_only": {
+                "display": "Subject Only",
+                "user_guidance": "Preserve the subject’s identity, pose, and defining traits; let other elements follow the prompt.",
+                "user_summary": "Keep subject fidelity; redesign other aspects.",
+                "include_categories": ["caption", "subject", "objects", "composition"],
+                "exclude_categories": ["style", "lighting", "color", "genre"],
+                "llm_instruction": (
+                    "Carry over the subject's identity, pose, and silhouette from this reference using the full caption as context. "
+                    "Invent fresh style, lighting, and background details to suit the user's prompt."
+                ),
+                "analysis_focus": (
+                    "Describe the subject's appearance, pose, silhouette, distinguishing features, and supportive forms as captured"
+                    " in the caption so the identity remains unmistakable."
+                )
+            },
+            "style_only": {
+                "display": "Style Only",
+                "user_guidance": "Borrow the artistic style, texture, palette, and brushwork; ignore subject and composition cues.",
+                "user_summary": "Transfer the reference style while changing subject matter.",
+                "include_categories": ["caption", "style", "color", "genre", "lighting"],
+                "exclude_categories": ["subject", "objects", "composition"],
+                "llm_instruction": (
+                    "Adopt the artistic style, texture, and palette suggested by this reference after studying the complete caption. "
+                    "Replace its subject and layout with the user's requested scene."
+                ),
+                "analysis_focus": (
+                    "Detail the artistic medium, techniques, palette tendencies, brushwork, texture, and stylistic motifs present"
+                    " in the caption so the style can be transferred accurately."
+                )
+            },
+            "lighting_only": {
+                "display": "Lighting Only",
+                "user_guidance": "Replicate lighting qualities like direction, intensity, and warmth; disregard subject or style cues.",
+                "user_summary": "Reuse lighting mood without copying subject matter.",
+                "include_categories": ["caption", "lighting", "color"],
+                "exclude_categories": ["subject", "objects", "style", "genre", "composition"],
+                "llm_instruction": (
+                    "Match the lighting direction, intensity, and warmth suggested by this reference while treating the full caption as context. "
+                    "Do not replicate its subject, style, or composition."
+                ),
+                "analysis_focus": (
+                    "Explain the lighting direction, intensity, quality, shadow behavior, and color temperature found in the caption"
+                    " so the mood can be recreated without losing context."
+                )
+            },
+            "composition": {
+                "display": "Composition",
+                "user_guidance": "Adopt the camera angle, framing, and spatial layout; let subject and style come from the prompt.",
+                "user_summary": "Mirror the reference framing while refreshing other traits.",
+                "include_categories": ["composition", "caption", "objects"],
+                "exclude_categories": ["style", "lighting", "color", "genre"],
+                "llm_instruction": (
+                    "Borrow the framing, camera angle, and spatial relationships implied by this reference using the caption as your map. "
+                    "Populate that layout with the subjects and styling requested in the prompt."
+                ),
+                "analysis_focus": (
+                    "Describe the camera angle, focal length impression, framing, depth relationships, and placement of key elements"
+                    " from the caption so the layout can be preserved."
+                )
+            },
+            "genre": {
+                "display": "Genre",
+                "user_guidance": "Match the genre or storytelling conventions; let other specifics follow the prompt unless genre demands otherwise.",
+                "user_summary": "Carry over the reference genre atmosphere.",
+                "include_categories": ["caption", "genre", "style", "color", "lighting"],
+                "exclude_categories": ["subject", "objects", "composition"],
+                "llm_instruction": (
+                    "Preserve the genre tone and storytelling conventions from this reference by internalizing the whole caption. "
+                    "Let the user's prompt determine subject matter and layout unless genre cues require tweaks."
+                ),
+                "analysis_focus": (
+                    "Summarize the genre-defining mood, atmosphere, storytelling motifs, and stylistic cues from the full caption"
+                    " so the tone carries over cleanly."
+                )
+            }
+        }
+
+        self.default_reference_analysis_method = "sequential_refine"
+        self.reference_guardrail_text = (
+            "Blend reference guidance without repeating yourself. Do not mention source image dimensions, aspect ratios, "
+            "or pixel resolutions under any circumstance."
+        )
     
     @classmethod
     def INPUT_TYPES(cls):
@@ -100,14 +343,60 @@ class TextToImagePromptEnhancer:
                                   "- Alternation: {apple|banana|orange} picks one randomly\n"
                                   "- Nested: {red|blue|green} (dress:1.2) works too"
                 }),
+
+                "reference_directive_1": ([
+                    "none",
+                    "auto",
+                    "recreate",
+                    "reinterpret",
+                    "subject only",
+                    "style only",
+                    "lighting only",
+                    "composition",
+                    "genre"
+                ], {
+                    "default": "none"
+                }),
+
+                "reference_directive_2": ([
+                    "none",
+                    "auto",
+                    "recreate",
+                    "reinterpret",
+                    "subject only",
+                    "style only",
+                    "lighting only",
+                    "composition",
+                    "genre"
+                ], {
+                    "default": "none"
+                }),
+                
+                "prompt_context": ([
+                    "none",
+                    "auto",
+                    "abbreviated_prompt",
+                    "prompt_seed",
+                    "item_list",
+                    "reference_modification",
+                    "reference_expansion"
+                ], {
+                    "default": "none"
+                }),
                 
                 # Platform selection
                 "target_platform": ([
                     "flux",
+                    "flux_kontex",
                     "sd_xl",
+                    "sd_1_5",
                     "pony",
                     "illustrious",
                     "chroma",
+                    "pixart_sigma",
+                    "aura_flow",
+                    "noobai",
+                    "kolors",
                     "qwen_image",
                     "qwen_image_edit",
                     "wan_image"
@@ -139,6 +428,17 @@ class TextToImagePromptEnhancer:
                     "max": 2.0,
                     "step": 0.1
                 }),
+
+                "vision_backend": ([
+                    "auto",
+                    "lm_studio",
+                    "ollama",
+                    "qwen3_vl",
+                    "disable"
+                ], {
+                    "default": "auto",
+                    "tooltip": "Vision captioning: auto=inherit from main LLM, qwen3_vl=local Qwen3-VL-4B, lm_studio/ollama=separate vision model, disable=heuristics only"
+                }),
                 
                 # Camera & Composition
                 "camera_angle": ([
@@ -147,7 +447,7 @@ class TextToImagePromptEnhancer:
                     "bird's eye view", "worm's eye view", "over the shoulder",
                     "point of view", "extreme close-up angle"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 "composition": ([
@@ -156,7 +456,7 @@ class TextToImagePromptEnhancer:
                     "golden ratio", "leading lines", "frame within frame",
                     "negative space", "balanced", "dynamic diagonal"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 # Lighting
@@ -167,7 +467,7 @@ class TextToImagePromptEnhancer:
                     "spotlight", "ambient lighting", "backlight", "rim lighting",
                     "window light", "street lights"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 "lighting_quality": ([
@@ -176,7 +476,7 @@ class TextToImagePromptEnhancer:
                     "high contrast", "low key", "high key", "chiaroscuro",
                     "volumetric", "atmospheric"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 # Time & Weather
@@ -185,7 +485,19 @@ class TextToImagePromptEnhancer:
                     "dawn", "early morning", "mid-morning", "noon", "afternoon",
                     "golden hour", "dusk", "twilight", "night", "midnight", "blue hour"
                 ], {
-                    "default": "auto"
+                    "default": "none"
+                }),
+                
+                "historical_period": ([
+                    "auto", "random", "none",
+                    "prehistoric era", "ancient civilizations", "classical antiquity",
+                    "medieval era", "renaissance", "baroque period", "industrial revolution",
+                    "victorian era", "edwardian era", "roaring twenties", "mid-century modern",
+                    "1960s counterculture", "1980s neon wave", "1990s digital dawn",
+                    "modern day", "near future", "far future", "cyberpunk future",
+                    "post-apocalyptic era", "fantasy realm", "science fiction epoch"
+                ], {
+                    "default": "none"
                 }),
                 
                 "weather": ([
@@ -193,7 +505,7 @@ class TextToImagePromptEnhancer:
                     "clear sky", "partly cloudy", "overcast", "misty", "foggy",
                     "rainy", "stormy", "snowy", "sunny", "hazy"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 # Style & Quality
@@ -204,7 +516,7 @@ class TextToImagePromptEnhancer:
                     "illustration", "concept art", "impressionist", "abstract",
                     "pixel art", "low poly", "papercraft", "isometric"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 "genre_style": ([
@@ -212,9 +524,10 @@ class TextToImagePromptEnhancer:
                     "surreal", "cinematic", "dramatic", "action", "humorous",
                     "indie", "horror", "scifi", "romantic", "x-rated", "pg",
                     "artistic", "documentary", "minimalist", "maximalist",
-                    "vintage", "modern", "fantasy", "noir", "cyberpunk"
+                    "vintage", "modern", "fantasy", "noir", "cyberpunk",
+                    "steampunk", "dieselpunk", "mythic", "gothic", "art deco", "retro futurism"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 "color_mood": ([
@@ -222,29 +535,13 @@ class TextToImagePromptEnhancer:
                     "vibrant", "muted", "monochrome", "warm tones", "cool tones",
                     "pastel", "high contrast", "desaturated", "neon", "earth tones"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
-                "detail_level": ([
-                    "auto",
-                    "standard",
-                    "highly detailed",
-                    "intricate details",
-                    "simplified",
-                    "minimalist"
+                "creative_randomness": ([
+                    "auto", "none", "off", "subtle", "moderate", "bold", "storyteller", "chaotic"
                 ], {
-                    "default": "auto"
-                }),
-                
-                "prompt_length": ([
-                    "auto",
-                    "very_short",
-                    "short",
-                    "medium",
-                    "long",
-                    "very_long"
-                ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 # Subject Controls
@@ -253,9 +550,10 @@ class TextToImagePromptEnhancer:
                     "extreme close-up", "close-up", "medium close-up",
                     "medium shot", "medium wide", "wide shot",
                     "full body", "cowboy shot", "bust shot",
-                    "head and shoulders", "three-quarter"
+                    "head and shoulders", "three-quarter", "establishing shot",
+                    "aerial overview", "profile view"
                 ], {
-                    "default": "auto"
+                    "default": "none"
                 }),
                 
                 "subject_pose": ([
@@ -263,13 +561,9 @@ class TextToImagePromptEnhancer:
                     "standing", "sitting", "lying down", "kneeling", "crouching",
                     "action pose", "portrait pose", "dynamic", "static",
                     "asymmetric", "contrapposto", "relaxed", "tense",
-                    "walking", "running", "jumping", "dancing"
+                    "walking", "running", "jumping", "dancing", "floating"
                 ], {
-                    "default": "auto"
-                }),
-                
-                "quality_emphasis": ("BOOLEAN", {
-                    "default": True
+                    "default": "none"
                 }),
                 
                 # Keywords
@@ -280,11 +574,27 @@ class TextToImagePromptEnhancer:
                 }),
                 
                 "negative_keywords": ("STRING", {
-                    "default": "",
+                    "default": "ugly, blurry, duplicate, deformed, distorted, lowres, bad anatomy, disfigured, poorly drawn, mutation, mutated, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, fused fingers, too many fingers, long neck",
                     "multiline": True,
                     "placeholder": "Things to avoid"
                 }),
+
+                "seed_mode": ([
+                    "random",
+                    "fixed",
+                    "increment",
+                    "decrement"
+                ], {
+                    "default": "random"
+                }),
                 
+                "random_seed": ("INT", {
+                    "default": -1,
+                    "min": -1,
+                    "max": 2_147_483_647,
+                    "step": 1
+                }),
+
                 # Output
                 "save_to_file": ("BOOLEAN", {
                     "default": False
@@ -299,6 +609,16 @@ class TextToImagePromptEnhancer:
                 # Optional image references
                 "reference_image_1": ("IMAGE",),
                 "reference_image_2": ("IMAGE",),
+                "reference_caption_override_1": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "Optional external caption for Reference 1"
+                }),
+                "reference_caption_override_2": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "Optional external caption for Reference 2"
+                }),
             }
         }
     
@@ -309,37 +629,72 @@ class TextToImagePromptEnhancer:
     CATEGORY = "Eric Prompt Enhancers"
     OUTPUT_NODE = True
     
+    @classmethod
+    def IS_CHANGED(cls, random_seed: int, seed_mode: str, **kwargs) -> bool:
+        """Determine if the node should re-execute based on seed mode."""
+
+        mode = str(seed_mode).strip().lower()
+        if mode in {"random", "increment", "decrement"}:
+            return True
+
+        try:
+            seed_value = int(random_seed)
+        except Exception:
+            return True
+
+        return seed_value < 0
+
     def enhance_prompt(
         self,
         text_prompt: str,
+        reference_directive_1: str,
+        reference_directive_2: str,
+        prompt_context: str,
         target_platform: str,
         llm_backend: str,
         model_name: str,
         api_endpoint: str,
         temperature: float,
+        vision_backend: str,
         camera_angle: str,
         composition: str,
         lighting_source: str,
         lighting_quality: str,
         time_of_day: str,
+        historical_period: str,
         weather: str,
         art_style: str,
         genre_style: str,
         color_mood: str,
-        detail_level: str,
-        prompt_length: str,
+        creative_randomness: str,
         subject_framing: str,
         subject_pose: str,
-        quality_emphasis: bool,
         positive_keywords: str,
         negative_keywords: str,
+        seed_mode: str,
+        random_seed: int,
         save_to_file: bool,
         filename_base: str,
         reference_image_1: Optional[torch.Tensor] = None,
-        reference_image_2: Optional[torch.Tensor] = None
+        reference_image_2: Optional[torch.Tensor] = None,
+        reference_caption_override_1: str = "",
+        reference_caption_override_2: str = ""
     ) -> Tuple[str, str, str, str]:
         """Main processing function"""
-        
+        try:
+            requested_seed = int(random_seed)
+        except Exception:
+            requested_seed = -1
+
+        seed_mode_normalized = str(seed_mode).strip().lower()
+        seed_value, resolved_seed_mode = self._resolve_seed_value(seed_mode_normalized, requested_seed)
+
+        python_random_state = random.getstate()
+        numpy_random_state = np.random.get_state()
+
+        random.seed(seed_value)
+        np.random.seed(seed_value % (2**32))
+
         try:
             # STEP 0: Process alternations first (before LLM)
             text_prompt = self._process_alternations(text_prompt)
@@ -348,75 +703,330 @@ class TextToImagePromptEnhancer:
             text_prompt = self._preserve_emphasis_syntax(text_prompt)
             
             # STEP 1: Process reference images if provided
-            image_descriptions = []
+            reference_images = []
+            directive_inputs = []
+            override_1 = (reference_caption_override_1 or "").strip()
+            override_2 = (reference_caption_override_2 or "").strip()
+
             if reference_image_1 is not None:
-                desc = self._get_simple_image_description(reference_image_1, "Reference 1")
-                image_descriptions.append(desc)
-            
+                reference_images.append({
+                    "label": "Reference 1",
+                    "tensor": reference_image_1,
+                    "caption_override": override_1,
+                    "override_source": "user" if override_1 else None
+                })
+                directive_inputs.append(("Reference 1", reference_directive_1))
+            elif override_1:
+                # Allow caption-only references when external descriptor provided
+                reference_images.append({
+                    "label": "Reference 1",
+                    "tensor": None,
+                    "caption_override": override_1,
+                    "override_source": "user"
+                })
+                directive_inputs.append(("Reference 1", reference_directive_1))
+
             if reference_image_2 is not None:
-                desc = self._get_simple_image_description(reference_image_2, "Reference 2")
-                image_descriptions.append(desc)
-            
-            # STEP 2: Resolve random/auto options
-            resolved_settings = self._resolve_settings(
-                camera_angle, composition, lighting_source, lighting_quality,
-                time_of_day, weather, art_style, genre_style, color_mood, 
-                detail_level, prompt_length, subject_framing, subject_pose,
-                target_platform
-            )
-            
-            # STEP 3: Build enhancement prompt
-            platform_config = get_platform_config(target_platform)
-            system_prompt = self._build_system_prompt(
-                platform_config, resolved_settings, quality_emphasis
-            )
-            
-            user_prompt = self._build_user_prompt(
-                text_prompt, image_descriptions, resolved_settings, target_platform
-            )
-            
-            # STEP 4: Call LLM
+                reference_images.append({
+                    "label": "Reference 2",
+                    "tensor": reference_image_2,
+                    "caption_override": override_2,
+                    "override_source": "user" if override_2 else None
+                })
+                directive_inputs.append(("Reference 2", reference_directive_2))
+            elif override_2:
+                reference_images.append({
+                    "label": "Reference 2",
+                    "tensor": None,
+                    "caption_override": override_2,
+                    "override_source": "user"
+                })
+                directive_inputs.append(("Reference 2", reference_directive_2))
+
+            reference_plan = self._prepare_reference_plan(directive_inputs)
+
             llm = LLMBackend(
                 backend_type=llm_backend,
                 endpoint=api_endpoint,
                 model_name=model_name,
                 temperature=temperature
             )
+
+            vision_backend_selection = (vision_backend or "inherit").strip().lower()
+            if not vision_backend_selection:
+                vision_backend_selection = "auto"
             
+            # For qwen3_vl: use hardcoded sensible defaults (no user configuration needed)
+            # For lm_studio/ollama: reuse main LLM endpoint/model (can't override without UI fields)
+            # For auto/inherit: use main LLM if it supports vision
+
+            vision_llm: Optional[LLMBackend] = None
+            vision_qwen_config: Optional[Dict[str, Any]] = None
+            vision_backend_mode = "disabled"
+            vision_caption_enabled = False
+            vision_model_used = ""
+            vision_init_warning: Optional[str] = None
+
+            if vision_backend_selection in {"", "auto", "inherit"}:
+                if llm.supports_images():
+                    vision_llm = llm
+                    vision_backend_mode = "inherit"
+                    vision_caption_enabled = True
+                    vision_model_used = getattr(llm, "model_name", model_name)
+                else:
+                    vision_backend_mode = "disabled"
+            elif vision_backend_selection == "disable":
+                vision_backend_mode = "disabled"
+            elif vision_backend_selection in {"lm_studio", "ollama"}:
+                # Reuse main LLM endpoint and model name for vision backend
+                try:
+                    vision_llm = LLMBackend(
+                        backend_type=vision_backend_selection,
+                        endpoint=api_endpoint,
+                        model_name=model_name,
+                        temperature=temperature
+                    )
+                    if vision_llm.supports_images():
+                        vision_backend_mode = vision_backend_selection
+                        vision_caption_enabled = True
+                        vision_model_used = model_name
+                    else:
+                        vision_backend_mode = "disabled"
+                        vision_init_warning = (
+                            f"Vision backend '{vision_backend_selection}' model '{model_name}' does not advertise image support."
+                        )
+                except Exception as exc:
+                    vision_backend_mode = "disabled"
+                    vision_init_warning = (
+                        f"Vision backend init failed ({vision_backend_selection}): {exc}"
+                    )
+                    vision_llm = None
+            elif vision_backend_selection == "qwen3_vl":
+                # Use hardcoded defaults for Qwen3-VL (matching Granddyser node behavior)
+                qwen_model = "Qwen/Qwen3-VL-4B-Instruct"
+                vision_qwen_config = {
+                    "model": qwen_model,
+                    "backend_hint": None,  # No overrides - use qwen3_vl_backend.py defaults
+                }
+                vision_backend_mode = "qwen3_vl"
+                vision_caption_enabled = True
+                vision_model_used = qwen_model
+            else:
+                vision_backend_mode = "disabled"
+
+            if not vision_model_used:
+                vision_model_used = getattr(llm, "model_name", model_name)
+
+            analysis_backend_label = vision_backend_mode
+            if analysis_backend_label == "inherit":
+                analysis_backend_label = f"inherit:{llm.backend_type}"
+
+            if not vision_caption_enabled:
+                vision_model_used = ""
+
+            reference_warnings: List[str] = []
+            if vision_init_warning:
+                reference_warnings.append(vision_init_warning)
+            if reference_images and not vision_caption_enabled:
+                reference_warnings.append(
+                    "Vision captioning disabled; reference traits rely on heuristic estimates."
+                )
+
+            image_analyses = []
+            for entry in reference_images:
+                label = entry.get("label", "Reference")
+                tensor = entry.get("tensor")
+                override_caption = entry.get("caption_override")
+                analysis = self._analyze_reference_image(
+                    tensor,
+                    label,
+                    vision_llm=vision_llm if vision_caption_enabled and vision_llm is not None else None,
+                    override_caption=override_caption,
+                    qwen_config=vision_qwen_config if vision_backend_mode == "qwen3_vl" else None,
+                    vision_temperature=temperature,
+                    vision_backend=analysis_backend_label,
+                    vision_model=vision_model_used
+                )
+                if override_caption:
+                    existing_warnings = analysis.setdefault("warnings", [])
+                    override_note = f"{label}: caption supplied by override."
+                    if override_note not in existing_warnings:
+                        existing_warnings.append(override_note)
+                warnings_from_analysis = analysis.get("warnings") or []
+                for warning in warnings_from_analysis:
+                    if warning not in reference_warnings:
+                        reference_warnings.append(warning)
+                image_analyses.append(analysis)
+
+            # STEP 2: Resolve random/auto options
+            resolved_settings, setting_sources = self._resolve_settings(
+                camera_angle, composition, lighting_source, lighting_quality,
+                time_of_day, historical_period, weather, art_style, genre_style, color_mood,
+                creative_randomness,
+                subject_framing, subject_pose, prompt_context,
+                target_platform
+            )
+            
+            # STEP 3: Build enhancement prompt
+            platform_config = get_platform_config(target_platform)
+            quality_emphasis = bool(platform_config.get("quality_emphasis", True))
+            resolved_settings["quality_emphasis"] = "enabled" if quality_emphasis else "disabled"
+            setting_sources["quality_emphasis"] = {"mode": "platform", "value": resolved_settings["quality_emphasis"]}
+            
+            directive_analyses, directive_meta = self._run_reference_directive_analysis(
+                image_analyses,
+                reference_plan,
+                llm
+            )
+
+            reference_guidance, reference_notes, guidance_meta = self._build_reference_guidance(
+                directive_analyses,
+                reference_plan,
+                llm,
+                prompt_context
+            )
+            reference_meta = self._merge_reference_metadata(reference_plan, directive_meta, guidance_meta)
+            reference_meta.update(
+                {
+                    "vision_backend_requested": vision_backend_selection,
+                    "vision_backend_resolved": vision_backend_mode,
+                    "vision_caption_enabled": vision_caption_enabled,
+                    "vision_model_used": vision_model_used,
+                }
+            )
+            if vision_qwen_config:
+                reference_meta["vision_backend_config"] = vision_qwen_config
+            if reference_warnings:
+                reference_meta["warnings"] = reference_warnings
+
+            backend_set = sorted(
+                {
+                    str(analysis.get("vision_backend"))
+                    for analysis in image_analyses
+                    if analysis.get("vision_backend")
+                }
+            )
+            model_set = sorted(
+                {
+                    str(analysis.get("vision_model"))
+                    for analysis in image_analyses
+                    if analysis.get("vision_model")
+                }
+            )
+            source_set = sorted(
+                {
+                    str(analysis.get("vision_caption_source"))
+                    for analysis in image_analyses
+                    if analysis.get("vision_caption_source")
+                }
+            )
+            if backend_set:
+                reference_meta["vision_backends_used"] = backend_set
+            if model_set:
+                reference_meta["vision_models_used"] = model_set
+            if source_set:
+                reference_meta["vision_caption_sources"] = source_set
+
+            reference_caption_payload: List[Tuple[str, str]] = []
+            for analysis, entry in zip(image_analyses, reference_plan):
+                label = entry.get("label", analysis.get("label", "Reference"))
+                caption_text = analysis.get("vision_caption") or analysis.get("summary")
+                if caption_text:
+                    prefix = "(override) " if analysis.get("caption_override") else ""
+                    reference_caption_payload.append((label, f"{prefix}{caption_text}"))
+            
+            creative_brainstorm = self._generate_creative_brainstorm(
+                text_prompt,
+                resolved_settings.get("creative_randomness", "off")
+            )
+            
+            system_prompt = self._build_system_prompt(
+                platform_config,
+                resolved_settings,
+                reference_plan,
+                prompt_context
+            )
+            
+            user_prompt = self._build_user_prompt(
+                text_prompt,
+                resolved_settings,
+                target_platform,
+                prompt_context,
+                reference_guidance,
+                creative_brainstorm,
+                reference_caption_payload
+            )
+            
+            # STEP 4: Prepare keyword overrides and call LLM
+            pos_kw_list = parse_keywords(positive_keywords)
+            neg_kw_list = parse_keywords(negative_keywords)
+
+            max_tokens = self._determine_max_tokens(
+                platform_config,
+                resolved_settings.get("creative_randomness")
+            )
             response = llm.send_prompt(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
-                max_tokens=800
+                max_tokens=max_tokens
             )
-            
-            if not response["success"]:
-                return (
-                    text_prompt,
-                    "",
-                    str(resolved_settings),
-                    f"❌ LLM Error: {response['error']}"
-                )
-            
-            # STEP 5: Parse and format response
-            enhanced_prompt = self._parse_llm_response(response["response"], target_platform)
+            main_llm_success = bool(response.get("success"))
+            llm_error_message = response.get("error", "")
+            raw_llm_output = response.get("response", "")
+
+            # STEP 5: Parse and format response (fallback to original prompt on failure)
+            if main_llm_success and raw_llm_output:
+                enhanced_prompt = self._parse_llm_response(raw_llm_output, target_platform)
+            else:
+                enhanced_prompt = text_prompt
             
             # STEP 5.5: Restore emphasis syntax that was protected
             enhanced_prompt = self._restore_emphasis_syntax(enhanced_prompt)
             
             # STEP 6: Add custom keywords
-            pos_kw_list = parse_keywords(positive_keywords)
             if pos_kw_list:
                 enhanced_prompt = self._add_keywords(enhanced_prompt, pos_kw_list, target_platform)
             
             # STEP 7: Add platform-specific required tokens
-            enhanced_prompt = self._add_platform_requirements(enhanced_prompt, target_platform, quality_emphasis)
+            enhanced_prompt = self._add_platform_requirements(enhanced_prompt, target_platform)
             
             # STEP 8: Generate negative prompt
-            neg_kw_list = parse_keywords(negative_keywords)
             negative_prompt = get_negative_prompt_for_platform(target_platform, neg_kw_list)
+
+            # STEP 8.5: Determine actual selections mentioned by the LLM output
+            actual_selections = self._infer_setting_mentions(enhanced_prompt)
+            display_context = {
+                "setting_sources": setting_sources,
+                "actual_selections": actual_selections,
+                "reference_meta": reference_meta,
+                "reference_image_count": len(reference_images),
+                "main_llm_success": main_llm_success,
+                "main_llm_error": llm_error_message,
+                "quality_emphasis": quality_emphasis,
+                "reference_guidance_used": bool(reference_guidance.strip()) if reference_guidance else False,
+                "reference_directives": reference_plan,
+                "reference_warnings": reference_warnings,
+                "random_seed": {
+                    "value": seed_value,
+                    "mode": resolved_seed_mode,
+                    "requested": requested_seed,
+                    "requested_mode": seed_mode_normalized
+                },
+                "vision": {
+                    "requested_backend": vision_backend_selection,
+                    "resolved_backend": vision_backend_mode,
+                    "resolved_model": vision_model_used,
+                    "caption_enabled": vision_caption_enabled,
+                }
+            }
             
             # STEP 9: Format settings display
-            settings_display = self._format_settings_display(resolved_settings, platform_config)
+            settings_display = self._format_settings_display(
+                resolved_settings,
+                platform_config,
+                reference_notes,
+                display_context
+            )
             
             # STEP 10: Save if requested
             if save_to_file:
@@ -425,9 +1035,36 @@ class TextToImagePromptEnhancer:
                     "platform": target_platform,
                     "platform_name": platform_config["name"],
                     "model": model_name,
+                    "backend": llm_backend,
+                    "temperature": temperature,
                     "original_prompt": text_prompt,
-                    "settings": resolved_settings
+                    "settings": resolved_settings,
+                    "setting_sources": setting_sources,
+                    "reference_meta": reference_meta,
+                    "vision_captions": reference_meta.get("vision_captions", []),
+                    "vision_caption_errors": reference_meta.get("vision_caption_errors", []),
+                    "vision_backend_requested": vision_backend_selection,
+                    "vision_backend_resolved": vision_backend_mode,
+                    "vision_model_used": vision_model_used,
+                    "vision_caption_enabled": vision_caption_enabled,
+                    "system_prompt": system_prompt,
+                    "user_prompt": user_prompt,
+                    "raw_llm_output": raw_llm_output,
+                    "creative_brainstorm": creative_brainstorm,
+                    "reference_guidance": reference_guidance,
+                    "reference_notes_log": reference_notes,
+                    "reference_llm_logs": reference_meta.get("llm_logs", []),
+                    "main_llm_success": main_llm_success,
+                    "main_llm_error": llm_error_message,
+                    "reference_warnings": reference_warnings,
+                    "random_seed_requested": requested_seed,
+                    "random_seed_used": seed_value,
+                    "random_seed_mode_requested": seed_mode_normalized,
+                    "random_seed_mode_resolved": resolved_seed_mode
                 }
+
+                if vision_qwen_config:
+                    metadata["vision_backend_config"] = vision_qwen_config
                 
                 save_result = save_prompts_to_file(
                     positive_prompt=enhanced_prompt,
@@ -442,7 +1079,52 @@ class TextToImagePromptEnhancer:
             else:
                 file_status = "Not saved"
             
-            status = f"✅ Enhanced for {platform_config['name']} | {file_status}"
+            llm_status_parts = []
+            if main_llm_success:
+                llm_status_parts.append("Main LLM: responded")
+            else:
+                error_snippet = (llm_error_message or "unknown error").splitlines()[0][:120]
+                error_snippet = error_snippet.replace('|', '/')
+                llm_status_parts.append(f"Main LLM: failed ({error_snippet})")
+
+            ref_count = reference_meta.get("reference_count", 0)
+            ref_method = reference_meta.get("analysis_method", "none")
+            if ref_count:
+                queries = reference_meta.get("llm_queries", 0)
+                successes = reference_meta.get("llm_successes", 0)
+                if queries:
+                    llm_status_parts.append(
+                        f"Reference LLM: {successes}/{queries} responses ({ref_method})"
+                    )
+                else:
+                    llm_status_parts.append(f"Reference LLM: not invoked ({ref_method})")
+            else:
+                llm_status_parts.append("Reference LLM: no references")
+
+            if ref_count:
+                llm_status_parts.append(f"References sent: {ref_count}")
+                directive_labels = reference_meta.get("directive_labels") or []
+                if directive_labels:
+                    llm_status_parts.append("Directives: " + ", ".join(directive_labels))
+            else:
+                llm_status_parts.append("References sent: none")
+
+            if reference_warnings:
+                warning_preview = reference_warnings[0]
+                if len(reference_warnings) > 1:
+                    warning_preview += f" (+{len(reference_warnings) - 1} more)"
+                if len(warning_preview) > 160:
+                    warning_preview = warning_preview[:157] + "…"
+                llm_status_parts.append(f"Reference warnings: {warning_preview}")
+
+            llm_status_parts.append(f"Seed: {seed_value} ({resolved_seed_mode})")
+
+            status_prefix = "✅" if main_llm_success else "⚠️"
+            status = (
+                f"{status_prefix} Enhanced for {platform_config['name']} | "
+                + " | ".join(llm_status_parts)
+                + f" | {file_status}"
+            )
             
             return (
                 enhanced_prompt,
@@ -461,64 +1143,15 @@ class TextToImagePromptEnhancer:
                 "",
                 f"❌ Error: {str(e)}"
             )
+        finally:
+            random.setstate(python_random_state)
+            np.random.set_state(numpy_random_state)
     
     def _get_simple_image_description(self, image: torch.Tensor, label: str) -> str:
-        """Get description of reference image based on basic analysis"""
-        try:
-            # Convert tensor to numpy for analysis
-            # ComfyUI images are typically [batch, height, width, channels] in range [0, 1]
-            if isinstance(image, torch.Tensor):
-                img_np = image.cpu().numpy()
-                
-                # Get first image if batch
-                if len(img_np.shape) == 4:
-                    img_np = img_np[0]
-                
-                # Get dimensions
-                height, width = img_np.shape[:2]
-                aspect_ratio = width / height if height > 0 else 1.0
-                
-                # Analyze colors (basic RGB analysis)
-                mean_colors = img_np.mean(axis=(0, 1))
-                brightness = mean_colors.mean()
-                
-                # Determine general characteristics
-                orientation = "landscape" if aspect_ratio > 1.3 else "portrait" if aspect_ratio < 0.77 else "square"
-                
-                if brightness > 0.7:
-                    tone = "bright"
-                elif brightness > 0.4:
-                    tone = "balanced"
-                else:
-                    tone = "dark"
-                
-                # Color dominance (simple heuristic)
-                if len(mean_colors) >= 3:
-                    r, g, b = mean_colors[0], mean_colors[1], mean_colors[2]
-                    max_channel = max(r, g, b)
-                    min_channel = min(r, g, b)
-                    saturation = max_channel - min_channel
-                    
-                    if saturation < 0.1:
-                        color_desc = "monochromatic or low saturation"
-                    elif r > g and r > b:
-                        color_desc = "warm tones, reddish hues"
-                    elif b > r and b > g:
-                        color_desc = "cool tones, bluish hues"
-                    elif g > r and g > b:
-                        color_desc = "greenish hues"
-                    else:
-                        color_desc = "balanced color palette"
-                else:
-                    color_desc = "grayscale"
-                
-                desc = f"{label}: {orientation} {width}x{height}, {tone} lighting, {color_desc}"
-                return desc
-                
-        except Exception as e:
-            print(f"Warning: Could not analyze reference image: {e}")
-        
-        return f"{label}: [Image provided as reference]"
+        """Backward-compatible helper returning the concise summary of an image analysis."""
+
+        analysis = self._analyze_reference_image(image, label)
+        return str(analysis.get("summary", f"{label}: [Image provided as reference]"))
     
     def _process_alternations(self, text: str) -> str:
         """
@@ -600,127 +1233,1326 @@ class TextToImagePromptEnhancer:
         lighting_source: str,
         lighting_quality: str,
         time_of_day: str,
+        historical_period: str,
         weather: str,
         art_style: str,
         genre_style: str,
         color_mood: str,
-        detail_level: str,
-        prompt_length: str,
+        creative_randomness: str,
         subject_framing: str,
         subject_pose: str,
+        prompt_context: str,
         platform: str
-    ) -> Dict[str, str]:
-        """Resolve auto/random options to actual values"""
-        
-        resolved = {}
-        
+    ) -> Tuple[Dict[str, str], Dict[str, Dict[str, str]]]:
+        """Resolve auto/random options to actual values and record their origins."""
+
+        resolved: Dict[str, str] = {}
+        sources: Dict[str, Dict[str, str]] = {}
+
         # Camera angle
         if camera_angle == "random":
-            resolved["camera_angle"] = random.choice(self.camera_angles)
+            choice = random.choice(self.camera_angles)
+            resolved["camera_angle"] = choice
+            sources["camera_angle"] = {"mode": "random", "value": choice}
         elif camera_angle not in ["auto", "none"]:
             resolved["camera_angle"] = camera_angle
+            sources["camera_angle"] = {"mode": "user", "value": camera_angle}
         elif camera_angle == "auto":
-            resolved["camera_angle"] = "auto (LLM decides)"
-        
+            resolved["camera_angle"] = "auto (LLM chooses camera angle)"
+            sources["camera_angle"] = {"mode": "llm"}
+        else:
+            sources["camera_angle"] = {"mode": "none"}
+
         # Composition
         if composition == "random":
-            resolved["composition"] = random.choice(self.composition_styles)
+            choice = random.choice(self.composition_styles)
+            resolved["composition"] = choice
+            sources["composition"] = {"mode": "random", "value": choice}
         elif composition not in ["auto", "none"]:
             resolved["composition"] = composition
+            sources["composition"] = {"mode": "user", "value": composition}
         elif composition == "auto":
-            resolved["composition"] = "auto (LLM decides)"
-        
+            resolved["composition"] = "auto (LLM arranges composition)"
+            sources["composition"] = {"mode": "llm"}
+        else:
+            sources["composition"] = {"mode": "none"}
+
         # Lighting source
         if lighting_source == "random":
-            resolved["lighting_source"] = random.choice(self.lighting_sources)
+            choice = random.choice(self.lighting_sources)
+            resolved["lighting_source"] = choice
+            sources["lighting_source"] = {"mode": "random", "value": choice}
         elif lighting_source not in ["auto", "none"]:
             resolved["lighting_source"] = lighting_source
+            sources["lighting_source"] = {"mode": "user", "value": lighting_source}
         elif lighting_source == "auto":
-            resolved["lighting_source"] = "auto (LLM decides)"
-        
+            resolved["lighting_source"] = "auto (LLM selects lighting source)"
+            sources["lighting_source"] = {"mode": "llm"}
+        else:
+            sources["lighting_source"] = {"mode": "none"}
+
         # Lighting quality
         if lighting_quality == "random":
-            resolved["lighting_quality"] = random.choice(self.lighting_quality)
+            choice = random.choice(self.lighting_quality)
+            resolved["lighting_quality"] = choice
+            sources["lighting_quality"] = {"mode": "random", "value": choice}
         elif lighting_quality not in ["auto", "none"]:
             resolved["lighting_quality"] = lighting_quality
+            sources["lighting_quality"] = {"mode": "user", "value": lighting_quality}
         elif lighting_quality == "auto":
-            resolved["lighting_quality"] = "auto (LLM decides)"
-        
+            resolved["lighting_quality"] = "auto (LLM refines lighting quality)"
+            sources["lighting_quality"] = {"mode": "llm"}
+        else:
+            sources["lighting_quality"] = {"mode": "none"}
+
         # Time of day
         if time_of_day == "random":
-            resolved["time_of_day"] = random.choice(self.times_of_day)
+            choice = random.choice(self.times_of_day)
+            resolved["time_of_day"] = choice
+            sources["time_of_day"] = {"mode": "random", "value": choice}
         elif time_of_day not in ["auto", "none"]:
             resolved["time_of_day"] = time_of_day
+            sources["time_of_day"] = {"mode": "user", "value": time_of_day}
         elif time_of_day == "auto":
-            resolved["time_of_day"] = "auto (LLM decides)"
-        
+            resolved["time_of_day"] = "auto (LLM selects time of day)"
+            sources["time_of_day"] = {"mode": "llm"}
+        else:
+            sources["time_of_day"] = {"mode": "none"}
+
+        # Historical period
+        if historical_period == "random":
+            choice = random.choice(self.historical_periods)
+            resolved["historical_period"] = choice
+            sources["historical_period"] = {"mode": "random", "value": choice}
+        elif historical_period not in ["auto", "none"]:
+            resolved["historical_period"] = historical_period
+            sources["historical_period"] = {"mode": "user", "value": historical_period}
+        elif historical_period == "auto":
+            resolved["historical_period"] = "auto (LLM infers historical context)"
+            sources["historical_period"] = {"mode": "llm"}
+        else:
+            sources["historical_period"] = {"mode": "none"}
+
         # Weather
         if weather == "random":
-            resolved["weather"] = random.choice(self.weather_conditions)
+            choice = random.choice(self.weather_conditions)
+            resolved["weather"] = choice
+            sources["weather"] = {"mode": "random", "value": choice}
         elif weather not in ["auto", "none"]:
             resolved["weather"] = weather
+            sources["weather"] = {"mode": "user", "value": weather}
         elif weather == "auto":
-            resolved["weather"] = "auto (LLM decides)"
-        
+            resolved["weather"] = "auto (LLM selects weather)"
+            sources["weather"] = {"mode": "llm"}
+        else:
+            sources["weather"] = {"mode": "none"}
+
         # Art style
         if art_style not in ["auto", "none"]:
             resolved["art_style"] = art_style
+            sources["art_style"] = {"mode": "user", "value": art_style}
         elif art_style == "auto":
-            resolved["art_style"] = "auto (LLM decides)"
-        
+            resolved["art_style"] = "auto (LLM selects art style)"
+            sources["art_style"] = {"mode": "llm"}
+        else:
+            sources["art_style"] = {"mode": "none"}
+
         # Color mood
         if color_mood == "random":
-            resolved["color_mood"] = random.choice(["vibrant", "muted", "warm tones", "cool tones", "pastel", "high contrast"])
+            choice = random.choice([
+                "vibrant", "muted", "warm tones", "cool tones", "pastel", "high contrast"
+            ])
+            resolved["color_mood"] = choice
+            sources["color_mood"] = {"mode": "random", "value": choice}
         elif color_mood not in ["auto", "none"]:
             resolved["color_mood"] = color_mood
+            sources["color_mood"] = {"mode": "user", "value": color_mood}
         elif color_mood == "auto":
-            resolved["color_mood"] = "auto (LLM decides)"
-        
-        # Detail level
-        if detail_level != "auto":
-            resolved["detail_level"] = detail_level
+            resolved["color_mood"] = "auto (LLM selects color mood)"
+            sources["color_mood"] = {"mode": "llm"}
         else:
-            resolved["detail_level"] = "auto (LLM decides)"
-        
+            sources["color_mood"] = {"mode": "none"}
+
         # Genre style
         if genre_style == "random":
-            resolved["genre_style"] = random.choice(self.genre_styles)
+            choice = random.choice(self.genre_styles)
+            resolved["genre_style"] = choice
+            sources["genre_style"] = {"mode": "random", "value": choice}
         elif genre_style not in ["auto", "none"]:
             resolved["genre_style"] = genre_style
+            sources["genre_style"] = {"mode": "user", "value": genre_style}
         elif genre_style == "auto":
-            resolved["genre_style"] = "auto (LLM decides)"
-        
-        # Prompt length
-        if prompt_length != "auto":
-            resolved["prompt_length"] = prompt_length
+            resolved["genre_style"] = "auto (LLM selects genre/mood)"
+            sources["genre_style"] = {"mode": "llm"}
         else:
-            resolved["prompt_length"] = "auto (based on platform)"
-        
+            sources["genre_style"] = {"mode": "none"}
+
+        # Creative randomness level
+        if creative_randomness == "auto":
+            resolved_randomness = self._auto_randomness_choice(platform)
+            sources["creative_randomness"] = {"mode": "auto", "value": resolved_randomness}
+        elif creative_randomness == "none":
+            resolved_randomness = "none"
+            sources["creative_randomness"] = {"mode": "none", "value": "none"}
+        else:
+            resolved_randomness = creative_randomness
+            sources["creative_randomness"] = {"mode": "user", "value": resolved_randomness}
+        resolved["creative_randomness"] = resolved_randomness
+
         # Subject framing
         if subject_framing == "random":
-            resolved["subject_framing"] = random.choice(self.subject_framings)
+            choice = random.choice(self.subject_framings)
+            resolved["subject_framing"] = choice
+            sources["subject_framing"] = {"mode": "random", "value": choice}
         elif subject_framing not in ["auto", "none"]:
             resolved["subject_framing"] = subject_framing
+            sources["subject_framing"] = {"mode": "user", "value": subject_framing}
         elif subject_framing == "auto":
-            resolved["subject_framing"] = "auto (LLM decides)"
-        
+            resolved["subject_framing"] = "auto (LLM frames subject)"
+            sources["subject_framing"] = {"mode": "llm"}
+        else:
+            sources["subject_framing"] = {"mode": "none"}
+
         # Subject pose
         if subject_pose == "random":
-            resolved["subject_pose"] = random.choice(self.subject_poses)
+            choice = random.choice(self.subject_poses)
+            resolved["subject_pose"] = choice
+            sources["subject_pose"] = {"mode": "random", "value": choice}
         elif subject_pose not in ["auto", "none"]:
             resolved["subject_pose"] = subject_pose
+            sources["subject_pose"] = {"mode": "user", "value": subject_pose}
         elif subject_pose == "auto":
-            resolved["subject_pose"] = "auto (LLM decides)"
-        
+            resolved["subject_pose"] = "auto (LLM chooses pose)"
+            sources["subject_pose"] = {"mode": "llm"}
+        else:
+            sources["subject_pose"] = {"mode": "none"}
+
+        # Prompt context
+        if prompt_context == "auto":
+            resolved["prompt_context"] = "auto (LLM interprets input role)"
+            sources["prompt_context"] = {"mode": "llm"}
+        elif prompt_context == "none":
+            resolved["prompt_context"] = "none"
+            sources["prompt_context"] = {"mode": "none"}
+        else:
+            resolved["prompt_context"] = prompt_context
+            sources["prompt_context"] = {"mode": "user", "value": prompt_context}
+
+        # Attach platform-specific defaults for length/detail expectations
+        platform_config = get_platform_config(platform)
+        resolved_length = platform_config.get(
+            "length_guidance",
+            "Generate a full-length, highly detailed prompt"
+        )
+        resolved_detail = platform_config.get(
+            "detail_expectation",
+            "Ultra detailed description"
+        )
+        resolved["length_mode"] = resolved_length
+        resolved["detail_mode"] = resolved_detail
+        sources["length_mode"] = {"mode": "platform", "value": resolved_length}
+        sources["detail_mode"] = {"mode": "platform", "value": resolved_detail}
+
+        return resolved, sources
+
+    def _auto_randomness_choice(self, platform: str) -> str:
+        """Choose a creative randomness default based on platform capabilities."""
+
+        platform = platform.lower()
+        if platform in {"flux", "chroma"}:
+            return "bold"
+        if platform in {"wan_image", "wan22", "wan"}:
+            return "moderate"
+        if platform in {"qwen_image", "qwen_image_edit"}:
+            return "storyteller"
+        if platform in {"hunyuan_image"}:
+            return "subtle"
+        if platform in {"sd_xl", "pony", "illustrious"}:
+            return "moderate"
+        return "subtle"
+
+    def _analyze_reference_image(
+        self,
+        image: Optional[torch.Tensor],
+        label: str,
+        vision_llm: Optional[LLMBackend] = None,
+        override_caption: Optional[str] = None,
+        qwen_config: Optional[Dict[str, Any]] = None,
+        vision_temperature: float = 0.7,
+        vision_backend: str = "",
+        vision_model: str = ""
+    ) -> Dict[str, Any]:
+        """Generate descriptive statistics and optional vision captions for a reference image."""
+
+        llm_logs: List[Dict[str, Any]] = []
+        warnings: List[str] = []
+        vision_caption: Optional[str] = None
+        vision_error: Optional[str] = None
+        vision_caption_source: Optional[str] = None
+
+        try:
+            if isinstance(image, torch.Tensor):
+                img_np = image.detach().cpu().numpy()
+
+                if img_np.ndim == 4:
+                    img_np = img_np[0]
+
+                img_np = np.clip(img_np, 0.0, 1.0)
+
+                if img_np.shape[-1] < 3:
+                    rgb = np.repeat(img_np[..., :1], 3, axis=-1)
+                else:
+                    rgb = img_np[..., :3]
+
+                height, width = rgb.shape[:2]
+                aspect_ratio = width / height if height else 1.0
+                orientation = "landscape" if aspect_ratio > 1.25 else "portrait" if aspect_ratio < 0.8 else "square"
+
+                avg_rgb = rgb.mean(axis=(0, 1))
+                brightness = float(avg_rgb.mean())
+
+                if brightness > 0.7:
+                    tone = "bright"
+                elif brightness > 0.45:
+                    tone = "balanced"
+                else:
+                    tone = "dim"
+
+                grayscale = rgb.mean(axis=2)
+                contrast_value = float(grayscale.std())
+                if contrast_value < 0.08:
+                    contrast_desc = "low contrast"
+                elif contrast_value < 0.16:
+                    contrast_desc = "moderate contrast"
+                else:
+                    contrast_desc = "high contrast"
+
+                edge_y = np.abs(np.diff(grayscale, axis=0))
+                edge_x = np.abs(np.diff(grayscale, axis=1))
+                edge_density = float((edge_x.mean() + edge_y.mean()) / 2.0)
+                if edge_density < 0.02:
+                    texture_desc = "soft textures"
+                elif edge_density < 0.05:
+                    texture_desc = "mixed textures"
+                else:
+                    texture_desc = "detailed textures"
+
+                palette_names, palette_hex = self._extract_palette(rgb)
+
+                warmth_score = float(avg_rgb[0] - avg_rgb[2])
+                if warmth_score > 0.05:
+                    temperature_desc = "warm color temperature"
+                elif warmth_score < -0.05:
+                    temperature_desc = "cool color temperature"
+                else:
+                    temperature_desc = "neutral color temperature"
+
+                genre_hint = self._infer_genre_suggestion(tone, contrast_desc, palette_names)
+
+                palette_description = ', '.join(palette_names) if palette_names else "mixed tones"
+                base_summary = (
+                    f"{label}: {orientation} framing with {tone} exposure, {contrast_desc}, {temperature_desc}, "
+                    f"palette leans {palette_description}"
+                )
+
+                detail_lines = [
+                    f"Orientation: {orientation} framing that feels {texture_desc}.",
+                    f"Lighting: {tone} exposure with {temperature_desc}.",
+                    f"Contrast impression: {contrast_desc} supporting {texture_desc} detail.",
+                    f"Palette impression: {palette_description} hues dominate.",
+                    f"Suggested genre alignment: {genre_hint}"
+                ]
+
+                category_notes = {
+                    "caption": base_summary,
+                    "style": f"{contrast_desc} with {texture_desc}; keep the {temperature_desc} mood.",
+                    "lighting": f"{tone} lighting with {temperature_desc}; preserve the same luminance mood.",
+                    "genre": genre_hint,
+                    "time_period": "No explicit era cues detected; align with selected time period.",
+                    "subject": f"Maintain the subject presence implied by the {orientation} framing.",
+                    "objects": "Refer to this image for relative placement of supporting forms.",
+                    "color": f"Palette guidance: {palette_description} tones.",
+                    "composition": f"Keep a {orientation} layout and similar balance between subject and environment."
+                }
+
+                caption_prompt = (
+                    "Describe this reference image in exhaustive detail. Cover subjects, setting, focal points, "
+                    "lighting, mood, palette, and any noteworthy props or actions. Write at least three complete sentences "
+                    "that mention every important element you observe."
+                )
+                caption_system_prompt = (
+                    "You are an expert visual analyst. Describe every element in the image clearly and precisely."
+                )
+
+                pil_image: Optional[Image.Image] = None
+
+                if override_caption and override_caption.strip():
+                    vision_caption = override_caption.strip()
+                    vision_caption_source = "override"
+                elif qwen_config:
+                    try:
+                        pil_image = Image.fromarray((rgb * 255).astype(np.uint8))
+                        qwen_result = caption_with_qwen3_vl(
+                            image=pil_image,
+                            prompt=caption_prompt,
+                            system_prompt=caption_system_prompt,
+                            model_spec=qwen_config.get("model"),
+                            backend_hint=qwen_config.get("backend_hint"),
+                            max_new_tokens=768,
+                            temperature=max(0.0, float(vision_temperature)),
+                        )
+                        if qwen_result.get("success") and qwen_result.get("caption"):
+                            vision_caption = qwen_result["caption"].strip()
+                            vision_caption_source = "qwen3_vl"
+                        else:
+                            error_message = qwen_result.get("error") or "Qwen3-VL caption failed"
+                            snippet = str(error_message).splitlines()[0][:200]
+                            warnings.append(f"{label}: Qwen3-VL caption failed ({snippet})")
+                            vision_error = snippet
+                    except Exception as exc:
+                        snippet = str(exc).splitlines()[0][:200]
+                        warnings.append(f"{label}: Qwen3-VL caption failed ({snippet})")
+                        vision_error = snippet
+                elif vision_llm:
+                    if pil_image is None:
+                        pil_image = Image.fromarray((rgb * 255).astype(np.uint8))
+                    image_buffer = io.BytesIO()
+                    pil_image.save(image_buffer, format="PNG")
+                    image_bytes = image_buffer.getvalue()
+                    image_buffer.close()
+
+                    caption_result = vision_llm.caption_image(
+                        image_bytes=image_bytes,
+                        label=label,
+                        prompt=caption_prompt,
+                        max_tokens=480
+                    )
+                    log_entry = caption_result.get("log_entry") if isinstance(caption_result, dict) else None
+                    if log_entry:
+                        llm_logs.append(log_entry)
+                    if caption_result.get("success") and caption_result.get("caption"):
+                        vision_caption = caption_result["caption"].strip()
+                        vision_caption_source = vision_llm.backend_type
+                    else:
+                        error_message = caption_result.get("error") if isinstance(caption_result, dict) else None
+                        if error_message:
+                            snippet = str(error_message).splitlines()[0][:160]
+                            warnings.append(f"{label}: vision caption failed ({snippet})")
+                            vision_error = snippet
+            else:
+                if not (override_caption and override_caption.strip()):
+                    raise ValueError("Reference image must be provided unless a caption override is supplied")
+
+                vision_caption = override_caption.strip()
+                vision_caption_source = "override"
+                warnings.append(f"{label}: analysis based solely on supplied caption override.")
+                height = width = 0
+                aspect_ratio = 1.0
+                orientation = "unspecified"
+                tone = "balanced"
+                contrast_desc = "moderate contrast"
+                texture_desc = "mixed textures"
+                temperature_desc = "neutral color temperature"
+                palette_names = []
+                palette_hex = []
+                palette_description = "mixed tones"
+                genre_hint = "Flexible genre potential; adapt to project goals."
+                base_summary = f"{label}: reference caption provided without image analysis."
+                detail_lines = [vision_caption]
+                category_notes = {
+                    key: vision_caption for key in self.reference_usage_labels.keys()
+                }
+
+            summary = vision_caption and f"{label}: {vision_caption}" or base_summary
+
+            if vision_caption:
+                detail_lines = [vision_caption] + detail_lines
+                caption_for_notes = vision_caption
+                category_notes = {
+                    key: caption_for_notes for key in self.reference_usage_labels.keys()
+                }
+                category_notes["lighting"] = (
+                    f"{caption_for_notes} | Lighting heuristics: {tone} with {temperature_desc}."
+                )
+                category_notes["composition"] = (
+                    f"{caption_for_notes} | Maintain the {orientation} framing relationships."
+                )
+                category_notes["color"] = (
+                    f"{caption_for_notes} | Palette impression: {palette_description} hues."
+                )
+
+            analysis_result: Dict[str, Any] = {
+                "label": label,
+                "width": width,
+                "height": height,
+                "orientation": orientation,
+                "aspect_ratio": aspect_ratio,
+                "tone": tone,
+                "contrast_description": contrast_desc,
+                "texture_description": texture_desc,
+                "temperature_description": temperature_desc,
+                "palette_names": palette_names,
+                "palette_hex": palette_hex,
+                "summary": summary,
+                "details": detail_lines,
+                "category_notes": category_notes
+            }
+
+            if llm_logs:
+                analysis_result["llm_logs"] = llm_logs
+            if warnings:
+                analysis_result["warnings"] = warnings
+            if vision_caption:
+                analysis_result["vision_caption"] = vision_caption
+                if override_caption and override_caption.strip():
+                    analysis_result["caption_override"] = True
+            if vision_caption_source:
+                analysis_result["vision_caption_source"] = vision_caption_source
+            if vision_error:
+                analysis_result["vision_caption_error"] = vision_error
+            analysis_result["vision_backend"] = vision_backend or "disabled"
+            analysis_result["vision_model"] = vision_model or ""
+
+            return analysis_result
+        except Exception as exc:
+            print(f"Warning: Could not analyze reference image ({label}): {exc}")
+            fallback_summary = f"{label}: reference image provided (analysis unavailable)"
+            result = {
+                "label": label,
+                "summary": fallback_summary,
+                "details": [fallback_summary],
+                "category_notes": {
+                    key: fallback_summary for key in self.reference_usage_labels.keys()
+                },
+                "palette_names": [],
+                "palette_hex": []
+            }
+            if warnings:
+                result["warnings"] = warnings
+            if llm_logs:
+                result["llm_logs"] = llm_logs
+            return result
+
+    def _extract_palette(self, rgb: np.ndarray, max_colors: int = 3) -> Tuple[List[str], List[str]]:
+        """Approximate dominant palette using simple quantization."""
+
+        flat = rgb.reshape(-1, 3)
+        if flat.shape[0] > 5000:
+            indices = np.random.choice(flat.shape[0], 5000, replace=False)
+            flat = flat[indices]
+
+        quantized = (flat * 255).astype(int)
+        quantized = (quantized // 32) * 32 + 16
+
+        color_counts: Dict[Tuple[int, int, int], int] = {}
+        for r, g, b in quantized:
+            key = (int(r), int(g), int(b))
+            color_counts[key] = color_counts.get(key, 0) + 1
+
+        if not color_counts:
+            color_counts = {(128, 128, 128): 1}
+
+        top_colors = sorted(color_counts.items(), key=lambda item: item[1], reverse=True)[:max_colors]
+
+        palette_rgb = [np.array(color) for color, _ in top_colors]
+        palette_names = [self._nearest_color_name(tuple(color)) for color in palette_rgb]
+        palette_hex = [self._rgb_to_hex(tuple(color)) for color in palette_rgb]
+
+        return palette_names, palette_hex
+
+    def _nearest_color_name(self, rgb: Tuple[int, int, int]) -> str:
+        """Map RGB values to a basic color name."""
+
+        reference_colors = {
+            "black": (0, 0, 0),
+            "white": (255, 255, 255),
+            "gray": (128, 128, 128),
+            "red": (210, 50, 40),
+            "orange": (230, 140, 45),
+            "yellow": (235, 220, 70),
+            "green": (70, 150, 70),
+            "teal": (50, 150, 150),
+            "blue": (60, 100, 220),
+            "purple": (130, 80, 200),
+            "magenta": (200, 70, 180),
+            "brown": (120, 80, 50),
+            "pink": (240, 170, 200)
+        }
+
+        r, g, b = rgb
+        best_name = "color"
+        best_distance = float("inf")
+        for name, ref_rgb in reference_colors.items():
+            distance = ((r - ref_rgb[0]) ** 2 + (g - ref_rgb[1]) ** 2 + (b - ref_rgb[2]) ** 2) ** 0.5
+            if distance < best_distance:
+                best_distance = distance
+                best_name = name
+        return best_name
+
+    def _rgb_to_hex(self, rgb: Tuple[int, int, int]) -> str:
+        return "#" + "".join(f"{max(0, min(255, channel)):02x}" for channel in rgb)
+
+    def _infer_genre_suggestion(self, tone: str, contrast_desc: str, palette_names: List[str]) -> str:
+        """Generate a lightweight genre recommendation from tonal clues."""
+
+        if tone == "dim" and "high" in contrast_desc:
+            return "Could lean into noir, horror, or dramatic lighting."
+        if tone == "bright" and "high" in contrast_desc:
+            return "Supports energetic action or bold cinematic styles."
+        if tone == "bright" and "low" in contrast_desc:
+            return "Suited for airy documentary, minimalist, or romantic moods."
+        if "blue" in palette_names or "teal" in palette_names:
+            return "Great candidate for sci-fi or cyberpunk palettes."
+        if "brown" in palette_names or "orange" in palette_names:
+            return "Pairs well with vintage, steampunk, or historical vibes."
+        return "Flexible genre potential; adapt to project goals."
+
+    def _resolve_reference_directive_key(self, choice: Optional[str]) -> str:
+        """Map user-facing directive text to an internal key."""
+
+        if not choice:
+            return "auto"
+
+        normalized = " ".join(choice.strip().lower().replace('-', ' ').split())
+        alias_map = {
+            "subject only": "subject_only",
+            "subject_only": "subject_only",
+            "style only": "style_only",
+            "style_only": "style_only",
+            "lighting only": "lighting_only",
+            "lighting_only": "lighting_only"
+        }
+
+        if normalized in alias_map:
+            key = alias_map[normalized]
+        else:
+            key = normalized.replace(" ", "_")
+
+        if key not in self.reference_directive_configs:
+            return "auto"
+        return key
+
+    def _build_reference_plan_entry(self, label: str, choice: Optional[str]) -> Dict[str, Any]:
+        """Create a normalized directive entry for a reference image."""
+
+        directive_key = self._resolve_reference_directive_key(choice)
+        config = self.reference_directive_configs.get(directive_key, self.reference_directive_configs["auto"])
+        display = config.get("display") or directive_key.replace('_', ' ').title()
+        return {
+            "label": label,
+            "user_choice": choice,
+            "directive_key": directive_key,
+            "display": display,
+            "config": config
+        }
+
+    def _prepare_reference_plan(self, directive_inputs: List[Tuple[str, str]]) -> List[Dict[str, Any]]:
+        """Normalize user selections into directive plan entries."""
+
+        plan: List[Dict[str, Any]] = []
+        for label, choice in directive_inputs:
+            plan.append(self._build_reference_plan_entry(label, choice))
+        return plan
+
+    def _align_reference_plan(self, analyses: List[Dict[str, Any]], plan: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Align directive plan entries with available analyses, defaulting to auto when missing."""
+
+        resolved_plan: List[Dict[str, Any]] = []
+        for idx, analysis in enumerate(analyses):
+            if idx < len(plan):
+                resolved_plan.append(plan[idx])
+            else:
+                label = analysis.get("label", f"Reference {idx + 1}")
+                resolved_plan.append(self._build_reference_plan_entry(label, "none"))
+        return resolved_plan
+
+    def _resolve_category_list(self, categories: Union[str, List[str], None]) -> List[str]:
+        """Resolve category hints into a concrete ordered list."""
+
+        if categories is None:
+            return []
+
+        if isinstance(categories, str):
+            cleaned = categories.strip().lower()
+            if cleaned == "all":
+                return list(self.reference_usage_labels.keys())
+            return [cleaned]
+
+        resolved: List[str] = []
+        seen: set = set()
+        for category in categories:
+            key = str(category).strip().lower()
+            if not key:
+                continue
+            if key == "all":
+                return list(self.reference_usage_labels.keys())
+            if key not in seen:
+                seen.add(key)
+                resolved.append(key)
         return resolved
+
+    def _collect_directive_traits(
+        self,
+        analysis: Dict[str, Any],
+        include_hint: Union[str, List[str], None]
+    ) -> List[str]:
+        """Gather trait notes that align with the selected directive categories."""
+
+        categories = self._resolve_category_list(include_hint)
+        notes = analysis.get("category_notes", {}) or {}
+        traits: List[str] = []
+
+        for category in categories:
+            note = notes.get(category)
+            if not note:
+                continue
+            label = self.reference_usage_labels.get(category, category.replace('_', ' '))
+            traits.append(f"{label}: {note}")
+
+        return traits
+
+    def _normalize_focus_lines(self, focus_note: Optional[str]) -> List[str]:
+        """Break directive focus text into clean bullet-friendly lines."""
+
+        if not focus_note:
+            return []
+
+        sanitized = focus_note.replace("•", "\n").replace(" - ", "\n").replace("- ", "\n")
+        fragments = [frag.strip(" \t•-") for frag in sanitized.splitlines() if frag.strip(" \t•-")]
+
+        if not fragments:
+            cleaned = focus_note.strip()
+            return [cleaned] if cleaned else []
+
+        if len(fragments) == 1:
+            sentences = [seg.strip() for seg in re.split(r'(?<=[.!?])\s+', fragments[0]) if seg.strip()]
+            return sentences or fragments
+
+        return fragments
+
+    def _clone_analysis_payload(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Copy analysis dictionary while ensuring mutable members are duplicated."""
+
+        cloned = dict(analysis)
+        cloned.pop("llm_logs", None)
+        details = analysis.get("details")
+        if isinstance(details, list):
+            cloned["details"] = list(details)
+        elif details is None:
+            cloned["details"] = []
+        else:
+            cloned["details"] = [str(details)]
+
+        category_notes = analysis.get("category_notes")
+        cloned["category_notes"] = dict(category_notes) if isinstance(category_notes, dict) else {}
+        return cloned
+
+    def _append_analysis_detail(self, analysis: Dict[str, Any], detail: str) -> None:
+        """Attach a detail string to the analysis record if it is new."""
+
+        if not detail:
+            return
+
+        details = analysis.get("details")
+        if not isinstance(details, list):
+            details = [str(details)] if details else []
+
+        if detail not in details:
+            details.append(detail)
+        analysis["details"] = details
+
+    def _fallback_directive_analysis(self, analysis: Dict[str, Any], focus_text: str) -> str:
+        """Provide a deterministic fallback summary when LLM analysis fails."""
+
+        summary = analysis.get("summary") or "Reference image supplied."
+        focus = focus_text.strip() if focus_text else ""
+        if focus and focus.lower() not in summary.lower():
+            return f"{summary} Focus: {focus}."
+        return summary
+
+    def _conduct_directive_analysis_llm(
+        self,
+        llm: Optional[LLMBackend],
+        analysis: Dict[str, Any],
+        entry: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any], bool]:
+        """Call the LLM to produce directive-focused reference notes."""
+
+        cloned = self._clone_analysis_payload(analysis)
+        config = entry.get("config", {}) or {}
+
+        directive_text = config.get("llm_instruction") or config.get("user_guidance") or "Follow the directive."
+        focus_text = config.get("analysis_focus") or "Highlight the most useful traits from this reference."
+
+        label = entry.get("label") or cloned.get("label", "Reference")
+        display = entry.get("display") or entry.get("directive_key", "Directive")
+
+        category_notes = cloned.get("category_notes") or {}
+        note_lines: List[str] = []
+        for category, note in category_notes.items():
+            if not note:
+                continue
+            label_text = self.reference_usage_labels.get(category, category.replace('_', ' '))
+            note_lines.append(f"{label_text}: {note}")
+
+        details = cloned.get("details")
+        if not isinstance(details, list):
+            details = [str(details)] if details else []
+
+        caption_text = cloned.get("vision_caption")
+        if caption_text:
+            normalized_caption = caption_text.strip()
+            details = [
+                str(detail)
+                for detail in details
+                if str(detail).strip() and str(detail).strip() != normalized_caption
+            ]
+
+        system_prompt = (
+            "You analyze detailed reference captions for a prompt engineer. Provide up to two concise sentences that"
+            " explain how to use the full caption while honoring the directive focus. Avoid mentioning pixel dimensions,"
+            " aspect ratios, or describing yourself. Do not use bullet points or numbering. Keep all critical subjects intact."
+        )
+
+        lines: List[str] = [
+            f"Reference label: {label}",
+            f"Directive choice: {display}",
+            f"Directive intent: {directive_text}",
+            "",
+            "Baseline summary:",
+            cloned.get("summary", "")
+        ]
+
+        if caption_text:
+            lines.append("")
+            lines.append("Full reference caption (canonical):")
+            lines.append(caption_text)
+
+        if details:
+            lines.append("")
+            lines.append("Additional analysis notes:")
+            lines.extend(f"- {detail}" for detail in details)
+
+        if note_lines:
+            lines.append("")
+            lines.append("Category cues:")
+            lines.extend(f"- {note}" for note in note_lines)
+
+        lines.append("")
+        lines.append("Focus request:")
+        lines.append(f"- {focus_text}")
+        lines.append("")
+        lines.append("Compose at most two sentences that satisfy the focus. Return plain text without headers.")
+
+        user_prompt = "\n".join(lines)
+
+        log_entry = {
+            "label": label,
+            "directive": display,
+            "mode": "directive_analysis",
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+            "raw_response": None,
+            "success": False
+        }
+
+        attempted = bool(llm)
+        if not attempted:
+            fallback = self._fallback_directive_analysis(cloned, focus_text)
+            cloned["directive_analysis"] = fallback
+            self._append_analysis_detail(cloned, fallback)
+            return cloned, log_entry, attempted
+
+        try:
+            response = llm.send_prompt(system_prompt=system_prompt, user_prompt=user_prompt, max_tokens=220)
+            raw = response.get("response", "")
+            if response.get("success") and raw:
+                cleaned = raw.strip()
+                log_entry["raw_response"] = cleaned
+                log_entry["success"] = True
+                cloned["directive_analysis"] = cleaned
+                self._append_analysis_detail(cloned, cleaned)
+                return cloned, log_entry, attempted
+            if raw:
+                log_entry["raw_response"] = raw.strip()
+        except Exception as exc:
+            print(f"Directive analysis failed: {exc}")
+
+        fallback = self._fallback_directive_analysis(cloned, focus_text)
+        cloned["directive_analysis"] = fallback
+        self._append_analysis_detail(cloned, fallback)
+        return cloned, log_entry, attempted
+
+    def _run_reference_directive_analysis(
+        self,
+        analyses: List[Dict[str, Any]],
+        plan: List[Dict[str, Any]],
+        llm: Optional[LLMBackend]
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        """Generate directive-driven summaries for each reference before prompt construction."""
+
+        if not analyses:
+            empty_meta = {
+                "phase": "directive_analysis",
+                "reference_count": 0,
+                "llm_queries": 0,
+                "llm_successes": 0,
+                "llm_logs": []
+            }
+            return [], empty_meta
+
+        resolved_plan = self._align_reference_plan(analyses, plan)
+        processed: List[Dict[str, Any]] = []
+        llm_logs: List[Dict[str, Any]] = []
+        llm_queries = 0
+        llm_successes = 0
+
+        for analysis, entry in zip(analyses, resolved_plan):
+            analysis_logs = analysis.get("llm_logs") or []
+            for pre_log in analysis_logs:
+                llm_logs.append(pre_log)
+                attempted_flag = pre_log.get("attempted")
+                if attempted_flag not in (False, None):
+                    llm_queries += 1
+                    if pre_log.get("success"):
+                        llm_successes += 1
+
+            if entry.get("directive_key") == "none":
+                cloned = self._clone_analysis_payload(analysis)
+                cloned.pop("llm_logs", None)
+                caption_text = analysis.get("vision_caption") or analysis.get("summary") or "Reference image provided."
+                cloned["directive_analysis"] = caption_text
+                self._append_analysis_detail(cloned, caption_text)
+                processed.append(cloned)
+                continue
+
+            enriched, log_entry, attempted = self._conduct_directive_analysis_llm(llm, analysis, entry)
+            processed.append(enriched)
+            if log_entry:
+                llm_logs.append(log_entry)
+            if attempted:
+                llm_queries += 1
+                if log_entry.get("success"):
+                    llm_successes += 1
+
+        meta = {
+            "phase": "directive_analysis",
+            "reference_count": len(processed),
+            "llm_queries": llm_queries,
+            "llm_successes": llm_successes,
+            "llm_logs": llm_logs
+        }
+        return processed, meta
+
+    def _build_reference_guidance(
+        self,
+        analyses: List[Dict[str, Any]],
+        plan: List[Dict[str, Any]],
+        llm: LLMBackend,
+        prompt_context: str
+    ) -> Tuple[str, List[str], Dict[str, Any]]:
+        """Generate textual guidance for using reference images and capture LLM usage stats."""
+
+        if not analyses:
+            return "", [], {
+                "analysis_method": "none",
+                "reference_count": 0,
+                "llm_queries": 0,
+                "llm_successes": 0,
+                "guardrail": self.reference_guardrail_text,
+                "directive_labels": [],
+                "directives": [],
+                "llm_logs": []
+            }
+
+        resolved_plan = self._align_reference_plan(analyses, plan)
+
+        method = self.default_reference_analysis_method or "sequential_refine"
+        if method not in {"single_pass", "sequential_refine"}:
+            method = "sequential_refine"
+        if not llm:
+            method = "single_pass"
+
+        guidance_lines: List[str] = [
+            "Reference guardrails:",
+            f"- {self.reference_guardrail_text}",
+            "- Integrate each directive once; avoid repeating identical phrasing.",
+            "- Preserve every major subject and environmental cue from the provided captions."
+        ]
+
+        guidance_lines.append("")
+
+        reference_notes: List[str] = []
+        reference_logs: List[Dict[str, Any]] = []
+        previous_guidance = ""
+        llm_queries = 0
+        llm_successes = 0
+        vision_captions: List[str] = []
+        vision_caption_errors: List[str] = []
+
+        for analysis, entry in zip(analyses, resolved_plan):
+            note_label = entry.get('label', analysis.get('label', 'Reference'))
+            note_display = entry.get('display', 'Auto')
+            focus_lines = self._normalize_focus_lines(analysis.get("directive_analysis"))
+            focus_block: List[str] = []
+            if focus_lines:
+                focus_header = f"{note_label} directive focus:"
+                focus_block.append(focus_header)
+                focus_block.extend(f"- {line}" for line in focus_lines)
+
+            if method == "sequential_refine":
+                refined, success, log_entry = self._refine_reference_with_llm(llm, analysis, entry, previous_guidance)
+                llm_queries += 1
+                if success:
+                    llm_successes += 1
+            else:
+                refined = self._compose_reference_line(analysis, entry)
+                success = False
+                log_entry = {
+                    "label": entry.get("label", analysis.get("label", "Reference")),
+                    "directive": entry.get("display"),
+                    "mode": "single_pass",
+                    "system_prompt": None,
+                    "user_prompt": None,
+                    "raw_response": None,
+                    "success": False
+                }
+
+            block_lines: List[str] = []
+            if focus_block:
+                guidance_lines.extend(focus_block)
+                block_lines.extend(focus_block)
+
+            guidance_lines.append(refined)
+            block_lines.append(refined)
+
+            config = entry.get('config', {})
+            summary_note = config.get('user_summary') or config.get('user_guidance') or ""
+            focus_note = focus_lines[0] if focus_lines else ""
+            note_parts: List[str] = []
+            if summary_note:
+                note_parts.append(summary_note)
+            if focus_note:
+                note_parts.append(f"Focus: {focus_note}")
+
+            caption_text = analysis.get("vision_caption")
+            if caption_text:
+                vision_captions.append(caption_text)
+                snippet = caption_text if len(caption_text) <= 220 else caption_text[:217] + "…"
+                note_parts.append(f"Caption: {snippet}")
+            elif analysis.get("vision_caption_error"):
+                error_entry = analysis.get("vision_caption_error")
+                if error_entry:
+                    vision_caption_errors.append(str(error_entry))
+
+            if note_parts:
+                reference_notes.append(f"{note_label} ({note_display}): " + " | ".join(note_parts))
+            else:
+                reference_notes.append(f"{note_label} ({note_display})")
+
+            previous_guidance += "\n".join(block_lines) + "\n"
+            reference_logs.append(log_entry)
+
+        if prompt_context == "reference_modification":
+            guidance_lines.append(
+                "Focus on adjusting existing reference traits rather than inventing wholly new scenes."
+            )
+
+        return "\n".join(guidance_lines).strip(), reference_notes, {
+            "analysis_method": method,
+            "reference_count": len(analyses),
+            "llm_queries": llm_queries,
+            "llm_successes": llm_successes,
+            "guardrail": self.reference_guardrail_text,
+            "directive_labels": [entry.get("display") for entry in resolved_plan],
+            "directives": [entry.get("directive_key") for entry in resolved_plan],
+            "llm_logs": reference_logs,
+            "vision_captions": vision_captions,
+            "vision_caption_errors": vision_caption_errors
+        }
+
+    def _merge_reference_metadata(
+        self,
+        plan: List[Dict[str, Any]],
+        directive_meta: Dict[str, Any],
+        guidance_meta: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Combine directive analysis and guidance metadata for downstream reporting."""
+
+        directives = [entry.get("directive_key") for entry in plan]
+        directive_labels = [entry.get("display") for entry in plan]
+
+        directive_queries = directive_meta.get("llm_queries", 0)
+        guidance_queries = guidance_meta.get("llm_queries", 0)
+        directive_success = directive_meta.get("llm_successes", 0)
+        guidance_success = guidance_meta.get("llm_successes", 0)
+
+        reference_count = max(
+            directive_meta.get("reference_count", 0),
+            guidance_meta.get("reference_count", 0),
+            len(plan)
+        )
+
+        combined_logs = (directive_meta.get("llm_logs") or []) + (guidance_meta.get("llm_logs") or [])
+        analysis_method = guidance_meta.get("analysis_method") or (
+            self.default_reference_analysis_method or "sequential_refine"
+        )
+
+        if reference_count == 0:
+            analysis_method = "none"
+
+        return {
+            "analysis_method": analysis_method,
+            "reference_count": reference_count,
+            "llm_queries": directive_queries + guidance_queries,
+            "llm_successes": directive_success + guidance_success,
+            "guardrail": self.reference_guardrail_text,
+            "directive_labels": directive_labels,
+            "directives": directives,
+            "llm_logs": combined_logs,
+            "analysis_phase": directive_meta,
+            "guidance_phase": guidance_meta,
+            "vision_captions": guidance_meta.get("vision_captions", []),
+            "vision_caption_errors": guidance_meta.get("vision_caption_errors", [])
+        }
+
+    def _resolve_seed_value(self, mode: str, requested_seed: int) -> Tuple[int, str]:
+        """Resolve the actual seed value based on the selected seed mode."""
+
+        normalized_mode = (mode or "random").strip().lower()
+        valid_modes = {"random", "fixed", "increment", "decrement"}
+        if normalized_mode not in valid_modes:
+            normalized_mode = "random"
+
+        max_seed = 2_147_483_647
+        system_rng = random.SystemRandom()
+
+        state = self._seed_state
+        last_mode = state.get("last_mode")
+        last_seed = state.get("last_seed")
+        last_input = state.get("last_input")
+
+        if requested_seed is None:
+            requested_seed = -1
+        else:
+            requested_seed = int(requested_seed)
+        seed_specified = requested_seed >= 0
+
+        def fresh_seed() -> int:
+            if seed_specified:
+                return requested_seed
+            return system_rng.randint(0, max_seed)
+
+        if normalized_mode == "fixed":
+            if seed_specified:
+                seed_value = requested_seed
+            elif last_mode == "fixed" and last_input == requested_seed and last_seed is not None:
+                seed_value = int(last_seed)
+            else:
+                seed_value = fresh_seed()
+        elif normalized_mode == "increment":
+            if last_mode == "increment" and last_input == requested_seed and last_seed is not None:
+                seed_value = int(last_seed) + 1
+                if seed_value > max_seed:
+                    seed_value = 0
+            else:
+                seed_value = fresh_seed()
+        elif normalized_mode == "decrement":
+            if last_mode == "decrement" and last_input == requested_seed and last_seed is not None:
+                seed_value = int(last_seed) - 1
+                if seed_value < 0:
+                    seed_value = max_seed
+            else:
+                seed_value = fresh_seed()
+        else:  # random or fallback
+            seed_value = system_rng.randint(0, max_seed)
+            normalized_mode = "random"
+
+        state["last_seed"] = int(seed_value)
+        state["last_mode"] = normalized_mode
+        state["last_input"] = requested_seed
+
+        return int(seed_value), normalized_mode
+
+    def _compose_reference_line(self, analysis: Dict[str, Any], entry: Dict[str, Any]) -> str:
+        """Compose a descriptive line for a reference image using directive presets."""
+
+        label = analysis.get("label", "Reference")
+        summary = analysis.get("summary", f"{label}: reference image provided")
+        config = entry.get("config", {})
+        include_hint = config.get("include_categories")
+        exclude_categories = config.get("exclude_categories", []) or []
+        extra_note = config.get("extra_notes")
+
+        lines = [f"- {summary}"]
+        directive_text = config.get("user_guidance")
+        if directive_text:
+            lines.append(f"  • Directive: {directive_text}")
+
+        traits = self._collect_directive_traits(analysis, include_hint)
+        for trait in traits:
+            lines.append(f"  • {trait}")
+
+        focus_lines = self._normalize_focus_lines(analysis.get("directive_analysis"))
+        for focus in focus_lines:
+            lines.append(f"  • Focus note: {focus}")
+
+        for category in exclude_categories:
+            label_text = self.reference_usage_labels.get(category, category.replace('_', ' '))
+            lines.append(f"  • Avoid mirroring {label_text}; generate a fresh interpretation.")
+
+        if extra_note:
+            lines.append(f"  • {extra_note}")
+
+        return "\n".join(lines)
+
+    def _refine_reference_with_llm(
+        self,
+        llm: LLMBackend,
+        analysis: Dict[str, Any],
+        entry: Dict[str, Any],
+        previous_guidance: str
+    ) -> Tuple[str, bool, Dict[str, Any]]:
+        """Request a compact reference summary from the LLM when sequential refinement is desired."""
+
+        config = entry.get("config", {})
+        include_hint = config.get("include_categories")
+        exclude_categories = config.get("exclude_categories", []) or []
+        directive_text = config.get("llm_instruction") or config.get("user_guidance", "Follow the directive.")
+
+        emphasis_lines = self._collect_directive_traits(analysis, include_hint)
+        avoid_lines = []
+        for category in exclude_categories:
+            label_text = self.reference_usage_labels.get(category, category.replace('_', ' '))
+            avoid_lines.append(f"Avoid copying {label_text}; invent something new.")
+
+        detail_entries = analysis.get("details", [])
+        if not isinstance(detail_entries, (list, tuple)):
+            detail_entries = [str(detail_entries)] if detail_entries else []
+
+        system_prompt = (
+            "You help transform reference analysis into concise prompt guidance. Provide at most two sentences. "
+            "Do not mention pixel dimensions, resolutions, or aspect ratios. Avoid repeating phrases verbatim."
+        )
+
+        lines: List[str] = [
+            f"Reference label: {analysis.get('label', 'Reference')}",
+            f"Directive: {directive_text}",
+            f"Summary: {analysis.get('summary', '')}"
+        ]
+
+        if emphasis_lines:
+            lines.append("Focus cues:")
+            lines.extend(f"- {cue}" for cue in emphasis_lines)
+
+        if avoid_lines:
+            lines.append("Avoid copying:")
+            lines.extend(f"- {cue}" for cue in avoid_lines)
+
+        if detail_entries:
+            lines.append("Additional observations:")
+            lines.extend(f"- {str(detail)}" for detail in detail_entries)
+
+        if previous_guidance:
+            lines.append("Guidance already covered for earlier references:")
+            lines.append(previous_guidance.strip())
+
+        lines.append("Write guidance that honors the directive without repeating earlier sentences.")
+        user_prompt = "\n".join(lines)
+
+        log_entry = {
+            "label": analysis.get("label", "Reference"),
+            "directive": entry.get("display"),
+            "mode": "sequential_refine",
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+            "raw_response": None,
+            "success": False
+        }
+
+        try:
+            response = llm.send_prompt(system_prompt=system_prompt, user_prompt=user_prompt, max_tokens=240)
+            raw_payload = response.get("response")
+            if response.get("success") and raw_payload:
+                raw = raw_payload.strip()
+                log_entry["raw_response"] = raw
+                log_entry["success"] = True
+                return "- " + raw, True, log_entry
+            if raw_payload:
+                log_entry["raw_response"] = raw_payload.strip()
+        except Exception as exc:
+            print(f"Reference refinement failed: {exc}")
+
+        fallback_text = self._compose_reference_line(analysis, entry)
+        return fallback_text, False, log_entry
+
+    def _generate_creative_brainstorm(self, text_prompt: str, randomness_mode: str) -> Optional[str]:
+        """Produce creative guidance snippets based on the selected randomness level."""
+
+        randomness_mode = (randomness_mode or "off").lower()
+        if randomness_mode in {"off", "none"}:
+            return None
+
+        base_subject = text_prompt.split(',')[0].strip() if text_prompt else "the subject"
+
+        if randomness_mode == "subtle":
+            return (
+                "Creative flourish: add gentle ambient storytelling cues (background sounds, faint weather, or "
+                "minor props) that enrich the scene without changing the main subject."
+            )
+
+        if randomness_mode == "moderate":
+            suggestion = random.choice(self.random_story_settings)
+            companion = random.choice(self.random_story_companions)
+            return (
+                "Creative prompt idea: place {subject} within {setting} accompanied by {companion}. "
+                "Retain the original tone but add cohesive environmental storytelling."
+            ).format(subject=base_subject, setting=suggestion, companion=companion)
+
+        if randomness_mode in {"bold", "storyteller", "chaotic"}:
+            setting = random.choice(self.random_story_settings)
+            companion = random.choice(self.random_story_companions)
+            conflict = random.choice(self.random_story_conflicts)
+            tone = "Embrace surreal twists" if randomness_mode == "chaotic" else "Craft a vivid narrative"
+            return (
+                f"{tone}: imagine {base_subject} within {setting}, joined by {companion}, {conflict}. "
+                "Blend this storyline into the enhanced prompt while preserving user intent."
+            )
+
+        return None
+
+    def _determine_max_tokens(
+        self,
+        platform_config: Dict,
+        creative_randomness: Optional[str]
+    ) -> int:
+        """Adjust LLM max tokens according to platform and desired verbosity."""
+
+        max_tokens_hint = platform_config.get("max_tokens")
+        max_words_hint = platform_config.get("max_words")
+
+        if max_tokens_hint:
+            base_tokens = int(max_tokens_hint)
+        elif max_words_hint:
+            base_tokens = int(max_words_hint * 1.45)
+        else:
+            base_tokens = 1000
+
+        if creative_randomness in {"bold", "storyteller", "chaotic"}:
+            base_tokens += 120
+
+        # Provide additional headroom for extremely long prompts
+        return min(base_tokens + 200, 1800)
     
     def _build_system_prompt(
         self,
         platform_config: Dict,
         settings: Dict,
-        quality_emphasis: bool
+        reference_plan: List[Dict[str, Any]],
+        prompt_context: str
     ) -> str:
         """Build LLM system prompt with platform-specific instructions"""
+        quality_emphasis = bool(platform_config.get("quality_emphasis", True))
         
         platform_name = platform_config["name"]
         platform = platform_config.get("prompt_style", "natural")
@@ -732,6 +2564,9 @@ CRITICAL OUTPUT RULES:
 2. Do NOT include phrases like "Here is...", "Prompt:", etc.
 3. Start directly with the image description
 4. Follow the platform-specific format precisely
+5. Never mention source image dimensions, aspect ratios, or pixel counts
+6. Keep the user's base prompt concept central; additions must support rather than replace it
+7. Treat every reference directive and focus note from the user message as mandatory content; weave them into the final prompt exactly once.
 
 TARGET PLATFORM: {platform_name}
 Description: {platform_config['description']}
@@ -764,19 +2599,20 @@ Optimal Length: {platform_config['optimal_length']}
         prompt += "\n=== USER REQUIREMENTS ===\n"
         prompt += "Incorporate these settings into the prompt:\n\n"
         
-        # Handle prompt length guidance
-        prompt_length_guide = settings.get("prompt_length", "auto")
-        if prompt_length_guide and "auto" not in prompt_length_guide:
-            length_map = {
-                "very_short": "20-40 tokens",
-                "short": "40-80 tokens",
-                "medium": "80-150 tokens",
-                "long": "150-250 tokens",
-                "very_long": "250-400 tokens"
-            }
-            target_length = length_map.get(prompt_length_guide, platform_config['optimal_length'])
-            prompt += f"TARGET LENGTH: {target_length}\n\n"
-        
+        # Length and detail expectations (always max detail)
+        length_guidance = platform_config.get("length_guidance")
+        if length_guidance:
+            prompt += f"TARGET LENGTH: {length_guidance}\n"
+
+        detail_expectation = platform_config.get("detail_expectation")
+        if detail_expectation:
+            prompt += f"DETAIL EXPECTATION: {detail_expectation}\n"
+
+        max_words = platform_config.get("max_words")
+        if max_words:
+            prompt += f"ABSOLUTE MINIMUM DETAIL: deliver no fewer than {int(max_words * 0.6)} words.\n\n"
+        else:
+            prompt += "Ensure the description is long-form and exhaustive.\n\n"
         # Handle genre/style if specified
         genre = settings.get("genre_style", "")
         if genre and "auto" not in genre.lower() and "none" not in genre.lower():
@@ -800,13 +2636,68 @@ Optimal Length: {platform_config['optimal_length']}
                 "modern": "contemporary, current, sleek, clean lines",
                 "fantasy": "magical, mythical, imaginative, enchanted",
                 "noir": "dark, moody, high contrast shadows, mystery",
-                "cyberpunk": "neon, futuristic dystopia, tech, gritty urban"
+                "cyberpunk": "neon, futuristic dystopia, tech, gritty urban",
+                "steampunk": "retro-futuristic contraptions, brass machinery, victorian flair",
+                "dieselpunk": "industrial grit, roaring engines, interwar aesthetics",
+                "mythic": "legendary scale, archetypal symbolism, timeless myth",
+                "gothic": "dramatic architecture, chiaroscuro mood, romantic darkness",
+                "art deco": "sleek geometry, metallic sheen, roaring twenties glamour",
+                "retro futurism": "optimistic vintage sci-fi, bold colors, nostalgic futurism"
             }
             style_desc = genre_guidance.get(genre, genre)
             prompt += f"STYLE/GENRE: {genre} - Infuse the prompt with {style_desc}\n\n"
+
+        # Prompt context guidance
+        context_map = {
+            "abbreviated_prompt": "User provided a shorthand idea. Expand it into a full, production-ready description.",
+            "prompt_seed": "Treat input as the opening line of the prompt. Continue and embellish it coherently.",
+            "item_list": "User supplied a checklist. Transform it into a cohesive narrative scene.",
+            "reference_modification": "Focus on altering specific parts of the reference imagery as requested.",
+            "reference_expansion": "Use reference images as a base and enrich them with new imaginative elements."
+        }
+        if prompt_context in context_map:
+            prompt += f"PROMPT CONTEXT: {context_map[prompt_context]}\n\n"
+
+        # Historical period guidance
+        historical = settings.get("historical_period")
+        if historical and "auto" not in historical.lower() and "none" not in historical.lower():
+            prompt += f"TIME PERIOD: Align visuals with the {historical}.\n\n"
+
+        # Creative randomness guidance
+        creativity = settings.get("creative_randomness", "off")
+        if creativity in self.creative_randomness_modes and creativity not in ["off", "none"]:
+            prompt += f"CREATIVE RANDOMNESS ({creativity.upper()}): {self.creative_randomness_modes[creativity]}\n"
+            prompt += "Blend surprise elements while keeping the requested subject recognizable.\n\n"
+
+        # Base prompt reinforcement
+        prompt += "\nBASE PROMPT PRIORITY:\n"
+        prompt += "- The user's text prompt is the authoritative subject. Preserve its characters, actions, and tone.\n"
+        prompt += "- If creative randomness or references introduce new ideas, they must enhance (not replace) the base concept.\n"
+        prompt += "- Reference directives override conflicting improvisations; missing them counts as failing the task.\n"
+
+        # Reference usage guidance
+        if reference_plan:
+            prompt += "REFERENCE IMAGE GUIDELINES:\n"
+            prompt += f"- {self.reference_guardrail_text}\n"
+            prompt += "- Integrate guidance once within the final prompt; do not repeat phrases verbatim.\n"
+            for entry in reference_plan:
+                config = entry.get("config", {})
+                display = entry.get("display", "Reference")
+                instruction = config.get("llm_instruction") or config.get("user_guidance")
+                label = entry.get("label", "Reference")
+                if instruction:
+                    prompt += f"- {label} ({display}): {instruction}\n"
+            prompt += "\n"
         
         for key, value in settings.items():
-            if key in ["prompt_length", "genre_style"]:  # Already handled above
+            if key in [
+                "genre_style",
+                "creative_randomness",
+                "prompt_context",
+                "historical_period",
+                "length_mode",
+                "detail_mode"
+            ]:
                 continue
             if value and "none" not in value.lower() and "auto" not in value.lower():
                 label = key.replace("_", " ").title()
@@ -898,31 +2789,68 @@ Example of WRONG output (DO NOT DO THIS):
     def _build_user_prompt(
         self,
         text_prompt: str,
-        image_descriptions: List[str],
         settings: Dict,
-        platform: str
+        platform: str,
+        prompt_context: str,
+        reference_guidance: str,
+        creative_brainstorm: Optional[str],
+        reference_captions: Optional[List[Tuple[str, str]]] = None
     ) -> str:
         """Build user prompt for LLM"""
-        
-        parts = [f"Base prompt: {text_prompt}"]
-        
-        # Emphasize reference images if provided
-        if image_descriptions:
-            ref_text = "Reference images provided - Use these characteristics to inform the enhanced prompt:\n"
-            for desc in image_descriptions:
-                ref_text += f"  - {desc}\n"
-            ref_text += "Incorporate the visual characteristics (composition, lighting, color tones, mood) from these reference images into your enhancement."
-            parts.append(ref_text)
-        
+
+        context_labels = {
+            "abbreviated_prompt": "Compressed idea to expand",
+            "prompt_seed": "Prompt opening line",
+            "item_list": "Checklist of required elements",
+            "reference_modification": "Modify references",
+            "reference_expansion": "Expand upon references"
+        }
+
+        header = context_labels.get(prompt_context, "Base prompt")
+        parts = [f"{header}: {text_prompt}"]
+
+        parts.append(
+            f'MANDATORY SUBJECT ANCHOR: The final description must clearly feature "{text_prompt}" without omission or substitution.'
+        )
+
+        if reference_guidance:
+            parts.append(
+                "REFERENCE DIRECTIVES (MANDATORY):\n"
+                f"{reference_guidance}\n\n"
+                "MANDATORY ACTION: integrate each reference block and focus note above into the final prompt exactly once,"
+                " preserving every major subject and environmental clue from the captions."
+            )
+
+        if reference_captions:
+            caption_lines = [
+                "REFERENCE CAPTIONS (VERBATIM):"
+            ]
+            for label, caption in reference_captions:
+                caption_lines.append(f"{label}: {caption}")
+            caption_lines.append(
+                "MANDATORY: Maintain the core subjects, actions, objects, and environmental details expressed in these captions."
+            )
+            parts.append("\n".join(caption_lines))
+
         # Add explicit settings inline - NOT appended to final output
         explicit_settings = []
         for key, value in settings.items():
-            if "auto" not in value.lower() and "none" not in value.lower():
-                explicit_settings.append(f"{key.replace('_', ' ')}: {value}")
-        
+            if not isinstance(value, str):
+                continue
+            lowered = value.lower()
+            if "auto" in lowered or "none" in lowered:
+                continue
+            if key in {"prompt_context", "length_mode", "detail_mode"}:
+                continue
+            display_key = key.replace('_', ' ')
+            explicit_settings.append(f"{display_key}: {value}")
+
         if explicit_settings:
-            parts.append(f"Required settings to incorporate: {'; '.join(explicit_settings)}")
-        
+            parts.append("Settings to weave into the prompt: " + "; ".join(explicit_settings))
+
+        if creative_brainstorm:
+            parts.append(creative_brainstorm)
+
         return "\n\n".join(parts)
     
     def _parse_llm_response(self, response: str, platform: str) -> str:
@@ -991,7 +2919,7 @@ Example of WRONG output (DO NOT DO THIS):
             # Natural language
             return f"{prompt}, {', '.join(missing_keywords)}"
     
-    def _add_platform_requirements(self, prompt: str, platform: str, quality: bool) -> str:
+    def _add_platform_requirements(self, prompt: str, platform: str) -> str:
         """Add platform-specific required tokens if missing"""
         
         platform_config = get_platform_config(platform)
@@ -1011,23 +2939,306 @@ Example of WRONG output (DO NOT DO THIS):
         
         return prompt
     
-    def _format_settings_display(self, settings: Dict, platform_config: Dict) -> str:
-        """Format settings for display"""
-        
+    def _format_choice_label(self, text: Optional[str]) -> str:
+        """Human-friendly capitalization for option labels."""
+        if not text:
+            return ""
+
+        cleaned = text.replace('_', ' ').strip()
+        if not cleaned:
+            return ""
+
+        words = []
+        for word in cleaned.split():
+            upper = word.upper()
+            if upper in {"POV", "OTS", "HDR", "SDXL"}:
+                words.append(upper)
+            elif any(char.isdigit() for char in word):
+                words.append(word.upper())
+            else:
+                words.append(word.capitalize())
+
+        result = " ".join(words)
+        result = result.replace("'S", "'s").replace("’S", "’s")
+        result = result.replace(" - ", "-")
+        return result
+
+    def _format_setting_value(
+        self,
+        key: str,
+        settings: Dict[str, str],
+        sources: Dict[str, Dict[str, str]],
+        actuals: Dict[str, str]
+    ) -> Optional[str]:
+        """Produce a descriptive string for a setting using origin metadata."""
+
+        source = sources.get(key, {})
+        mode = source.get("mode")
+        stored_value = source.get("value") or settings.get(key)
+        actual_value = actuals.get(key)
+
+        if mode == "llm":
+            if actual_value:
+                return f"LLM chose {self._format_choice_label(actual_value)}"
+            return "LLM will decide during prompt generation"
+
+        if mode == "random":
+            label = self._format_choice_label(stored_value)
+            return f"Randomized → {label}" if label else "Randomized"
+
+        if mode == "auto":
+            label = self._format_choice_label(stored_value)
+            return f"Auto default → {label}" if label else "Auto-resolved"
+
+        if mode == "platform":
+            return f"{stored_value} (platform default)"
+
+        if mode == "none":
+            return "Not specified"
+
+        if stored_value:
+            return self._format_choice_label(stored_value)
+
+        if actual_value:
+            return self._format_choice_label(actual_value)
+
+        return None
+
+    def _infer_setting_mentions(self, prompt: str) -> Dict[str, str]:
+        """Scan the enhanced prompt to detect explicit mentions of key settings."""
+
+        normalized = prompt.lower().replace("’", "'")
+        normalized_alt = normalized.replace('-', ' ')
+        search_texts = [normalized, normalized_alt]
+
+        results: Dict[str, str] = {}
+
+        search_map: Dict[str, List[str]] = {
+            "camera_angle": self.camera_angles,
+            "composition": self.composition_styles,
+            "lighting_source": self.lighting_sources,
+            "lighting_quality": self.lighting_quality,
+            "time_of_day": self.times_of_day,
+            "weather": self.weather_conditions,
+            "art_style": [style for style in [
+                "photorealistic", "digital art", "oil painting", "watercolor",
+                "anime", "manga", "sketch", "pencil drawing", "3d render",
+                "illustration", "concept art", "impressionist", "abstract",
+                "pixel art", "low poly", "papercraft", "isometric"
+            ]],
+            "genre_style": self.genre_styles,
+            "color_mood": [
+                "vibrant", "muted", "monochrome", "warm tones", "cool tones",
+                "pastel", "high contrast", "desaturated", "neon", "earth tones"
+            ],
+            "subject_framing": self.subject_framings,
+            "subject_pose": self.subject_poses
+        }
+
+        alias_map: Dict[Tuple[str, str], List[str]] = {
+            ("camera_angle", "point of view"): ["pov", "pov shot", "point-of-view"],
+            ("camera_angle", "over the shoulder"): ["ots", "over-the-shoulder"],
+            ("camera_angle", "bird's eye view"): ["birds eye view", "birdseye view", "bird-eye view"],
+            ("camera_angle", "worm's eye view"): ["worms eye view", "worms-eye view"],
+            ("subject_framing", "extreme close-up"): ["extreme closeup"],
+            ("subject_framing", "medium close-up"): ["medium closeup"],
+            ("subject_pose", "lying down"): ["lying-down"],
+            ("color_mood", "warm tones"): ["warm-toned", "warm lighting"],
+            ("color_mood", "cool tones"): ["cool-toned", "cool lighting"],
+            ("color_mood", "high contrast"): ["high-contrast"],
+            ("art_style", "3d render"): ["3d-render", "3d rendering"]
+        }
+
+        for key, options in search_map.items():
+            if key in results:
+                continue
+            for option in options:
+                option_lower = option.lower()
+                if any(option_lower in text for text in search_texts):
+                    results[key] = option
+                    break
+                alias_key = (key, option_lower)
+                aliases = alias_map.get(alias_key, [])
+                if any(alias.lower() in text for text in search_texts for alias in aliases):
+                    results[key] = option
+                    break
+
+        return results
+    
+    def _format_settings_display(
+        self,
+        settings: Dict[str, str],
+        platform_config: Dict[str, Any],
+        reference_notes: List[str],
+        context: Dict[str, Any]
+    ) -> str:
+        """Format settings for display with origin tracking and detected selections."""
+
+        sources: Dict[str, Dict[str, str]] = context.get("setting_sources", {}) or {}
+        actuals: Dict[str, str] = context.get("actual_selections", {}) or {}
+        ref_meta: Dict[str, Any] = context.get("reference_meta", {}) or {}
+        main_llm_success: bool = context.get("main_llm_success", True)
+        main_llm_error: str = context.get("main_llm_error", "")
+        ref_count: int = context.get("reference_image_count", 0)
+        quality_emphasis_active: bool = bool(context.get("quality_emphasis", False))
+        ref_warnings: List[str] = context.get("reference_warnings", []) or []
+        vision_context: Dict[str, Any] = context.get("vision", {}) or {}
+
         lines = [
             "=" * 60,
             "TEXT-TO-IMAGE PROMPT ENHANCEMENT",
             "=" * 60,
             f"\nTarget Platform: {platform_config['name']}",
             f"Prompting Style: {platform_config['prompt_style']}",
-            f"Optimal Length: {platform_config['optimal_length']}",
-            "\nSETTINGS APPLIED:"
+            f"Optimal Length: {platform_config['optimal_length']}"
         ]
-        
-        for key, value in settings.items():
+
+        lines.append("\nLLM CALL SUMMARY:")
+        if main_llm_success:
+            lines.append("  - Main prompt LLM: responded")
+        else:
+            snippet = (main_llm_error or "unknown error").splitlines()[0][:120]
+            snippet = snippet.replace('|', '/').strip()
+            lines.append(f"  - Main prompt LLM: FAILED ({snippet or 'no details'})")
+
+        analysis_method = ref_meta.get("analysis_method", "none")
+        ref_queries = ref_meta.get("llm_queries", 0)
+        ref_successes = ref_meta.get("llm_successes", 0)
+        if ref_count:
+            if ref_queries:
+                lines.append(
+                    f"  - Reference LLM: {ref_successes}/{ref_queries} responses ({analysis_method})"
+                )
+            else:
+                lines.append(f"  - Reference LLM: not invoked ({analysis_method})")
+        else:
+            lines.append("  - Reference LLM: no reference images")
+
+        lines.append(f"  - References sent: {ref_count}")
+        if ref_count:
+            lines.append(f"  - Reference guidance applied: {'yes' if context.get('reference_guidance_used') else 'no'}")
+        directive_labels = ref_meta.get("directive_labels") or []
+        if directive_labels:
+            lines.append(f"  - Reference directives: {', '.join(directive_labels)}")
+        lines.append(f"  - Quality emphasis: {'enabled' if quality_emphasis_active else 'disabled'}")
+
+        if vision_context:
+            requested_backend = (vision_context.get("requested_backend") or "auto").strip() or "auto"
+            resolved_backend = (vision_context.get("resolved_backend") or "disabled").strip() or "disabled"
+            resolved_model = vision_context.get("resolved_model") or "auto"
+            caption_enabled = bool(vision_context.get("caption_enabled"))
+
+            if resolved_backend.startswith("inherit:"):
+                inherit_source = resolved_backend.split(":", 1)[1]
+                resolved_display = f"inherit ({inherit_source})"
+            else:
+                resolved_display = resolved_backend
+
+            status_note = "enabled" if caption_enabled else "disabled"
+            lines.append(
+                f"  - Vision captioning: {status_note} (requested: {requested_backend}, resolved: {resolved_display})"
+            )
+            if caption_enabled and resolved_model:
+                lines.append(f"    • Vision model: {resolved_model}")
+
+        lines.append("\nSETTINGS APPLIED:")
+
+        context_display = {
+            "abbreviated_prompt": "Abbreviated prompt (expand fully)",
+            "prompt_seed": "Prompt seed (continue logically)",
+            "item_list": "Item list (merge into scene)",
+            "reference_modification": "Modify reference traits",
+            "reference_expansion": "Expand reference storytelling"
+        }
+
+        ordered_keys = [
+            "camera_angle", "composition", "lighting_source", "lighting_quality",
+            "time_of_day", "historical_period", "weather",
+            "art_style", "genre_style", "color_mood",
+            "creative_randomness", "subject_framing", "subject_pose",
+            "prompt_context", "length_mode", "detail_mode", "quality_emphasis"
+        ]
+
+        remaining_keys = [key for key in settings.keys() if key not in ordered_keys]
+        display_keys = ordered_keys + remaining_keys
+
+        for key in display_keys:
+            if key not in settings:
+                continue
+
             label = key.replace("_", " ").title()
-            lines.append(f"  - {label}: {value}")
-        
+            desc: Optional[str] = None
+
+            if key == "prompt_context":
+                mode = sources.get(key, {}).get("mode")
+                if mode == "llm":
+                    desc = "LLM interprets input role dynamically"
+                else:
+                    raw_value = settings.get(key, "")
+                    desc = context_display.get(raw_value, self._format_choice_label(raw_value))
+
+            elif key == "creative_randomness":
+                desc = self._format_setting_value(key, settings, sources, actuals)
+                raw_value = (settings.get(key, "") or "").lower()
+                explanation = self.creative_randomness_modes.get(raw_value)
+                if explanation:
+                    pretty = self._format_choice_label(raw_value)
+                    if desc:
+                        desc = f"{desc} — {explanation}"
+                    else:
+                        desc = f"{pretty or raw_value} — {explanation}"
+
+            elif key in {"length_mode", "detail_mode"}:
+                desc = self._format_setting_value(key, settings, sources, actuals)
+
+            elif key == "quality_emphasis":
+                mode = sources.get(key, {}).get("mode")
+                if mode == "platform":
+                    origin = "platform default"
+                elif mode:
+                    origin = mode
+                else:
+                    origin = settings.get(key, "")
+                desc = f"{'Enabled' if quality_emphasis_active else 'Disabled'} ({origin})"
+
+            else:
+                desc = self._format_setting_value(key, settings, sources, actuals)
+
+            if not desc:
+                desc = settings.get(key)
+
+            if desc:
+                lines.append(f"  - {label}: {desc}")
+
+        if ref_count:
+            lines.append("\nREFERENCE IMAGE NOTES:")
+            guardrail = ref_meta.get("guardrail")
+            if guardrail:
+                lines.append(f"  • Guardrail: {guardrail}")
+            for note in reference_notes:
+                lines.append(f"  • {note}")
+            for warning in ref_warnings:
+                lines.append(f"  • Warning: {warning}")
+            caption_sources = ref_meta.get("vision_caption_sources") or []
+            backends_used = ref_meta.get("vision_backends_used") or []
+            models_used = ref_meta.get("vision_models_used") or []
+            if backends_used:
+                lines.append(f"  • Vision backends used: {', '.join(backends_used)}")
+            if models_used:
+                lines.append(f"  • Vision models used: {', '.join(model for model in models_used if model) or 'n/a'}")
+            if caption_sources:
+                lines.append(f"  • Vision caption sources: {', '.join(caption_sources)}")
+        elif ref_warnings:
+            lines.append("\nREFERENCE WARNINGS:")
+            for warning in ref_warnings:
+                lines.append(f"  • {warning}")
+
+        seed_info = context.get("random_seed") or {}
+        seed_value = seed_info.get("value")
+        if seed_value is not None:
+            mode_label = seed_info.get("mode", "manual")
+            lines.append(f"\nRandom Seed Used: {seed_value} ({mode_label})")
+
         lines.append("\n" + "=" * 60)
-        
+
         return "\n".join(lines)

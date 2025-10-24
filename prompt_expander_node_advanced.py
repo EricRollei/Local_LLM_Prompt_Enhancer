@@ -4,6 +4,8 @@ Provides dropdown menus for all Wan 2.2 elements
 """
 
 import os
+import re
+import random
 from typing import Tuple
 from .llm_backend import LLMBackend
 from .expansion_engine import PromptExpander
@@ -24,6 +26,7 @@ class AIVideoPromptExpanderAdvanced:
         self.expander = PromptExpander()
         self.type = "prompt_expansion_advanced"
         self.output_dir = "output/video_prompts"
+        self._emphasis_store = []  # Store for emphasis syntax preservation
     
     @classmethod
     def INPUT_TYPES(cls):
@@ -32,7 +35,24 @@ class AIVideoPromptExpanderAdvanced:
                 # Core inputs
                 "basic_prompt": ("STRING", {
                     "multiline": True,
-                    "default": "A cat playing piano in a cozy room"
+                    "default": "A cat playing piano in a cozy room",
+                    "tooltip": "Enter your prompt. Supports emphasis (keyword:1.5) and alternations {opt1|opt2}"
+                }),
+                
+                # NEW: Operation mode
+                "operation_mode": ([
+                    "expand_from_idea",
+                    "refine_existing",
+                    "modify_style",
+                    "add_details"
+                ], {
+                    "default": "expand_from_idea",
+                    "tooltip": (
+                        "expand_from_idea: Take a short concept and expand it fully\n"
+                        "refine_existing: Polish and improve an existing prompt\n"
+                        "modify_style: Change the style/aesthetic of existing prompt\n"
+                        "add_details: Add more descriptive details to existing prompt"
+                    )
                 }),
                 
                 "preset": ([
@@ -47,21 +67,19 @@ class AIVideoPromptExpanderAdvanced:
                     "default": "cinematic"
                 }),
                 
-                "expansion_tier": ([
-                    "auto",
-                    "basic",
-                    "enhanced", 
-                    "advanced",
-                    "cinematic"
+                "detail_level": ([
+                    "concise",      # ~150-200 words
+                    "moderate",     # ~250-350 words  
+                    "detailed",     # ~400-500 words
+                    "exhaustive"    # ~600-1000 words
                 ], {
-                    "default": "auto"
-                }),
-                
-                "mode": ([
-                    "text-to-video",
-                    "image-to-video"
-                ], {
-                    "default": "text-to-video"
+                    "default": "detailed",
+                    "tooltip": (
+                        "concise: Brief, essential details only\n"
+                        "moderate: Good balance of detail\n"
+                        "detailed: Rich, comprehensive description\n"
+                        "exhaustive: Maximum detail for cinematic quality"
+                    )
                 }),
                 
                 # === LIGHTING CONTROLS ===
@@ -316,6 +334,12 @@ class AIVideoPromptExpanderAdvanced:
                     "default": "video_prompt_advanced",
                     "multiline": False
                 })
+            },
+            "optional": {
+                # Optional image/video reference for image-to-video workflows
+                "reference_image": ("IMAGE", {
+                    "tooltip": "Optional: Provide an image to analyze and incorporate into the prompt using Qwen3-VL"
+                }),
             }
         }
     
@@ -336,9 +360,9 @@ class AIVideoPromptExpanderAdvanced:
     def expand_prompt(
         self,
         basic_prompt: str,
+        operation_mode: str,
         preset: str,
-        expansion_tier: str,
-        mode: str,
+        detail_level: str,
         light_source: str,
         lighting_type: str,
         time_of_day: str,
@@ -359,13 +383,46 @@ class AIVideoPromptExpanderAdvanced:
         negative_keywords: str,
         num_variations: int,
         save_to_file: bool,
-        filename_base: str
+        filename_base: str,
+        reference_image=None  # Optional image input
     ) -> Tuple[str, str, str, str, str, str]:
         """
         Main processing function with aesthetic controls
         """
         
         try:
+            # Process alternations first (before LLM)
+            basic_prompt = self._process_alternations(basic_prompt)
+            
+            # Preserve emphasis syntax before LLM processing
+            basic_prompt = self._preserve_emphasis_syntax(basic_prompt)
+            
+            # Handle optional image reference using Qwen3-VL
+            image_context = ""
+            mode = "text-to-video"  # Default
+            
+            if reference_image is not None:
+                try:
+                    from .qwen3_vl_backend import caption_with_qwen3_vl
+                    
+                    # Convert ComfyUI image tensor to PIL
+                    image_caption = self._process_reference_image(reference_image)
+                    
+                    if image_caption:
+                        image_context = f"\n\nREFERENCE IMAGE ANALYSIS:\n{image_caption}\n"
+                        mode = "image-to-video"
+                        print(f"[Advanced Node] Image analyzed: {image_caption[:200]}...")
+                except Exception as e:
+                    print(f"[Advanced Node] Warning: Could not process image: {e}")
+                    # Continue without image context
+            
+            # Determine working prompt based on operation mode
+            working_prompt = self._apply_operation_mode(
+                basic_prompt, 
+                operation_mode, 
+                image_context
+            )
+            
             # Parse keywords
             pos_kw_list = parse_keywords(positive_keywords)
             neg_kw_list = parse_keywords(negative_keywords)
@@ -406,9 +463,9 @@ class AIVideoPromptExpanderAdvanced:
             for var_num in range(num_variations):
                 # Build expansion prompts with aesthetic controls
                 system_prompt, user_prompt, breakdown_dict = self.expander.expand_prompt(
-                    basic_prompt=basic_prompt,
+                    basic_prompt=working_prompt,
                     preset=preset,
-                    tier=expansion_tier,
+                    tier=detail_level,  # Map detail_level to tier
                     mode=mode,
                     positive_keywords=pos_kw_list,
                     variation_seed=var_num if num_variations > 1 else None,
@@ -436,6 +493,9 @@ class AIVideoPromptExpanderAdvanced:
                 # Parse response
                 parsed = self.expander.parse_llm_response(response["response"])
                 enhanced_prompt = parsed["prompt"]
+                
+                # Restore emphasis syntax after LLM processing
+                enhanced_prompt = self._restore_emphasis_syntax(enhanced_prompt)
                 
                 # Ensure positive keywords are included
                 if pos_kw_list:
@@ -468,14 +528,16 @@ class AIVideoPromptExpanderAdvanced:
             if save_to_file and positive_prompts[0]:
                 metadata = {
                     "preset": preset,
-                    "tier": expansion_tier,
+                    "detail_level": detail_level,
+                    "operation_mode": operation_mode,
                     "mode": mode,
                     "backend": llm_backend,
                     "model": model_name,
                     "temperature": temperature,
                     "variation_num": num_variations,
                     "original_prompt": basic_prompt,
-                    "aesthetic_controls": aesthetic_controls
+                    "aesthetic_controls": aesthetic_controls,
+                    "had_image_reference": reference_image is not None
                 }
                 
                 save_result = save_prompts_to_file(
@@ -496,7 +558,8 @@ class AIVideoPromptExpanderAdvanced:
             
             # Build status with aesthetic controls summary
             controls_summary = self._summarize_controls(aesthetic_controls)
-            status = f"✅ Generated {num_variations} variation(s) | Tier: {expansion_tier} | Preset: {preset}\n{controls_summary}\n{file_status}"
+            mode_display = f"Mode: {mode}" + (" (with image)" if reference_image is not None else "")
+            status = f"✅ Generated {num_variations} variation(s) | {operation_mode} | Detail: {detail_level} | Preset: {preset}\n{mode_display}\n{controls_summary}\n{file_status}"
             
             return (
                 positive_prompts[0],
@@ -609,6 +672,150 @@ class AIVideoPromptExpanderAdvanced:
         lines.append("\n" + "=" * 70)
         
         return "\n".join(lines)
+    
+    def _process_alternations(self, text: str) -> str:
+        """
+        Process alternation syntax {option1|option2|option3}
+        Replaces with randomly chosen option
+        """
+        import re
+        import random
+        
+        # Pattern to match {option1|option2|option3}
+        pattern = r'\{([^{}]+)\}'
+        
+        def replace_alternation(match):
+            options = match.group(1).split('|')
+            # Strip whitespace from each option
+            options = [opt.strip() for opt in options]
+            return random.choice(options)
+        
+        # Keep replacing until no more alternations found (handles nested cases)
+        max_iterations = 10  # Prevent infinite loops
+        iteration = 0
+        while '{' in text and '|' in text and iteration < max_iterations:
+            new_text = re.sub(pattern, replace_alternation, text)
+            if new_text == text:  # No more changes
+                break
+            text = new_text
+            iteration += 1
+        
+        return text
+    
+    def _preserve_emphasis_syntax(self, text: str) -> str:
+        """
+        Protect emphasis syntax (keyword:1.5) from being modified
+        Replaces temporarily with placeholders during LLM processing
+        """
+        import re
+        
+        # Pattern to match (text:number) emphasis syntax
+        # This matches things like (dark skin:1.5) or (hair:0.8)
+        pattern = r'\(([^():]+):(\d+\.?\d*)\)'
+        
+        # Find all emphasis patterns
+        emphasis_patterns = re.findall(pattern, text)
+        
+        # Store original patterns
+        self._emphasis_store = []
+        
+        # Replace with placeholders
+        def replace_emphasis(match):
+            full_match = match.group(0)
+            placeholder = f"__EMPHASIS_{len(self._emphasis_store)}__"
+            self._emphasis_store.append(full_match)
+            return placeholder
+        
+        text = re.sub(pattern, replace_emphasis, text)
+        
+        return text
+    
+    def _restore_emphasis_syntax(self, text: str) -> str:
+        """
+        Restore emphasis syntax that was protected
+        """
+        if not hasattr(self, '_emphasis_store'):
+            return text
+        
+        # Restore placeholders with original emphasis syntax
+        for i, original in enumerate(self._emphasis_store):
+            placeholder = f"__EMPHASIS_{i}__"
+            text = text.replace(placeholder, original)
+        
+        # Clear the store
+        self._emphasis_store = []
+        
+        return text
+    
+    def _apply_operation_mode(self, prompt: str, operation_mode: str, image_context: str = "") -> str:
+        """
+        Apply operation mode to modify how the prompt is processed
+        """
+        if operation_mode == "expand_from_idea":
+            # Default behavior - treat as short concept to expand
+            return prompt + image_context
+        
+        elif operation_mode == "refine_existing":
+            # Polish and improve without major changes
+            instruction = "\n\n[INSTRUCTION: This is an existing prompt to refine. Keep the core content but improve clarity, flow, and descriptive quality. Don't dramatically change the concept or add major new elements.]"
+            return prompt + instruction + image_context
+        
+        elif operation_mode == "modify_style":
+            # Change aesthetic/style while keeping subject
+            instruction = "\n\n[INSTRUCTION: This is an existing prompt. Keep the main subject and action, but modify the style, mood, cinematography, and aesthetic treatment according to the selected preset and controls.]"
+            return prompt + instruction + image_context
+        
+        elif operation_mode == "add_details":
+            # Add more descriptive elements
+            instruction = "\n\n[INSTRUCTION: This is an existing prompt that needs more detail. Keep everything that's already there and add richer descriptions, atmospheric details, and sensory elements.]"
+            return prompt + instruction + image_context
+        
+        return prompt + image_context
+    
+    def _process_reference_image(self, image_tensor):
+        """
+        Process ComfyUI image tensor using Qwen3-VL for captioning
+        """
+        try:
+            import torch
+            import numpy as np
+            from PIL import Image
+            from .qwen3_vl_backend import caption_with_qwen3_vl
+            
+            # Convert ComfyUI image format (B,H,W,C) to PIL Image
+            if isinstance(image_tensor, torch.Tensor):
+                # Take first image if batch
+                img_np = image_tensor[0].cpu().numpy()
+                # Convert from 0-1 float to 0-255 uint8
+                img_np = (img_np * 255).astype(np.uint8)
+                pil_image = Image.fromarray(img_np)
+            else:
+                return None
+            
+            # Use Qwen3-VL to caption the image
+            prompt = """Describe this image in detail for video generation purposes. Include:
+- Main subject and their appearance
+- Actions and movements
+- Environment and setting
+- Lighting and atmosphere
+- Colors and visual style
+- Any notable objects or elements
+
+Be specific and descriptive."""
+            
+            caption_result = caption_with_qwen3_vl(pil_image, prompt)
+            
+            if caption_result["success"]:
+                return caption_result["caption"]
+            else:
+                print(f"[Advanced Node] Qwen3-VL error: {caption_result.get('error', 'Unknown error')}")
+                return None
+                
+        except Exception as e:
+            print(f"[Advanced Node] Error processing image: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
 
 # For testing

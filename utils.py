@@ -5,7 +5,7 @@ Utility functions for file saving and text processing
 import os
 import re
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 def save_prompts_to_file(
@@ -75,44 +75,137 @@ def format_prompt_file(
     """Format the prompt file content"""
     
     separator = "=" * 70
-    
-    content = f"""{separator}
-AI VIDEO PROMPT EXPANDER - GENERATED PROMPTS
-Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-{separator}
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-POSITIVE PROMPT:
-{positive_prompt}
+    parts: List[str] = [
+        separator,
+        "AI VIDEO PROMPT EXPANDER - GENERATED PROMPTS",
+        f"Generated: {timestamp}",
+        separator,
+        "",
+        "POSITIVE PROMPT:",
+        positive_prompt or "",
+        "",
+        separator,
+        "",
+        "NEGATIVE PROMPT:",
+        negative_prompt or "",
+        "",
+        separator,
+        "",
+        "BREAKDOWN:",
+        breakdown or "",
+        "",
+        separator,
+        "",
+        "METADATA:",
+        f"Preset: {metadata.get('preset', 'N/A')}",
+        f"Expansion Tier: {metadata.get('tier', 'N/A')}",
+        f"Mode: {metadata.get('mode', 'N/A')}",
+        f"LLM Backend: {metadata.get('backend', 'N/A')}",
+        f"Model: {metadata.get('model', 'N/A')}",
+        f"Temperature: {metadata.get('temperature', 'N/A')}",
+        f"Variation: {metadata.get('variation_num', 'N/A')}",
+        "",
+        separator,
+        "",
+        "ORIGINAL INPUT:",
+        metadata.get('original_prompt', 'N/A') or "",
+        "",
+        separator
+    ]
 
-{separator}
+    reference_guidance = metadata.get("reference_guidance")
+    if reference_guidance:
+        parts.extend([
+            "",
+            "REFERENCE GUIDANCE PROVIDED TO MAIN LLM:",
+            str(reference_guidance),
+            "",
+            separator
+        ])
 
-NEGATIVE PROMPT:
-{negative_prompt}
+    creative_brainstorm = metadata.get("creative_brainstorm")
+    if creative_brainstorm:
+        parts.extend([
+            "",
+            "CREATIVE BRAINSTORM NOTE:",
+            str(creative_brainstorm),
+            "",
+            separator
+        ])
 
-{separator}
+    main_llm_error = metadata.get("main_llm_error")
+    if main_llm_error and not metadata.get("main_llm_success", True):
+        parts.extend([
+            "",
+            "MAIN LLM ERROR DETAILS:",
+            str(main_llm_error),
+            "",
+            separator
+        ])
 
-BREAKDOWN:
-{breakdown}
+    # Detailed LLM instruction/response trace
+    trace_lines: List[str] = []
 
-{separator}
+    system_prompt = metadata.get("system_prompt")
+    user_prompt = metadata.get("user_prompt")
+    raw_llm_output = metadata.get("raw_llm_output")
 
-METADATA:
-Preset: {metadata.get('preset', 'N/A')}
-Expansion Tier: {metadata.get('tier', 'N/A')}
-Mode: {metadata.get('mode', 'N/A')}
-LLM Backend: {metadata.get('backend', 'N/A')}
-Model: {metadata.get('model', 'N/A')}
-Temperature: {metadata.get('temperature', 'N/A')}
-Variation: {metadata.get('variation_num', 'N/A')}
+    if system_prompt or user_prompt or raw_llm_output:
+        trace_lines.append("MAIN PROMPT LLM:")
+        if system_prompt:
+            trace_lines.append("  System Prompt:")
+            trace_lines.extend("    " + line for line in str(system_prompt).splitlines())
+        if user_prompt:
+            trace_lines.append("  User Prompt:")
+            trace_lines.extend("    " + line for line in str(user_prompt).splitlines())
+        if raw_llm_output:
+            trace_lines.append("  Response:")
+            trace_lines.extend("    " + line for line in str(raw_llm_output).splitlines())
+        else:
+            trace_lines.append("  Response: [no response recorded]")
+        trace_lines.append("")
 
-{separator}
+    reference_logs = metadata.get("reference_llm_logs") or []
+    if reference_logs:
+        trace_lines.append("REFERENCE ANALYSIS CALLS:")
+        for idx, log in enumerate(reference_logs, start=1):
+            label = log.get("label", f"Reference {idx}")
+            directive = log.get("directive", "N/A")
+            mode = log.get("mode", "N/A")
+            outcome = "success" if log.get("success") else "fallback"
+            trace_lines.append(f"  {idx}. {label} [{directive} | {mode}] → {outcome}")
 
-ORIGINAL INPUT:
-{metadata.get('original_prompt', 'N/A')}
+            sys_prompt = log.get("system_prompt")
+            if sys_prompt:
+                trace_lines.append("    System Prompt:")
+                trace_lines.extend("      " + line for line in str(sys_prompt).splitlines())
 
-{separator}
-"""
-    return content
+            user_payload = log.get("user_prompt")
+            if user_payload:
+                trace_lines.append("    User Prompt:")
+                trace_lines.extend("      " + line for line in str(user_payload).splitlines())
+
+            raw_response = log.get("raw_response")
+            if raw_response:
+                trace_lines.append("    Response:")
+                trace_lines.extend("      " + line for line in str(raw_response).splitlines())
+            else:
+                trace_lines.append("    Response: [no response recorded]")
+
+            trace_lines.append("")
+
+    if trace_lines:
+        parts.extend([
+            "",
+            "LLM INSTRUCTIONS & RESPONSES:",
+            "",
+            *trace_lines,
+            separator
+        ])
+
+    return "\n".join(parts) + "\n"
 
 
 def sanitize_filename(filename: str) -> str:
@@ -214,7 +307,7 @@ def truncate_text(text: str, max_length: int = 500, add_ellipsis: bool = True) -
     return truncated
 
 
-def validate_positive_keywords(keywords: List[str], prompt: str) -> bool:
+def validate_positive_keywords(keywords: List[str], prompt: str) -> Tuple[bool, List[str]]:
     """Check if positive keywords are already in the prompt"""
     prompt_lower = prompt.lower()
     missing_keywords = []

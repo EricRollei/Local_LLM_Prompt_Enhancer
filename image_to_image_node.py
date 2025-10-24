@@ -4,15 +4,12 @@ Platform-aware prompt generation for image-to-image workflows
 """
 
 import torch
-import numpy as np
-from PIL import Image
-import io
-import base64
 from typing import Tuple, Optional
 from .llm_backend import LLMBackend
 from .img2img_expansion_engine import ImageToImageExpander
 from .platforms import get_platform_list, get_platform_config
 from .utils import save_prompts_to_file, parse_keywords
+from .qwen3_vl_backend import caption_with_qwen3_vl
 
 
 class ImageToImagePromptExpander:
@@ -61,7 +58,8 @@ class ImageToImagePromptExpander:
                 
                 "vision_backend": ([
                     "lm_studio",
-                    "ollama"
+                    "ollama",
+                    "qwen3_vl"
                 ], {
                     "default": "lm_studio"
                 }),
@@ -185,11 +183,6 @@ class ImageToImagePromptExpander:
                     "default": "auto"
                 }),
                 
-                # Quality and keywords
-                "quality_emphasis": ("BOOLEAN", {
-                    "default": True
-                }),
-                
                 "positive_keywords": ("STRING", {
                     "default": "",
                     "multiline": True,
@@ -239,7 +232,6 @@ class ImageToImagePromptExpander:
         color_palette: str,
         mood: str,
         detail_level: str,
-        quality_emphasis: bool,
         positive_keywords: str,
         negative_keywords: str,
         save_to_file: bool,
@@ -294,7 +286,6 @@ class ImageToImagePromptExpander:
                 change_request=change_request,
                 platform=target_platform,
                 aesthetic_controls=aesthetic_controls,
-                quality_emphasis=quality_emphasis,
                 custom_negatives=neg_kw_list
             )
             
@@ -389,16 +380,6 @@ class ImageToImagePromptExpander:
         """Analyze image with focus on edit-relevant details"""
         
         try:
-            # Convert tensor to PIL Image
-            img_np = image[0].cpu().numpy()
-            img_np = (img_np * 255).astype(np.uint8)
-            pil_image = Image.fromarray(img_np)
-            
-            # Convert to base64
-            buffered = io.BytesIO()
-            pil_image.save(buffered, format="PNG")
-            img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-            
             # Vision prompt focused on structure and key elements
             vision_system_prompt = """You are an expert at analyzing images for image-to-image generation.
 
@@ -420,13 +401,41 @@ Output ONLY the description."""
             from .image_to_video_node import ImageToVideoPromptExpander
             img2vid_node = ImageToVideoPromptExpander()
             
+            pil_image = img2vid_node._tensor_to_pil(image)
+
+            if backend == "qwen3_vl":
+                qwen_result = caption_with_qwen3_vl(
+                    image=pil_image,
+                    prompt=vision_user_prompt,
+                    system_prompt=vision_system_prompt,
+                    model_spec=model_name,
+                    backend_hint=endpoint,
+                    max_new_tokens=768,
+                    temperature=temperature,
+                )
+
+                if not qwen_result.get("success"):
+                    return {
+                        "success": False,
+                        "error": qwen_result.get("error", "Qwen3-VL caption failed")
+                    }
+
+                description = qwen_result.get("caption", "").strip()
+
+                return {
+                    "success": True,
+                    "description": description
+                }
+
+            img_base64 = img2vid_node._pil_to_base64(pil_image)
+
             llm = LLMBackend(
                 backend_type=backend,
                 endpoint=endpoint,
                 model_name=model_name,
                 temperature=temperature
             )
-            
+
             if backend == "lm_studio":
                 response = img2vid_node._call_vision_lm_studio(
                     llm, vision_system_prompt, vision_user_prompt, img_base64

@@ -24,6 +24,15 @@ Model: [your model name]
 Temperature: 0.7
 ```
 
+## Local Qwen3-VL Vision Backend
+```
+Backend: qwen3_vl
+Model: Qwen/Qwen3-VL-4B-Instruct@4bit (or local path)
+Endpoint Overrides: quant=4bit;attn=sdpa;device=cuda:0
+Temperature: 0.6 (captioning focused)
+```
+Set this backend inside the image-to-video or image-to-image nodes when you want to caption reference images without calling an HTTP server. Install `transformers`, `accelerate`, `huggingface_hub`, and (optionally) `bitsandbytes` beforehand.
+
 ## Preset Recommendations
 
 ### For Realistic Scenes

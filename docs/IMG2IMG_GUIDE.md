@@ -84,7 +84,11 @@ Different models need different prompting styles:
 
 **vision_backend** / **vision_model_name** / **vision_endpoint**
 - Same as Image-to-Video node
-- Use Llama 3.2 Vision, LLaVA, etc.
+- Set `vision_backend` to `lm_studio` or `ollama` for HTTP servers (typical workflow)
+- Set `vision_backend` to `qwen3_vl` to run a local Qwen3-VL model directly inside ComfyUI. In that case:
+  - `vision_model_name` should be a Hugging Face repo id or local path (e.g. `Qwen/Qwen3-VL-4B-Instruct`, `Qwen/Qwen3-VL-4B-Instruct@4bit`).
+  - Use the `vision_endpoint` field for optional overrides such as `quant=4bit;attn=sdpa` or `device=cuda:0`.
+- Works with Llama 3.2 Vision, LLaVA, MiniCPM V, or Qwen3-VL depending on backend choice.
 
 ### Expansion Model Settings
 

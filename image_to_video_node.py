@@ -16,6 +16,7 @@ from .utils import (
     parse_keywords,
     validate_positive_keywords
 )
+from .qwen3_vl_backend import caption_with_qwen3_vl
 
 
 class ImageToVideoPromptExpander:
@@ -75,7 +76,8 @@ class ImageToVideoPromptExpander:
                 
                 "vision_backend": ([
                     "lm_studio",
-                    "ollama"
+                    "ollama",
+                    "qwen3_vl"
                 ], {
                     "default": "lm_studio"
                 }),
@@ -406,18 +408,7 @@ class ImageToVideoPromptExpander:
         """Use vision model to analyze the image"""
         
         try:
-            # Convert tensor to PIL Image
-            # ComfyUI image format: [batch, height, width, channels]
-            img_np = image[0].cpu().numpy()  # Take first image from batch
-            img_np = (img_np * 255).astype(np.uint8)
-            pil_image = Image.fromarray(img_np)
-            
-            # Convert to base64
-            buffered = io.BytesIO()
-            pil_image.save(buffered, format="PNG")
-            img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-            
-            # Build vision prompt
+            # Build vision prompts up front so all backends share them
             vision_system_prompt = """You are an expert at describing images in detail for video generation.
 
 Describe this image comprehensively:
@@ -432,6 +423,34 @@ Be specific and detailed. Focus on visual elements that matter for video generat
 Output ONLY the description, no labels or meta-commentary."""
             
             vision_user_prompt = "Describe this image in detail for video generation purposes."
+
+            pil_image = self._tensor_to_pil(image)
+
+            if backend == "qwen3_vl":
+                qwen_result = caption_with_qwen3_vl(
+                    image=pil_image,
+                    prompt=vision_user_prompt,
+                    system_prompt=vision_system_prompt,
+                    model_spec=model_name,
+                    backend_hint=endpoint,
+                    max_new_tokens=768,
+                    temperature=temperature,
+                )
+
+                if not qwen_result.get("success"):
+                    return {
+                        "success": False,
+                        "error": qwen_result.get("error", "Qwen3-VL caption failed")
+                    }
+
+                description = qwen_result.get("caption", "").strip()
+
+                return {
+                    "success": True,
+                    "description": description
+                }
+
+            img_base64 = self._pil_to_base64(pil_image)
             
             # Call vision model
             llm = LLMBackend(
@@ -474,6 +493,22 @@ Output ONLY the description, no labels or meta-commentary."""
                 "success": False,
                 "error": f"Image analysis failed: {str(e)}"
             }
+
+    @staticmethod
+    def _tensor_to_pil(image: torch.Tensor) -> Image.Image:
+        """Convert a ComfyUI image tensor to a PIL image."""
+
+        img_np = image[0].cpu().numpy()
+        img_np = np.clip(img_np * 255.0, 0, 255).astype(np.uint8)
+        return Image.fromarray(img_np)
+
+    @staticmethod
+    def _pil_to_base64(pil_image: Image.Image) -> str:
+        """Encode a PIL image to a base64 PNG string."""
+
+        buffered = io.BytesIO()
+        pil_image.save(buffered, format="PNG")
+        return base64.b64encode(buffered.getvalue()).decode('utf-8')
     
     def _call_vision_lm_studio(self, llm, system_prompt: str, user_prompt: str, img_base64: str) -> dict:
         """Call LM Studio with vision (OpenAI-compatible format)"""

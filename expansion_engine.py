@@ -35,17 +35,36 @@ class PromptExpander:
         - {animal:cat|dog|bird} - picks one randomly
         - {animal} - if you have predefined categories
         
+        tier parameter accepts both old and new names:
+        - Old: auto, basic, enhanced, advanced, cinematic
+        - New: concise, moderate, detailed, exhaustive
+        
         Returns:
             Tuple of (system_prompt, user_prompt, breakdown_dict)
         """
-        # STEP 1: Process wildcards in the input prompt
-        processed_prompt, wildcard_replacements = self._process_wildcards(basic_prompt, variation_seed)
+        # Map new detail_level names to old tier names for backward compatibility
+        tier_mapping = {
+            "concise": "basic",
+            "moderate": "enhanced",
+            "detailed": "advanced",
+            "exhaustive": "cinematic"
+        }
         
-        # STEP 2: Detect tier if auto
-        if tier == "auto":
+        # Convert new names to old internal names
+        if tier in tier_mapping:
+            detected_tier = tier_mapping[tier]
+        elif tier == "auto":
+            # STEP 1: Process wildcards in the input prompt
+            processed_prompt, wildcard_replacements = self._process_wildcards(basic_prompt, variation_seed)
             detected_tier = detect_complexity(processed_prompt)
         else:
+            # Old tier names still work
             detected_tier = tier
+            processed_prompt, wildcard_replacements = self._process_wildcards(basic_prompt, variation_seed)
+        
+        # STEP 1b: Process wildcards if not done yet (for non-auto cases)
+        if tier != "auto":
+            processed_prompt, wildcard_replacements = self._process_wildcards(basic_prompt, variation_seed)
         
         # STEP 3: Get preset configuration
         preset_config = get_preset(preset)

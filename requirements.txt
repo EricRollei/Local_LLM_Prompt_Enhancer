@@ -18,3 +18,9 @@ requests>=2.25.0
 # LM Studio: https://lmstudio.ai/ (recommended)
 # Ollama: https://ollama.ai/
 
+# Optional: Local Qwen3-VL backend support
+# transformers>=4.42.0
+# accelerate>=0.30.0
+# huggingface_hub>=0.23.0
+# bitsandbytes>=0.43.0  # required for 4bit/8bit quantization
+

@@ -3,7 +3,7 @@ Image-to-Image Expansion Engine
 Platform-aware prompt expansion for image generation models
 """
 
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Sequence
 from .platforms import get_platform_config, format_for_platform, get_negative_prompt_for_platform
 
 
@@ -18,9 +18,8 @@ class ImageToImageExpander:
         image_description: str,
         change_request: str,
         platform: str,
-        aesthetic_controls: Optional[Dict] = None,
-        quality_emphasis: bool = True,
-        custom_negatives: list = None
+    aesthetic_controls: Optional[Dict] = None,
+    custom_negatives: Optional[Sequence[str]] = None
     ) -> Tuple[str, str, Dict]:
         """
         Expand image-to-image prompt with platform awareness
@@ -30,7 +29,6 @@ class ImageToImageExpander:
             change_request: User's description of desired changes
             platform: Target platform (flux, wan22, hunyuan_image, etc.)
             aesthetic_controls: Style, lighting, composition controls
-            quality_emphasis: Add quality tokens
             custom_negatives: Additional negative terms
             
         Returns:
@@ -43,8 +41,7 @@ class ImageToImageExpander:
         system_prompt = self._build_expansion_prompt(
             platform,
             platform_config,
-            aesthetic_controls,
-            quality_emphasis
+            aesthetic_controls
         )
         
         # Build user prompt combining image desc + changes
@@ -63,7 +60,7 @@ class ImageToImageExpander:
             "image_description": image_description,
             "change_request": change_request,
             "aesthetic_controls": aesthetic_controls,
-            "quality_emphasis": quality_emphasis
+            "quality_emphasis": bool(platform_config.get("quality_emphasis", True))
         }
         
         return system_prompt, user_prompt, breakdown
@@ -72,10 +69,10 @@ class ImageToImageExpander:
         self,
         platform: str,
         config: dict,
-        aesthetic_controls: Optional[Dict],
-        quality_emphasis: bool
+        aesthetic_controls: Optional[Dict]
     ) -> str:
         """Build LLM system prompt with platform-specific instructions"""
+        quality_emphasis = bool(config.get("quality_emphasis", True))
         
         prompt = f"""You are an expert prompt engineer for {config['name']} image generation.
 
@@ -119,14 +116,14 @@ EDIT MODE INSTRUCTIONS:
 - Include preservation hints if needed: "keep background", "maintain composition"
 """
         
-        elif platform == "flux":
+        elif platform in {"flux", "flux_kontex"}:
             prompt += """
-FLUX INSTRUCTIONS:
-- Use natural, detailed language (75-150 tokens)
+FLUX FAMILY INSTRUCTIONS:
+- Use natural, detailed language with cinematic storytelling
 - Include style references when appropriate
-- Use photography/artistic terms
+- Use photography/artistic terms and sensory details
 - Front-load important concepts
-- Quality modifiers are important
+- Quality modifiers are optional; focus on evocative description
 """
         
         elif platform == "wan22":
@@ -226,7 +223,7 @@ FINAL REMINDERS:
     def generate_negative_prompt(
         self,
         platform: str,
-        custom_negatives: list = None
+        custom_negatives: Optional[Sequence[str]] = None
     ) -> str:
         """Generate platform-optimized negative prompt"""
         return get_negative_prompt_for_platform(platform, custom_negatives)

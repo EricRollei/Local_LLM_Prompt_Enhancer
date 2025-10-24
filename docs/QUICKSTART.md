@@ -19,6 +19,14 @@ Get up and running with AI Video Prompt Expander in 5 minutes!
 4. Run: `ollama pull llama3`
 5. Server starts automatically (endpoint: http://localhost:11434)
 
+### Option C: Local Qwen3-VL Vision Backend (Optional)
+Use this if you want the image-to-video or image-to-image nodes to caption images without calling LM Studio/Ollama.
+1. Install Python packages: `pip install transformers accelerate huggingface_hub bitsandbytes`
+2. Download a Qwen3-VL model (e.g., `Qwen/Qwen3-VL-4B-Instruct`)
+3. In the node, set `vision_backend` to `qwen3_vl`
+4. Set `vision_model_name` to the repo or local path (append `@4bit`/`@8bit` if desired)
+5. Use the `vision_endpoint` field for optional overrides like `quant=4bit;attn=sdpa`
+
 ## Step 2: Verify Installation
 
 1. Open terminal in the video_prompter directory

@@ -4,6 +4,8 @@ Fixed auto mode + shows detected tier
 """
 
 import os
+import re
+import random
 from typing import Tuple
 from .llm_backend import LLMBackend
 from .expansion_engine import PromptExpander
@@ -25,6 +27,7 @@ class AIVideoPromptExpander:
         self.expander = PromptExpander()
         self.type = "prompt_expansion"
         self.output_dir = "output/video_prompts"
+        self._emphasis_store = []  # Store for emphasis syntax preservation
     
     @classmethod
     def INPUT_TYPES(cls):
@@ -155,6 +158,12 @@ class AIVideoPromptExpander:
         """Main processing function"""
         
         try:
+            # Process alternations first (before LLM)
+            basic_prompt = self._process_alternations(basic_prompt)
+            
+            # Preserve emphasis syntax before LLM processing
+            basic_prompt = self._preserve_emphasis_syntax(basic_prompt)
+            
             pos_kw_list = parse_keywords(positive_keywords)
             neg_kw_list = parse_keywords(negative_keywords)
             
@@ -195,6 +204,9 @@ class AIVideoPromptExpander:
                 
                 parsed = self.expander.parse_llm_response(response["response"])
                 enhanced_prompt = parsed["prompt"]
+                
+                # Restore emphasis syntax after LLM processing
+                enhanced_prompt = self._restore_emphasis_syntax(enhanced_prompt)
                 
                 # Validate we got output
                 if not enhanced_prompt or len(enhanced_prompt) < 20:
@@ -318,3 +330,72 @@ class AIVideoPromptExpander:
         lines.append("\n" + "=" * 60)
         
         return "\n".join(lines)
+    
+    def _process_alternations(self, text: str) -> str:
+        """
+        Process alternation syntax {option1|option2|option3}
+        Replaces with randomly chosen option
+        """
+        # Pattern to match {option1|option2|option3}
+        pattern = r'\{([^{}]+)\}'
+        
+        def replace_alternation(match):
+            options = match.group(1).split('|')
+            # Strip whitespace from each option
+            options = [opt.strip() for opt in options]
+            return random.choice(options)
+        
+        # Keep replacing until no more alternations found (handles nested cases)
+        max_iterations = 10  # Prevent infinite loops
+        iteration = 0
+        while '{' in text and '|' in text and iteration < max_iterations:
+            new_text = re.sub(pattern, replace_alternation, text)
+            if new_text == text:  # No more changes
+                break
+            text = new_text
+            iteration += 1
+        
+        return text
+    
+    def _preserve_emphasis_syntax(self, text: str) -> str:
+        """
+        Protect emphasis syntax (keyword:1.5) from being modified
+        Replaces temporarily with placeholders during LLM processing
+        """
+        # Pattern to match (text:number) emphasis syntax
+        # This matches things like (dark skin:1.5) or (hair:0.8)
+        pattern = r'\(([^():]+):(\d+\.?\d*)\)'
+        
+        # Find all emphasis patterns
+        emphasis_patterns = re.findall(pattern, text)
+        
+        # Store original patterns
+        self._emphasis_store = []
+        
+        # Replace with placeholders
+        def replace_emphasis(match):
+            full_match = match.group(0)
+            placeholder = f"__EMPHASIS_{len(self._emphasis_store)}__"
+            self._emphasis_store.append(full_match)
+            return placeholder
+        
+        text = re.sub(pattern, replace_emphasis, text)
+        
+        return text
+    
+    def _restore_emphasis_syntax(self, text: str) -> str:
+        """
+        Restore emphasis syntax that was protected
+        """
+        if not hasattr(self, '_emphasis_store'):
+            return text
+        
+        # Restore placeholders with original emphasis syntax
+        for i, original in enumerate(self._emphasis_store):
+            placeholder = f"__EMPHASIS_{i}__"
+            text = text.replace(placeholder, original)
+        
+        # Clear the store
+        self._emphasis_store = []
+        
+        return text
