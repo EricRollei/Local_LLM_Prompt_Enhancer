@@ -82,6 +82,59 @@ class AIVideoPromptExpanderAdvanced:
                     )
                 }),
                 
+                "creativity_mode": ([
+                    "conservative",
+                    "balanced",
+                    "creative",
+                    "highly_creative"
+                ], {
+                    "default": "balanced",
+                    "tooltip": (
+                        "Conservative: Focused, predictable (temp 0.5)\n"
+                        "Balanced: Good variety (temp 0.7)\n"
+                        "Creative: More experimental (temp 0.85)\n"
+                        "Highly Creative: Maximum variety (temp 1.0)"
+                    )
+                }),
+                
+                # === REFERENCE IMAGE CONTROLS ===
+                "reference_mode": ([
+                    "recreate_exact",
+                    "subject_only",
+                    "style_only",
+                    "color_palette_only",
+                    "action_only",
+                    "character_remix",
+                    "reimagine"
+                ], {
+                    "default": "recreate_exact",
+                    "tooltip": (
+                        "recreate_exact: Use image as exact reference for character, costume, and setting\n"
+                        "subject_only: Keep character identity, ignore background and lighting\n"
+                        "style_only: Match aesthetic and mood, create new subject\n"
+                        "color_palette_only: Extract and apply color scheme only\n"
+                        "action_only: Use the pose/action, change everything else\n"
+                        "character_remix: Keep character, place in new scenario\n"
+                        "reimagine: Loosely inspired by image, creative reinterpretation"
+                    )
+                }),
+                
+                # === SHOT STRUCTURE CONTROLS ===
+                "shot_structure": ([
+                    "continuous_paragraph",
+                    "2_shot_structure",
+                    "3_shot_structure",
+                    "4_shot_structure"
+                ], {
+                    "default": "3_shot_structure",
+                    "tooltip": (
+                        "continuous_paragraph: Single flowing description (no shot breaks)\n"
+                        "2_shot_structure: Two distinct shots (Opening + Final Reveal)\n"
+                        "3_shot_structure: Three shots (Setup, Development, Finale) [Recommended]\n"
+                        "4_shot_structure: Four shots (Intro, Build, Climax, Resolution)"
+                    )
+                }),
+                
                 # === LIGHTING CONTROLS ===
                 "light_source": ([
                     "auto",
@@ -93,12 +146,23 @@ class AIVideoPromptExpanderAdvanced:
                     "firelighting",
                     "fluorescent lighting",
                     "overcast lighting",
-                    "mixed lighting"
+                    "mixed lighting",
+                    "ambient lighting",
+                    "reflected lighting",
+                    "softbox lighting",
+                    "camera flash",
+                    "neon lights",
+                    "striplight",
+                    "computer screen glow",
+                    "flashlight",
+                    "candlelight",
+                    "spotlight"
                 ], {
-                    "default": "auto"
+                    "default": "auto",
+                    "tooltip": "Primary source of illumination in the scene"
                 }),
                 
-                "lighting_type": ([
+                "lighting_quality": ([
                     "auto",
                     "none",
                     "soft lighting",
@@ -111,9 +175,15 @@ class AIVideoPromptExpanderAdvanced:
                     "silhouette lighting",
                     "backlighting",
                     "low contrast lighting",
-                    "high contrast lighting"
+                    "high contrast lighting",
+                    "spotlight effect",
+                    "dappled lighting",
+                    "cinematic lighting",
+                    "diffused lighting",
+                    "dramatic lighting"
                 ], {
-                    "default": "auto"
+                    "default": "auto",
+                    "tooltip": "Quality and style of lighting"
                 }),
                 
                 "time_of_day": ([
@@ -182,7 +252,9 @@ class AIVideoPromptExpanderAdvanced:
                     "aerial shot",
                     "bird's eye view",
                     "over-the-shoulder shot",
-                    "top-down shot"
+                    "top-down shot",
+                    "first-person POV",
+                    "profile close-up"
                 ], {
                     "default": "auto"
                 }),
@@ -191,6 +263,7 @@ class AIVideoPromptExpanderAdvanced:
                     "auto",
                     "none",
                     "static shot",
+                    "locked-off shot",
                     "camera pushes in",
                     "dolly in",
                     "camera pulls back",
@@ -202,12 +275,18 @@ class AIVideoPromptExpanderAdvanced:
                     "tracking shot",
                     "arc shot",
                     "crane shot",
+                    "camera cranes up",
+                    "camera cranes down",
                     "handheld camera",
                     "steadicam",
                     "compound move",
-                    "whip pan"
+                    "whip pan",
+                    "camera orbits around subject",
+                    "smooth glide",
+                    "crash zoom in"
                 ], {
-                    "default": "auto"
+                    "default": "auto",
+                    "tooltip": "How the camera moves through the scene (Wan 2.2 optimized)"
                 }),
                 
                 # === COLOR/STYLE CONTROLS ===
@@ -222,6 +301,51 @@ class AIVideoPromptExpanderAdvanced:
                     "black and white"
                 ], {
                     "default": "auto"
+                }),
+                
+                "art_style": ([
+                    "auto",
+                    "none",
+                    "Picasso style",
+                    "Van Gogh style",
+                    "Monet style",
+                    "Salvador Dali style",
+                    "Banksy style",
+                    "Andy Warhol style",
+                    "Rembrandt style",
+                    "Caravaggio style",
+                    "Studio Ghibli style",
+                    "Tim Burton style",
+                    "Wes Anderson style",
+                    "Pixar style",
+                    "Norman Rockwell style",
+                    "Edward Hopper style",
+                    "Renaissance style",
+                    "Baroque style",
+                    "Art Nouveau style",
+                    "Expressionist style",
+                    "Impressionist style",
+                    "Surrealist style",
+                    "Cubist style",
+                    "Pop Art style"
+                ], {
+                    "default": "auto",
+                    "tooltip": "Apply the distinctive style of famous artists or art movements"
+                }),
+                
+                "scene_detail": ([
+                    "auto",
+                    "none",
+                    "simple scene",
+                    "clean scene",
+                    "detailed scene",
+                    "cluttered scene",
+                    "intricate detail",
+                    "minimalist",
+                    "maximalist"
+                ], {
+                    "default": "auto",
+                    "tooltip": "Level of detail and complexity in the scene composition"
                 }),
                 
                 "visual_style": ([
@@ -283,26 +407,24 @@ class AIVideoPromptExpanderAdvanced:
                 # LLM Configuration
                 "llm_backend": ([
                     "lm_studio",
-                    "ollama"
+                    "ollama",
+                    "qwen3_vl"
                 ], {
-                    "default": "lm_studio"
-                }),
-                
-                "model_name": ("STRING", {
-                    "default": "llama3",
-                    "multiline": False
+                    "default": "lm_studio",
+                    "tooltip": (
+                        "lm_studio: Uses currently loaded model in LM Studio\n"
+                        "ollama: Uses currently loaded model in Ollama\n"
+                        "qwen3_vl: Auto-detects local Qwen3-VL model (no API server needed)"
+                    )
                 }),
                 
                 "api_endpoint": ("STRING", {
                     "default": "http://localhost:1234/v1",
-                    "multiline": False
-                }),
-                
-                "temperature": ("FLOAT", {
-                    "default": 0.7,
-                    "min": 0.1,
-                    "max": 2.0,
-                    "step": 0.1
+                    "multiline": False,
+                    "tooltip": (
+                        "lm_studio/ollama: API endpoint URL\n"
+                        "qwen3_vl: Leave default, or specify custom model path like 'local:A:\\path\\to\\model'"
+                    )
                 }),
                 
                 # Keywords
@@ -343,14 +465,15 @@ class AIVideoPromptExpanderAdvanced:
             }
         }
     
-    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "STRING")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING")
     RETURN_NAMES = (
         "positive_prompt_1",
         "positive_prompt_2", 
         "positive_prompt_3",
         "negative_prompt",
         "breakdown",
-        "status"
+        "status",
+        "vision_caption"
     )
     
     FUNCTION = "expand_prompt"
@@ -363,8 +486,11 @@ class AIVideoPromptExpanderAdvanced:
         operation_mode: str,
         preset: str,
         detail_level: str,
+        creativity_mode: str,
+        reference_mode: str,
+        shot_structure: str,
         light_source: str,
-        lighting_type: str,
+        lighting_quality: str,
         time_of_day: str,
         shot_size: str,
         composition: str,
@@ -372,56 +498,67 @@ class AIVideoPromptExpanderAdvanced:
         camera_angle: str,
         camera_movement: str,
         color_tone: str,
+        art_style: str,
+        scene_detail: str,
         visual_style: str,
         visual_effect: str,
         character_emotion: str,
         llm_backend: str,
-        model_name: str,
         api_endpoint: str,
-        temperature: float,
         positive_keywords: str,
         negative_keywords: str,
         num_variations: int,
         save_to_file: bool,
         filename_base: str,
         reference_image=None  # Optional image input
-    ) -> Tuple[str, str, str, str, str, str]:
+    ) -> Tuple[str, str, str, str, str, str, str]:
         """
         Main processing function with aesthetic controls
         """
         
         try:
+            # Map creativity mode to temperature
+            temperature_map = {
+                "conservative": 0.5,
+                "balanced": 0.7,
+                "creative": 0.85,
+                "highly_creative": 1.0
+            }
+            temperature = temperature_map.get(creativity_mode, 0.7)
+            
             # Process alternations first (before LLM)
             basic_prompt = self._process_alternations(basic_prompt)
             
             # Preserve emphasis syntax before LLM processing
             basic_prompt = self._preserve_emphasis_syntax(basic_prompt)
             
-            # Handle optional image reference using Qwen3-VL
-            image_context = ""
+            # === PASS 1: Vision Analysis (if image provided) ===
+            vision_caption = ""
             mode = "text-to-video"  # Default
             
             if reference_image is not None:
                 try:
-                    from .qwen3_vl_backend import caption_with_qwen3_vl
+                    print(f"[Advanced Node] PASS 1: Analyzing reference image with Qwen3-VL...")
                     
-                    # Convert ComfyUI image tensor to PIL
-                    image_caption = self._process_reference_image(reference_image)
+                    # Get comprehensive image caption (no mode filtering yet)
+                    vision_caption = self._process_reference_image(reference_image)
                     
-                    if image_caption:
-                        image_context = f"\n\nREFERENCE IMAGE ANALYSIS:\n{image_caption}\n"
+                    if vision_caption:
                         mode = "image-to-video"
-                        print(f"[Advanced Node] Image analyzed: {image_caption[:200]}...")
+                        print(f"[Advanced Node] ✓ Vision analysis complete: {len(vision_caption)} chars")
+                        print(f"[Advanced Node] Caption preview: {vision_caption[:200]}...")
+                    else:
+                        print(f"[Advanced Node] ⚠ Vision analysis returned empty - continuing without image context")
+                        
                 except Exception as e:
-                    print(f"[Advanced Node] Warning: Could not process image: {e}")
-                    # Continue without image context
+                    print(f"[Advanced Node] ⚠ Warning: Could not process image: {e}")
+                    print(f"[Advanced Node] Continuing with text-only mode...")
+                    # Continue without image context - graceful degradation
             
-            # Determine working prompt based on operation mode
-            working_prompt = self._apply_operation_mode(
-                basic_prompt, 
-                operation_mode, 
-                image_context
-            )
+            elif reference_mode != "recreate_exact":
+                # User set a reference_mode but didn't attach image - warn but continue
+                print(f"[Advanced Node] ⚠ Warning: reference_mode is '{reference_mode}' but no image attached")
+                print(f"[Advanced Node] Continuing in text-only mode...")
             
             # Parse keywords
             pos_kw_list = parse_keywords(positive_keywords)
@@ -429,17 +566,17 @@ class AIVideoPromptExpanderAdvanced:
             
             # Gather aesthetic controls
             aesthetic_controls = self._gather_aesthetic_controls(
-                light_source, lighting_type, time_of_day,
+                light_source, lighting_quality, time_of_day,
                 shot_size, composition, lens, camera_angle,
-                camera_movement, color_tone, visual_style,
-                visual_effect, character_emotion
+                camera_movement, color_tone, art_style, scene_detail,
+                visual_style, visual_effect, character_emotion
             )
             
-            # Initialize LLM backend
+            # Initialize LLM backend (model_name auto-detected)
             llm = LLMBackend(
                 backend_type=llm_backend,
                 endpoint=api_endpoint,
-                model_name=model_name,
+                model_name=None,  # Auto-detect for all backends
                 temperature=temperature
             )
             
@@ -453,23 +590,37 @@ class AIVideoPromptExpanderAdvanced:
                     "",
                     "",
                     f"ERROR: {error_msg}",
-                    f"❌ {error_msg}"
+                    f"❌ {error_msg}",
+                    vision_caption if vision_caption else "No image provided"
                 )
+            
+            # === PASS 2: Smart LLM Expansion ===
+            print(f"[Advanced Node] PASS 2: Expanding prompt with LLM...")
             
             # Generate variations
             positive_prompts = []
             breakdowns = []
             
             for var_num in range(num_variations):
-                # Build expansion prompts with aesthetic controls
+                # Build expansion prompts with:
+                # - User's basic prompt
+                # - Vision caption (if available)
+                # - Reference mode instructions (how to apply vision caption)
+                # - Aesthetic controls
+                # - Creativity mode
+                # - Shot structure
                 system_prompt, user_prompt, breakdown_dict = self.expander.expand_prompt(
-                    basic_prompt=working_prompt,
+                    basic_prompt=basic_prompt,
                     preset=preset,
                     tier=detail_level,  # Map detail_level to tier
                     mode=mode,
                     positive_keywords=pos_kw_list,
                     variation_seed=var_num if num_variations > 1 else None,
-                    aesthetic_controls=aesthetic_controls
+                    aesthetic_controls=aesthetic_controls,
+                    shot_structure=shot_structure,
+                    creativity_mode=creativity_mode,
+                    vision_caption=vision_caption,  # Pass 1 result
+                    reference_mode=reference_mode   # How to apply vision caption
                 )
                 
                 # Call LLM with longer max_tokens for detailed output
@@ -481,13 +632,16 @@ class AIVideoPromptExpanderAdvanced:
                 
                 if not response["success"]:
                     error_msg = response["error"]
+                    print(f"[Advanced Node] LLM expansion failed: {error_msg}")
+                    print(f"[Advanced Node] Full response: {response}")
                     return (
                         basic_prompt,
                         "",
                         "",
                         "",
                         f"ERROR: {error_msg}",
-                        f"❌ {error_msg}"
+                        f"❌ {error_msg}",
+                        vision_caption if vision_caption else "No image provided"
                     )
                 
                 # Parse response
@@ -510,11 +664,12 @@ class AIVideoPromptExpanderAdvanced:
             while len(positive_prompts) < 3:
                 positive_prompts.append("")
             
-            # Generate negative prompt
+            # Generate negative prompt with visual_style for Wan 2.2 optimization
             negative_prompt = self.expander.generate_negative_prompt(
                 preset=preset,
                 custom_negatives=neg_kw_list,
-                mode=mode
+                mode=mode,
+                visual_style=visual_style
             )
             
             # Format breakdown
@@ -532,7 +687,8 @@ class AIVideoPromptExpanderAdvanced:
                     "operation_mode": operation_mode,
                     "mode": mode,
                     "backend": llm_backend,
-                    "model": model_name,
+                    "model": llm.model_name or "auto-detected",
+                    "creativity_mode": creativity_mode,
                     "temperature": temperature,
                     "variation_num": num_variations,
                     "original_prompt": basic_prompt,
@@ -559,7 +715,8 @@ class AIVideoPromptExpanderAdvanced:
             # Build status with aesthetic controls summary
             controls_summary = self._summarize_controls(aesthetic_controls)
             mode_display = f"Mode: {mode}" + (" (with image)" if reference_image is not None else "")
-            status = f"✅ Generated {num_variations} variation(s) | {operation_mode} | Detail: {detail_level} | Preset: {preset}\n{mode_display}\n{controls_summary}\n{file_status}"
+            vision_status = f" | Vision: {len(vision_caption)} chars" if vision_caption else ""
+            status = f"✅ Generated {num_variations} variation(s) | {operation_mode} | Detail: {detail_level} | Preset: {preset}\n{mode_display}{vision_status}\n{controls_summary}\n{file_status}"
             
             return (
                 positive_prompts[0],
@@ -567,24 +724,28 @@ class AIVideoPromptExpanderAdvanced:
                 positive_prompts[2],
                 negative_prompt,
                 breakdown_text,
-                status
+                status,
+                vision_caption if vision_caption else "No image provided"
             )
         
         except Exception as e:
             error_msg = f"Unexpected error: {str(e)}"
+            # Try to preserve vision_caption if it exists
+            caption_output = vision_caption if 'vision_caption' in locals() and vision_caption else "No image provided"
             return (
-                basic_prompt,
+                basic_prompt if 'basic_prompt' in locals() else "",
                 "",
                 "",
                 "",
                 f"ERROR: {error_msg}",
-                f"❌ {error_msg}"
+                f"❌ {error_msg}",
+                caption_output
             )
     
     def _gather_aesthetic_controls(
         self,
         light_source: str,
-        lighting_type: str,
+        lighting_quality: str,
         time_of_day: str,
         shot_size: str,
         composition: str,
@@ -592,6 +753,8 @@ class AIVideoPromptExpanderAdvanced:
         camera_angle: str,
         camera_movement: str,
         color_tone: str,
+        art_style: str,
+        scene_detail: str,
         visual_style: str,
         visual_effect: str,
         character_emotion: str
@@ -602,8 +765,8 @@ class AIVideoPromptExpanderAdvanced:
         
         if light_source not in ["auto", "none"]:
             controls["light_source"] = light_source
-        if lighting_type not in ["auto", "none"]:
-            controls["lighting_type"] = lighting_type
+        if lighting_quality not in ["auto", "none"]:
+            controls["lighting_quality"] = lighting_quality
         if time_of_day not in ["auto", "none"]:
             controls["time_of_day"] = time_of_day
         if shot_size not in ["auto", "none"]:
@@ -618,6 +781,10 @@ class AIVideoPromptExpanderAdvanced:
             controls["camera_movement"] = camera_movement
         if color_tone not in ["auto", "none"]:
             controls["color_tone"] = color_tone
+        if art_style not in ["auto", "none"]:
+            controls["art_style"] = art_style
+        if scene_detail not in ["auto", "none"]:
+            controls["scene_detail"] = scene_detail
         if visual_style not in ["auto", "none"]:
             controls["visual_style"] = visual_style
         if visual_effect not in ["auto", "none"]:
@@ -772,9 +939,70 @@ class AIVideoPromptExpanderAdvanced:
         
         return prompt + image_context
     
+    def _build_reference_mode_instruction(self, reference_mode: str) -> str:
+        """
+        Build explicit instruction for how to use the reference image based on mode
+        Follows Wan 2.2 image-to-video best practices
+        """
+        mode_instructions = {
+            "recreate_exact": (
+                "[REFERENCE MODE: RECREATE EXACT]\n"
+                "Use the provided image as the exact character and costume reference. "
+                "Keep the same face, hair, outfit, lighting, and overall aesthetic. "
+                "Animate this character/scene without changing identity or appearance. "
+                "Match the visual style, mood, and composition of the reference image."
+            ),
+            "subject_only": (
+                "[REFERENCE MODE: SUBJECT ONLY]\n"
+                "Preserve ONLY the subject's face, body identity, and core appearance from the reference image. "
+                "Ignore the original background, lighting, and environment. "
+                "Place this character in the new scene described by the prompt with new lighting and atmosphere. "
+                "Keep character identity consistent but change everything else."
+            ),
+            "style_only": (
+                "[REFERENCE MODE: STYLE TRANSFER]\n"
+                "Match the lighting, color palette, visual aesthetic, and cinematic mood of the reference image. "
+                "Create a completely new subject, character, and scene, but apply the same artistic style, "
+                "color grading, lighting quality, and atmospheric treatment seen in the reference."
+            ),
+            "color_palette_only": (
+                "[REFERENCE MODE: COLOR PALETTE ONLY]\n"
+                "Extract and apply the dominant color scheme from the reference image. "
+                "Use the same hues, saturation levels, and color relationships. "
+                "Create an entirely new subject and scene, but maintain color harmony with the reference palette. "
+                "Ignore composition, lighting style, and subject matter from the reference."
+            ),
+            "action_only": (
+                "[REFERENCE MODE: ACTION/POSE ONLY]\n"
+                "Recreate the pose, gesture, body language, and action/movement from the reference image. "
+                "Change the character identity, environment, lighting, costume, and visual style completely. "
+                "Keep only the physical positioning and motion dynamic from the reference."
+            ),
+            "character_remix": (
+                "[REFERENCE MODE: CHARACTER REMIX]\n"
+                "Keep the character's core identity (face, build, personality traits) from the reference image. "
+                "Place them in a completely new scenario, environment, time period, or genre as described in the prompt. "
+                "Change their outfit, the lighting, the setting, and the mood, but maintain character recognition. "
+                "Adapt the character to fit the new context while preserving their essential identity."
+            ),
+            "reimagine": (
+                "[REFERENCE MODE: REIMAGINE]\n"
+                "Use the reference image as loose inspiration for a creative reinterpretation. "
+                "Take the core concept, mood, or theme and reimagine it in a new way. "
+                "Feel free to change subject, style, setting, and execution while maintaining thematic connection. "
+                "This is the most creative mode - interpret the essence freely and combine with the prompt."
+            )
+        }
+        
+        return mode_instructions.get(reference_mode, mode_instructions["recreate_exact"])
+    
     def _process_reference_image(self, image_tensor):
         """
-        Process ComfyUI image tensor using Qwen3-VL for captioning
+        PASS 1: Comprehensive Vision Analysis using Qwen3-VL
+        Get complete image description without reference_mode filtering.
+        The LLM will apply reference_mode logic in Pass 2.
+        
+        Returns: Complete image caption string or None if error
         """
         try:
             import torch
@@ -792,18 +1020,43 @@ class AIVideoPromptExpanderAdvanced:
             else:
                 return None
             
-            # Use Qwen3-VL to caption the image
-            prompt = """Describe this image in detail for video generation purposes. Include:
-- Main subject and their appearance
-- Actions and movements
-- Environment and setting
-- Lighting and atmosphere
-- Colors and visual style
-- Any notable objects or elements
+            # Comprehensive analysis prompt - get ALL details
+            # Reference mode filtering will happen in Pass 2 (LLM expansion)
+            comprehensive_prompt = """Analyze this image in complete detail for video prompt generation. Provide a thorough description covering:
 
-Be specific and descriptive."""
+**SUBJECT/CHARACTER:**
+- Facial features, expression, age, gender, distinctive traits
+- Hair style, length, color, texture
+- Body type, build, posture, pose
+- Clothing: style, color, material, accessories, condition
+- Personality or mood visible in expression
+- Any actions or gestures being performed
+
+**ENVIRONMENT/SETTING:**
+- Location type and specific details
+- Background elements and spatial layout
+- Environmental context and atmosphere
+- Props, objects, or decorative elements
+- Scale and depth of space
+
+**LIGHTING & COLOR:**
+- Light source direction, quality, intensity
+- Color temperature (warm/cool)
+- Shadows, highlights, contrast
+- Color palette: dominant colors, accents, saturation
+- Overall color mood
+
+**COMPOSITION & STYLE:**
+- Camera angle and framing
+- Compositional elements and balance
+- Artistic style (photorealistic, illustrated, etc.)
+- Visual quality and rendering
+- Cinematic or aesthetic qualities
+- Mood and emotional tone
+
+Be comprehensive and detailed - this caption will be used to generate video prompts."""
             
-            caption_result = caption_with_qwen3_vl(pil_image, prompt)
+            caption_result = caption_with_qwen3_vl(pil_image, comprehensive_prompt)
             
             if caption_result["success"]:
                 return caption_result["caption"]

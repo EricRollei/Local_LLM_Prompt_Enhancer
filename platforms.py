@@ -364,26 +364,26 @@ PLATFORMS = {
     
     "pony": {
         "name": "Pony Diffusion",
-        "description": "Anime/furry model - Booru tags, score system, specific quality tags required",
-        "prompt_style": "booru_structured",
-        "optimal_length": "extended (~75 tags/words)",
-        "max_words": 75,
-        "max_tokens": 110,
+        "description": "Versatile model - Score tags required, then natural language comma-separated descriptions",
+        "prompt_style": "natural_detailed",
+        "optimal_length": "extended (~150-200 words)",
+        "max_words": 200,
+        "max_tokens": 280,
     "quality_emphasis": True,
-        "length_guidance": "Provide roughly 75 booru tags with exhaustive character, outfit, and background coverage.",
-        "detail_expectation": "Stack quality, anatomy, clothing, and background tags for maximum specificity.",
-        "supports": ["booru_tags", "score_system", "quality_modifiers", "rating_tags"],
+        "length_guidance": "Generate 150-200 words with rich descriptive detail after the required score tags.",
+        "detail_expectation": "Provide comprehensive character, outfit, environment, and lighting descriptions in natural language.",
+        "supports": ["natural_language", "score_system", "quality_modifiers", "detailed_descriptions"],
         "preferences": [
-            "Start with score_9, score_8_up, score_7_up",
-            "Use danbooru tag format",
-            "Underscores instead of spaces in tags",
-            "Specific quality tags at beginning",
-            "Rating at start (safe/questionable/explicit)",
-            "Character descriptions in tag format"
+            "MUST start with: score_9, score_8_up, score_7_up",
+            "Then use natural language comma-separated descriptions",
+            "NO underscores in descriptive text (only in score tags)",
+            "Detailed character and scene descriptions",
+            "Specific quality and mood descriptors",
+            "Clear, readable phrases not technical tags"
         ],
         "quality_tokens": [
-            "score_9", "score_8_up", "score_7_up", "best quality", "amazing quality",
-            "very aesthetic", "absurdres", "newest"
+            "masterpiece", "best quality", "highly detailed", "professional",
+            "stunning", "beautiful", "intricate details", "sharp focus"
         ],
         "required_positive": [
             "score_9", "score_8_up", "score_7_up"
@@ -393,10 +393,10 @@ PLATFORMS = {
             "bad anatomy", "sketch", "jpeg artifacts"
         ],
         "avoid": [
-            "Natural language descriptions",
-            "Spaces in multi-word concepts (use underscores)",
-            "Missing score tags",
-            "Long narrative descriptions"
+            "Underscore_formatting in descriptive text",
+            "Danbooru-style tags (except score tags)",
+            "Missing score tags at start",
+            "Technical tag format instead of natural language"
         ]
     },
     

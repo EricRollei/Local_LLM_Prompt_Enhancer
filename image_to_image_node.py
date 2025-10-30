@@ -61,35 +61,38 @@ class ImageToImagePromptExpander:
                     "ollama",
                     "qwen3_vl"
                 ], {
-                    "default": "lm_studio"
-                }),
-                
-                "vision_model_name": ("STRING", {
-                    "default": "llama-3.2-vision",
-                    "multiline": False
+                    "default": "lm_studio",
+                    "tooltip": (
+                        "lm_studio: Uses currently loaded model\n"
+                        "ollama: Uses currently loaded model\n"
+                        "qwen3_vl: Auto-detects local Qwen3-VL model"
+                    )
                 }),
                 
                 "vision_endpoint": ("STRING", {
                     "default": "http://localhost:1234/v1",
-                    "multiline": False
+                    "multiline": False,
+                    "tooltip": "API endpoint or custom model path (qwen3_vl)"
                 }),
                 
                 # Expansion model
                 "expansion_backend": ([
                     "lm_studio",
-                    "ollama"
+                    "ollama",
+                    "qwen3_vl"
                 ], {
-                    "default": "lm_studio"
-                }),
-                
-                "expansion_model_name": ("STRING", {
-                    "default": "llama3",
-                    "multiline": False
+                    "default": "lm_studio",
+                    "tooltip": (
+                        "lm_studio: Uses currently loaded model\n"
+                        "ollama: Uses currently loaded model\n"
+                        "qwen3_vl: Auto-detects local Qwen3-VL model"
+                    )
                 }),
                 
                 "expansion_endpoint": ("STRING", {
                     "default": "http://localhost:1234/v1",
-                    "multiline": False
+                    "multiline": False,
+                    "tooltip": "API endpoint or custom model path (qwen3_vl)"
                 }),
                 
                 "temperature": ("FLOAT", {
@@ -220,10 +223,8 @@ class ImageToImagePromptExpander:
         target_platform: str,
         use_vision_model: bool,
         vision_backend: str,
-        vision_model_name: str,
         vision_endpoint: str,
         expansion_backend: str,
-        expansion_model_name: str,
         expansion_endpoint: str,
         temperature: float,
         art_style: str,
@@ -245,7 +246,6 @@ class ImageToImagePromptExpander:
                 image_desc_result = self._analyze_image_for_editing(
                     image,
                     vision_backend,
-                    vision_model_name,
                     vision_endpoint,
                     temperature
                 )
@@ -289,11 +289,11 @@ class ImageToImagePromptExpander:
                 custom_negatives=neg_kw_list
             )
             
-            # STEP 4: Call expansion LLM
+            # STEP 4: Call expansion LLM (model_name auto-detected)
             expansion_llm = LLMBackend(
                 backend_type=expansion_backend,
                 endpoint=expansion_endpoint,
-                model_name=expansion_model_name,
+                model_name=None,  # Auto-detect for all backends
                 temperature=temperature
             )
             
@@ -327,8 +327,8 @@ class ImageToImagePromptExpander:
                     "type": "image-to-image",
                     "platform": target_platform,
                     "platform_name": breakdown_dict.get("platform_name"),
-                    "vision_model": vision_model_name if use_vision_model else "none",
-                    "expansion_model": expansion_model_name,
+                    "vision_model": vision_backend if use_vision_model else "none",
+                    "expansion_model": expansion_llm.model_name or "auto-detected",
                     "image_description": image_description,
                     "change_request": change_request
                 }
@@ -373,7 +373,6 @@ class ImageToImagePromptExpander:
         self,
         image: torch.Tensor,
         backend: str,
-        model_name: str,
         endpoint: str,
         temperature: float
     ) -> dict:
@@ -404,12 +403,14 @@ Output ONLY the description."""
             pil_image = img2vid_node._tensor_to_pil(image)
 
             if backend == "qwen3_vl":
+                # Use endpoint for custom model path
+                model_spec = endpoint if endpoint != "http://localhost:1234/v1" else None
                 qwen_result = caption_with_qwen3_vl(
                     image=pil_image,
                     prompt=vision_user_prompt,
                     system_prompt=vision_system_prompt,
-                    model_spec=model_name,
-                    backend_hint=endpoint,
+                    model_spec=model_spec,
+                    backend_hint=None,
                     max_new_tokens=768,
                     temperature=temperature,
                 )
@@ -429,10 +430,11 @@ Output ONLY the description."""
 
             img_base64 = img2vid_node._pil_to_base64(pil_image)
 
+            # Call LM Studio/Ollama (model_name auto-detected)
             llm = LLMBackend(
                 backend_type=backend,
                 endpoint=endpoint,
-                model_name=model_name,
+                model_name=None,  # Auto-detect for all backends
                 temperature=temperature
             )
 

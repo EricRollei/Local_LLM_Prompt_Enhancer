@@ -40,3 +40,6 @@ test_*.py
 output/
 temp/
 tmp/
+
+# Local notes
+notes_local/

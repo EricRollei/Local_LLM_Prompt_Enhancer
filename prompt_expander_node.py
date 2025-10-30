@@ -71,19 +71,24 @@ class AIVideoPromptExpander:
                 # LLM Configuration
                 "llm_backend": ([
                     "lm_studio",
-                    "ollama"
+                    "ollama",
+                    "qwen3_vl"
                 ], {
-                    "default": "lm_studio"
-                }),
-                
-                "model_name": ("STRING", {
-                    "default": "llama3",
-                    "multiline": False
+                    "default": "lm_studio",
+                    "tooltip": (
+                        "lm_studio: Uses currently loaded model in LM Studio\n"
+                        "ollama: Uses currently loaded model in Ollama\n"
+                        "qwen3_vl: Auto-detects local Qwen3-VL model (no API server needed)"
+                    )
                 }),
                 
                 "api_endpoint": ("STRING", {
                     "default": "http://localhost:1234/v1",
-                    "multiline": False
+                    "multiline": False,
+                    "tooltip": (
+                        "lm_studio/ollama: API endpoint URL\n"
+                        "qwen3_vl: Leave default, or specify custom model path like 'A:\\path\\to\\model'"
+                    )
                 }),
                 
                 "temperature": ("FLOAT", {
@@ -146,7 +151,6 @@ class AIVideoPromptExpander:
         expansion_tier: str,
         mode: str,
         llm_backend: str,
-        model_name: str,
         api_endpoint: str,
         temperature: float,
         positive_keywords: str,
@@ -167,10 +171,11 @@ class AIVideoPromptExpander:
             pos_kw_list = parse_keywords(positive_keywords)
             neg_kw_list = parse_keywords(negative_keywords)
             
+            # Initialize LLM backend (model_name auto-detected)
             llm = LLMBackend(
                 backend_type=llm_backend,
                 endpoint=api_endpoint,
-                model_name=model_name,
+                model_name=None,  # Auto-detect for all backends
                 temperature=temperature
             )
             
@@ -245,7 +250,7 @@ class AIVideoPromptExpander:
                     "detected_tier": breakdowns[0].get('detected_tier'),
                     "mode": mode,
                     "backend": llm_backend,
-                    "model": model_name,
+                    "model": llm.model_name or "auto-detected",
                     "temperature": temperature,
                     "variation_num": num_variations,
                     "original_prompt": basic_prompt

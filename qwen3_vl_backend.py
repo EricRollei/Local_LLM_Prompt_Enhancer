@@ -354,3 +354,93 @@ def _resolve_model_device(model: Any) -> Any:
             if isinstance(first, (list, tuple)) and first:
                 return first[0]
     return "cpu"
+
+
+def generate_text_with_qwen3_vl(
+    prompt: str,
+    model_spec: Optional[str] = None,
+    backend_hint: Optional[str] = None,
+    max_new_tokens: int = 2000,
+    temperature: float = 0.7,
+) -> Dict[str, Any]:
+    """Generate text using Qwen3-VL model (no image input - pure text generation).
+    
+    Parameters
+    ----------
+    prompt:
+        Text prompt for generation (can include system instructions).
+    model_spec:
+        Optional model specification (e.g., "local:/path/to/model" or None for default).
+    backend_hint:
+        Optional configuration hint string (e.g., "quant=8bit;attn=sdpa").
+    max_new_tokens:
+        Maximum tokens to generate.
+    temperature:
+        Sampling temperature (0.1-2.0).
+        
+    Returns
+    -------
+    Dictionary with 'success' bool, 'response' text, and optional 'error'.
+    """
+    try:
+        config = _parse_model_spec(model_spec, backend_hint)
+        state = _get_or_load_model(config)
+        
+        model = state["model"]
+        processor = state["processor"]
+        device = _resolve_model_device(model)
+        
+        # Format as text-only conversation
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt}
+                ]
+            }
+        ]
+        
+        text = processor.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+        
+        inputs = processor(
+            text=[text],
+            return_tensors="pt",
+        )
+        inputs = inputs.to(device)
+        
+        # Generate with temperature sampling
+        with torch.no_grad():
+            output_ids = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                do_sample=(temperature > 0.0),  # Only sample if temperature > 0
+            )
+        
+        # Decode only the new tokens (skip input)
+        input_len = inputs["input_ids"].shape[1]
+        generated_ids = output_ids[:, input_len:]
+        response_text = processor.batch_decode(
+            generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )[0]
+        
+        return {
+            "success": True,
+            "response": response_text.strip(),
+            "error": None
+        }
+        
+    except Qwen3VLError as exc:
+        return {
+            "success": False,
+            "response": "",
+            "error": f"Qwen3-VL configuration error: {exc}"
+        }
+    except Exception as exc:
+        return {
+            "success": False,
+            "response": "",
+            "error": f"Qwen3-VL text generation failed: {exc}"
+        }

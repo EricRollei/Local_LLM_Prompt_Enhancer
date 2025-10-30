@@ -69,6 +69,22 @@ class ImageToVideoPromptExpander:
                     "default": "enhanced"
                 }),
                 
+                # Reference image mode (Wan 2.2 optimization)
+                "reference_mode": ([
+                    "recreate_exact",
+                    "style_transfer",
+                    "character_remix",
+                    "face_only"
+                ], {
+                    "default": "recreate_exact",
+                    "tooltip": (
+                        "recreate_exact: Keep exact character, outfit, lighting - animate this\n"
+                        "style_transfer: Match lighting/mood only, create new pose/scene\n"
+                        "character_remix: Use character but change outfit/setting\n"
+                        "face_only: Preserve face identity only, ignore background/lighting"
+                    )
+                }),
+                
                 # Vision model settings
                 "use_vision_model": ("BOOLEAN", {
                     "default": True
@@ -79,36 +95,44 @@ class ImageToVideoPromptExpander:
                     "ollama",
                     "qwen3_vl"
                 ], {
-                    "default": "lm_studio"
-                }),
-                
-                "vision_model_name": ("STRING", {
-                    "default": "llama-3.2-vision",
-                    "multiline": False,
-                    "placeholder": "e.g., llama-3.2-vision, llava, minicpm-v"
+                    "default": "lm_studio",
+                    "tooltip": (
+                        "lm_studio: Uses currently loaded model in LM Studio\n"
+                        "ollama: Uses currently loaded model in Ollama\n"
+                        "qwen3_vl: Auto-detects local Qwen3-VL model (no API server needed)"
+                    )
                 }),
                 
                 "vision_endpoint": ("STRING", {
                     "default": "http://localhost:1234/v1",
-                    "multiline": False
+                    "multiline": False,
+                    "tooltip": (
+                        "lm_studio/ollama: API endpoint URL\n"
+                        "qwen3_vl: Leave default, or specify custom model path like 'A:\\path\\to\\model'"
+                    )
                 }),
                 
                 # Text expansion model (can be same or different)
                 "expansion_backend": ([
                     "lm_studio",
-                    "ollama"
+                    "ollama",
+                    "qwen3_vl"
                 ], {
-                    "default": "lm_studio"
-                }),
-                
-                "expansion_model_name": ("STRING", {
-                    "default": "llama3",
-                    "multiline": False
+                    "default": "lm_studio",
+                    "tooltip": (
+                        "lm_studio: Uses currently loaded model in LM Studio\n"
+                        "ollama: Uses currently loaded model in Ollama\n"
+                        "qwen3_vl: Auto-detects local Qwen3-VL model (no API server needed)"
+                    )
                 }),
                 
                 "expansion_endpoint": ("STRING", {
                     "default": "http://localhost:1234/v1",
-                    "multiline": False
+                    "multiline": False,
+                    "tooltip": (
+                        "lm_studio/ollama: API endpoint URL\n"
+                        "qwen3_vl: Leave default, or specify custom model path like 'A:\\path\\to\\model'"
+                    )
                 }),
                 
                 "temperature": ("FLOAT", {
@@ -225,12 +249,11 @@ class ImageToVideoPromptExpander:
         motion_description: str,
         preset: str,
         expansion_tier: str,
+        reference_mode: str,
         use_vision_model: bool,
         vision_backend: str,
-        vision_model_name: str,
         vision_endpoint: str,
         expansion_backend: str,
-        expansion_model_name: str,
         expansion_endpoint: str,
         temperature: float,
         camera_movement: str,
@@ -253,7 +276,6 @@ class ImageToVideoPromptExpander:
                 image_desc_result = self._analyze_image(
                     image,
                     vision_backend,
-                    vision_model_name,
                     vision_endpoint,
                     temperature
                 )
@@ -270,11 +292,12 @@ class ImageToVideoPromptExpander:
             else:
                 image_description = "[Image description skipped - using motion only]"
             
-            # STEP 2: Build combined prompt
-            combined_input = self._build_combined_prompt(
+            # STEP 2: Build combined prompt with reference mode instruction
+            combined_input = self._build_combined_prompt_with_mode(
                 image_description,
                 motion_description,
-                motion_speed
+                motion_speed,
+                reference_mode
             )
             
             # STEP 3: Gather aesthetic controls
@@ -302,11 +325,11 @@ class ImageToVideoPromptExpander:
                 aesthetic_controls=aesthetic_controls
             )
             
-            # STEP 5: Call expansion LLM
+            # STEP 5: Call expansion LLM (model_name auto-detected)
             expansion_llm = LLMBackend(
                 backend_type=expansion_backend,
                 endpoint=expansion_endpoint,
-                model_name=expansion_model_name,
+                model_name=None,  # Auto-detect for all backends
                 temperature=temperature
             )
             
@@ -401,7 +424,6 @@ class ImageToVideoPromptExpander:
         self,
         image: torch.Tensor,
         backend: str,
-        model_name: str,
         endpoint: str,
         temperature: float
     ) -> dict:
@@ -427,12 +449,14 @@ Output ONLY the description, no labels or meta-commentary."""
             pil_image = self._tensor_to_pil(image)
 
             if backend == "qwen3_vl":
+                # Use endpoint for custom model path
+                model_spec = endpoint if endpoint != "http://localhost:1234/v1" else None
                 qwen_result = caption_with_qwen3_vl(
                     image=pil_image,
                     prompt=vision_user_prompt,
                     system_prompt=vision_system_prompt,
-                    model_spec=model_name,
-                    backend_hint=endpoint,
+                    model_spec=model_spec,
+                    backend_hint=None,
                     max_new_tokens=768,
                     temperature=temperature,
                 )
@@ -452,11 +476,11 @@ Output ONLY the description, no labels or meta-commentary."""
 
             img_base64 = self._pil_to_base64(pil_image)
             
-            # Call vision model
+            # Call vision model (model_name auto-detected)
             llm = LLMBackend(
                 backend_type=backend,
                 endpoint=endpoint,
-                model_name=model_name,
+                model_name=None,  # Auto-detect for all backends
                 temperature=temperature
             )
             
@@ -593,6 +617,43 @@ Output ONLY the description, no labels or meta-commentary."""
         # Add image description
         if image_description and not image_description.startswith("ERROR") and not image_description.startswith("[Image"):
             parts.append(f"Scene: {image_description}")
+        
+        # Add motion with speed modifier
+        motion = motion_description
+        if motion_speed not in ["auto", "normal"]:
+            motion = f"{motion_speed}, {motion}"
+        
+        parts.append(f"Motion: {motion}")
+        
+        return " | ".join(parts)
+    
+    def _build_combined_prompt_with_mode(
+        self,
+        image_description: str,
+        motion_description: str,
+        motion_speed: str,
+        reference_mode: str
+    ) -> str:
+        """Combine image description and motion with Wan 2.2 reference mode instruction"""
+        
+        # Get reference mode instruction
+        mode_instructions = {
+            "recreate_exact": "Use the provided image as the exact character and costume reference. Keep the same face, hair, outfit, and lighting. Animate this character without changing identity.",
+            "style_transfer": "Match the lighting, color palette, and cinematic mood of the provided image, but create a new pose and new scene.",
+            "character_remix": "Loosely base the main character on the provided image, but change the outfit and relocate them to a new setting.",
+            "face_only": "Preserve ONLY the subject's face and body identity from the provided image. Ignore the original background and lighting. Place this character in the new described scene."
+        }
+        
+        mode_instruction = mode_instructions.get(reference_mode, mode_instructions["recreate_exact"])
+        
+        parts = []
+        
+        # Add reference mode instruction first
+        parts.append(f"REFERENCE MODE: {mode_instruction}")
+        
+        # Add image description
+        if image_description and not image_description.startswith("ERROR") and not image_description.startswith("[Image"):
+            parts.append(f"Scene Analysis: {image_description}")
         
         # Add motion with speed modifier
         motion = motion_description

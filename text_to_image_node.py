@@ -375,13 +375,35 @@ class TextToImagePromptEnhancer:
                 "prompt_context": ([
                     "none",
                     "auto",
-                    "abbreviated_prompt",
-                    "prompt_seed",
-                    "item_list",
-                    "reference_modification",
-                    "reference_expansion"
+                    "expand_short_prompt",
+                    "finish_opening_line",
+                    "prompt_from_item_list",
+                    "modify_reference_image",
+                    "enhance_reference_image"
                 ], {
-                    "default": "none"
+                    "default": "none",
+                    "tooltip": (
+                        "none/auto: Standard prompt\n"
+                        "expand_short_prompt: Expand shorthand into full description\n"
+                        "finish_opening_line: Continue from your opening line\n"
+                        "prompt_from_item_list: Transform comma-separated elements into scene\n"
+                        "modify_reference_image: Alter specific parts of reference\n"
+                        "enhance_reference_image: Enrich reference with new elements"
+                    )
+                }),
+                
+                "creative_randomness": ([
+                    "auto", "none", "off", "subtle", "moderate", "bold", "storyteller", "chaotic"
+                ], {
+                    "default": "none",
+                    "tooltip": (
+                        "off/none: Minimal embellishment\n"
+                        "subtle: Gentle mood enhancement\n"
+                        "moderate: Add supporting details\n"
+                        "bold: Vivid scene with narrative hooks\n"
+                        "storyteller: Imaginative mini-story\n"
+                        "chaotic: Experimental, surreal twists"
+                    )
                 }),
                 
                 # Platform selection
@@ -407,19 +429,24 @@ class TextToImagePromptEnhancer:
                 # LLM settings
                 "llm_backend": ([
                     "lm_studio",
-                    "ollama"
+                    "ollama",
+                    "qwen3_vl"
                 ], {
-                    "default": "lm_studio"
-                }),
-                
-                "model_name": ("STRING", {
-                    "default": "llama3",
-                    "multiline": False
+                    "default": "lm_studio",
+                    "tooltip": (
+                        "lm_studio: Uses currently loaded model in LM Studio\n"
+                        "ollama: Uses currently loaded model in Ollama\n"
+                        "qwen3_vl: Auto-detects local Qwen3-VL model (no API server needed)"
+                    )
                 }),
                 
                 "api_endpoint": ("STRING", {
                     "default": "http://localhost:1234/v1",
-                    "multiline": False
+                    "multiline": False,
+                    "tooltip": (
+                        "lm_studio/ollama: API endpoint URL\n"
+                        "qwen3_vl: Leave default, or specify custom model path like 'A:\\path\\to\\model'"
+                    )
                 }),
                 
                 "temperature": ("FLOAT", {
@@ -437,7 +464,16 @@ class TextToImagePromptEnhancer:
                     "disable"
                 ], {
                     "default": "auto",
-                    "tooltip": "Vision captioning: auto=inherit from main LLM, qwen3_vl=local Qwen3-VL-4B, lm_studio/ollama=separate vision model, disable=heuristics only"
+                    "tooltip": "Vision captioning: auto=inherit from main LLM, qwen3_vl=local Qwen3-VL, lm_studio/ollama=separate vision model, disable=heuristics only"
+                }),
+                
+                "vision_api_endpoint": ("STRING", {
+                    "default": "http://localhost:1234/v1",
+                    "multiline": False,
+                    "tooltip": (
+                        "Vision backend API endpoint (lm_studio/ollama) or custom model path (qwen3_vl)\n"
+                        "For qwen3_vl: Leave default for auto-detect, or specify 'A:\\path\\to\\model'"
+                    )
                 }),
                 
                 # Camera & Composition
@@ -538,12 +574,6 @@ class TextToImagePromptEnhancer:
                     "default": "none"
                 }),
                 
-                "creative_randomness": ([
-                    "auto", "none", "off", "subtle", "moderate", "bold", "storyteller", "chaotic"
-                ], {
-                    "default": "none"
-                }),
-                
                 # Subject Controls
                 "subject_framing": ([
                     "auto", "random", "none",
@@ -622,27 +652,38 @@ class TextToImagePromptEnhancer:
             }
         }
     
-    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("positive_prompt", "negative_prompt", "settings_used", "status")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "INT")
+    RETURN_NAMES = ("positive_prompt", "negative_prompt", "settings_used", "status", "vision_caption", "seed_used")
     
     FUNCTION = "enhance_prompt"
     CATEGORY = "Eric Prompt Enhancers"
     OUTPUT_NODE = True
     
     @classmethod
-    def IS_CHANGED(cls, random_seed: int, seed_mode: str, **kwargs) -> bool:
-        """Determine if the node should re-execute based on seed mode."""
-
+    def IS_CHANGED(cls, random_seed: int, seed_mode: str, **kwargs):
+        """Determine if the node should re-execute based on seed mode.
+        
+        Returns a unique value for modes that need to re-run each time,
+        or the seed value for fixed mode (to use ComfyUI's caching).
+        """
+        import time
+        
         mode = str(seed_mode).strip().lower()
+        
+        # For random/increment/decrement, return unique value each time to force re-execution
         if mode in {"random", "increment", "decrement"}:
-            return True
-
+            # Return timestamp to guarantee uniqueness
+            return float(time.time())
+        
+        # For fixed mode, return the seed value so ComfyUI can cache
         try:
             seed_value = int(random_seed)
+            if seed_value < 0:
+                # Negative seed means random even in fixed mode
+                return float(time.time())
+            return seed_value
         except Exception:
-            return True
-
-        return seed_value < 0
+            return float(time.time())
 
     def enhance_prompt(
         self,
@@ -652,10 +693,10 @@ class TextToImagePromptEnhancer:
         prompt_context: str,
         target_platform: str,
         llm_backend: str,
-        model_name: str,
         api_endpoint: str,
         temperature: float,
         vision_backend: str,
+        vision_api_endpoint: str,
         camera_angle: str,
         composition: str,
         lighting_source: str,
@@ -745,10 +786,11 @@ class TextToImagePromptEnhancer:
 
             reference_plan = self._prepare_reference_plan(directive_inputs)
 
+            # Initialize LLM backend (model_name auto-detected)
             llm = LLMBackend(
                 backend_type=llm_backend,
                 endpoint=api_endpoint,
-                model_name=model_name,
+                model_name=None,  # Auto-detect for all backends
                 temperature=temperature
             )
 
@@ -756,9 +798,7 @@ class TextToImagePromptEnhancer:
             if not vision_backend_selection:
                 vision_backend_selection = "auto"
             
-            # For qwen3_vl: use hardcoded sensible defaults (no user configuration needed)
-            # For lm_studio/ollama: reuse main LLM endpoint/model (can't override without UI fields)
-            # For auto/inherit: use main LLM if it supports vision
+            # Vision backend now supports custom endpoint via vision_api_endpoint
 
             vision_llm: Optional[LLMBackend] = None
             vision_qwen_config: Optional[Dict[str, Any]] = None
@@ -772,50 +812,51 @@ class TextToImagePromptEnhancer:
                     vision_llm = llm
                     vision_backend_mode = "inherit"
                     vision_caption_enabled = True
-                    vision_model_used = getattr(llm, "model_name", model_name)
+                    vision_model_used = getattr(llm, "model_name", "auto-detected")
                 else:
                     vision_backend_mode = "disabled"
             elif vision_backend_selection == "disable":
                 vision_backend_mode = "disabled"
             elif vision_backend_selection in {"lm_studio", "ollama"}:
-                # Reuse main LLM endpoint and model name for vision backend
+                # Use vision-specific endpoint
                 try:
                     vision_llm = LLMBackend(
                         backend_type=vision_backend_selection,
-                        endpoint=api_endpoint,
-                        model_name=model_name,
+                        endpoint=vision_api_endpoint,
+                        model_name=None,  # Auto-detect
                         temperature=temperature
                     )
                     if vision_llm.supports_images():
                         vision_backend_mode = vision_backend_selection
                         vision_caption_enabled = True
-                        vision_model_used = model_name
+                        vision_model_used = getattr(vision_llm, "model_name", "auto-detected")
                     else:
                         vision_backend_mode = "disabled"
                         vision_init_warning = (
-                            f"Vision backend '{vision_backend_selection}' model '{model_name}' does not advertise image support."
+                            f"Vision backend '{vision_backend_selection}' does not advertise image support."
                         )
                 except Exception as exc:
                     vision_backend_mode = "disabled"
                     vision_init_warning = (
                         f"Vision backend init failed ({vision_backend_selection}): {exc}"
                     )
+                    print(f"[Text-to-Image] ⚠️ Vision backend '{vision_backend_selection}' initialization failed: {exc}")
+                    print(f"[Text-to-Image] → Continuing with text expansion only (no vision captions)")
                     vision_llm = None
             elif vision_backend_selection == "qwen3_vl":
-                # Use hardcoded defaults for Qwen3-VL (matching Granddyser node behavior)
-                qwen_model = "Qwen/Qwen3-VL-4B-Instruct"
+                # Use vision_api_endpoint for custom model path
                 vision_qwen_config = {
-                    "model": qwen_model,
-                    "backend_hint": None,  # No overrides - use qwen3_vl_backend.py defaults
+                    "model": None,  # Auto-detect from vision_api_endpoint
+                    "backend_hint": vision_api_endpoint if vision_api_endpoint != "http://localhost:1234/v1" else None,
                 }
                 vision_backend_mode = "qwen3_vl"
                 vision_caption_enabled = True
-                vision_model_used = qwen_model
+                vision_model_used = "Qwen3-VL (auto-detected)"
             else:
                 vision_backend_mode = "disabled"
 
             if not vision_model_used:
-                vision_model_used = getattr(llm, "model_name", model_name)
+                vision_model_used = getattr(llm, "model_name", "auto-detected")
 
             analysis_backend_label = vision_backend_mode
             if analysis_backend_label == "inherit":
@@ -832,31 +873,49 @@ class TextToImagePromptEnhancer:
                     "Vision captioning disabled; reference traits rely on heuristic estimates."
                 )
 
+            # Wrap vision processing in try/except to prevent vision failures from breaking text expansion
             image_analyses = []
-            for entry in reference_images:
-                label = entry.get("label", "Reference")
-                tensor = entry.get("tensor")
-                override_caption = entry.get("caption_override")
-                analysis = self._analyze_reference_image(
-                    tensor,
-                    label,
-                    vision_llm=vision_llm if vision_caption_enabled and vision_llm is not None else None,
-                    override_caption=override_caption,
-                    qwen_config=vision_qwen_config if vision_backend_mode == "qwen3_vl" else None,
-                    vision_temperature=temperature,
-                    vision_backend=analysis_backend_label,
-                    vision_model=vision_model_used
-                )
-                if override_caption:
-                    existing_warnings = analysis.setdefault("warnings", [])
-                    override_note = f"{label}: caption supplied by override."
-                    if override_note not in existing_warnings:
-                        existing_warnings.append(override_note)
-                warnings_from_analysis = analysis.get("warnings") or []
-                for warning in warnings_from_analysis:
-                    if warning not in reference_warnings:
-                        reference_warnings.append(warning)
-                image_analyses.append(analysis)
+            try:
+                for entry in reference_images:
+                    label = entry.get("label", "Reference")
+                    tensor = entry.get("tensor")
+                    override_caption = entry.get("caption_override")
+                    analysis = self._analyze_reference_image(
+                        tensor,
+                        label,
+                        vision_llm=vision_llm if vision_caption_enabled and vision_llm is not None else None,
+                        override_caption=override_caption,
+                        qwen_config=vision_qwen_config if vision_backend_mode == "qwen3_vl" else None,
+                        vision_temperature=temperature,
+                        vision_backend=analysis_backend_label,
+                        vision_model=vision_model_used
+                    )
+                    if override_caption:
+                        existing_warnings = analysis.setdefault("warnings", [])
+                        override_note = f"{label}: caption supplied by override."
+                        if override_note not in existing_warnings:
+                            existing_warnings.append(override_note)
+                    warnings_from_analysis = analysis.get("warnings") or []
+                    for warning in warnings_from_analysis:
+                        if warning not in reference_warnings:
+                            reference_warnings.append(warning)
+                    image_analyses.append(analysis)
+            except Exception as vision_exc:
+                # Vision processing failed - log error but continue with text expansion
+                error_msg = f"Vision processing failed: {str(vision_exc)}"
+                print(f"[Text-to-Image] ⚠️ {error_msg}")
+                reference_warnings.append(error_msg)
+                # Create fallback analyses if we got partial results
+                if not image_analyses and reference_images:
+                    for entry in reference_images:
+                        label = entry.get("label", "Reference")
+                        fallback = {
+                            "label": label,
+                            "summary": f"{label}: vision analysis failed, continuing with text expansion",
+                            "details": ["Vision model unavailable"],
+                            "warnings": [error_msg]
+                        }
+                        image_analyses.append(fallback)
 
             # STEP 2: Resolve random/auto options
             resolved_settings, setting_sources = self._resolve_settings(
@@ -873,19 +932,40 @@ class TextToImagePromptEnhancer:
             resolved_settings["quality_emphasis"] = "enabled" if quality_emphasis else "disabled"
             setting_sources["quality_emphasis"] = {"mode": "platform", "value": resolved_settings["quality_emphasis"]}
             
-            directive_analyses, directive_meta = self._run_reference_directive_analysis(
-                image_analyses,
-                reference_plan,
-                llm
-            )
+            # Wrap reference guidance processing to prevent failures from blocking text expansion
+            reference_guidance = ""
+            reference_notes = []
+            reference_meta = {}
+            
+            try:
+                directive_analyses, directive_meta = self._run_reference_directive_analysis(
+                    image_analyses,
+                    reference_plan,
+                    llm
+                )
 
-            reference_guidance, reference_notes, guidance_meta = self._build_reference_guidance(
-                directive_analyses,
-                reference_plan,
-                llm,
-                prompt_context
-            )
-            reference_meta = self._merge_reference_metadata(reference_plan, directive_meta, guidance_meta)
+                reference_guidance, reference_notes, guidance_meta = self._build_reference_guidance(
+                    directive_analyses,
+                    reference_plan,
+                    llm,
+                    prompt_context
+                )
+                reference_meta = self._merge_reference_metadata(reference_plan, directive_meta, guidance_meta)
+            except Exception as ref_exc:
+                # Reference guidance processing failed - log but continue
+                error_msg = f"Reference guidance generation failed: {str(ref_exc)}"
+                print(f"[Text-to-Image] ⚠️ {error_msg}")
+                reference_warnings.append(error_msg)
+                # Initialize empty reference data
+                reference_meta = {
+                    "analysis_method": "failed",
+                    "reference_count": len(image_analyses),
+                    "llm_queries": 0,
+                    "llm_successes": 0,
+                    "warnings": [error_msg]
+                }
+            
+            # Always update reference_meta with vision info (even if guidance failed)
             reference_meta.update(
                 {
                     "vision_backend_requested": vision_backend_selection,
@@ -941,6 +1021,7 @@ class TextToImagePromptEnhancer:
             )
             
             system_prompt = self._build_system_prompt(
+                target_platform,
                 platform_config,
                 resolved_settings,
                 reference_plan,
@@ -961,24 +1042,52 @@ class TextToImagePromptEnhancer:
             pos_kw_list = parse_keywords(positive_keywords)
             neg_kw_list = parse_keywords(negative_keywords)
 
-            max_tokens = self._determine_max_tokens(
+            max_tokens_requested = self._determine_max_tokens(
                 platform_config,
                 resolved_settings.get("creative_randomness")
             )
-            response = llm.send_prompt(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                max_tokens=max_tokens
+            capped_tokens, token_cap_note = self._cap_tokens_for_backend(
+                llm.backend_type,
+                getattr(llm, "model_name", None),
+                max_tokens_requested
             )
-            main_llm_success = bool(response.get("success"))
-            llm_error_message = response.get("error", "")
-            raw_llm_output = response.get("response", "")
+            backend_params = {
+                "backend_type": llm_backend,
+                "endpoint": api_endpoint,
+                "temperature": temperature
+            }
 
-            # STEP 5: Parse and format response (fallback to original prompt on failure)
-            if main_llm_success and raw_llm_output:
+            response, llm_used, llm_attempts = self._call_main_llm_with_retries(
+                llm,
+                system_prompt,
+                user_prompt,
+                capped_tokens,
+                backend_params
+            )
+            llm = llm_used
+            raw_llm_output = response.get("response", "")
+            llm_error_message = response.get("error", "")
+            main_llm_success = bool(response.get("success")) and bool((raw_llm_output or "").strip())
+
+            fallback_meta: Optional[Dict[str, Any]] = None
+            fallback_used = False
+
+            # STEP 5: Parse and format response (fallback on failure)
+            if main_llm_success:
                 enhanced_prompt = self._parse_llm_response(raw_llm_output, target_platform)
+                print(f"[Text-to-Image] LLM successfully enhanced prompt (length: {len(enhanced_prompt)} chars)")
             else:
-                enhanced_prompt = text_prompt
+                enhanced_prompt, fallback_meta = self._build_deterministic_fallback_prompt(
+                    text_prompt,
+                    target_platform,
+                    platform_config,
+                    resolved_settings,
+                    reference_notes
+                )
+                fallback_used = True
+                print(f"[Text-to-Image] ⚠️ LLM failed or returned empty content - using deterministic fallback")
+                if llm_error_message:
+                    print(f"[Text-to-Image] Error details: {llm_error_message}")
             
             # STEP 5.5: Restore emphasis syntax that was protected
             enhanced_prompt = self._restore_emphasis_syntax(enhanced_prompt)
@@ -989,6 +1098,23 @@ class TextToImagePromptEnhancer:
             
             # STEP 7: Add platform-specific required tokens
             enhanced_prompt = self._add_platform_requirements(enhanced_prompt, target_platform)
+
+            # STEP 7.5: Boost density if the output is too terse
+            enhanced_prompt, density_meta = self._ensure_prompt_density(
+                enhanced_prompt,
+                target_platform,
+                platform_config,
+                reference_notes,
+                resolved_settings
+            )
+
+            if density_meta and density_meta.get("added_phrases"):
+                print(
+                    f"[Text-to-Image] ℹ️ Density boost added {density_meta['added_phrases']} phrase(s) "
+                    f"(words {density_meta['before_words']}→{density_meta['after_words']})."
+                )
+            else:
+                density_meta = None
             
             # STEP 8: Generate negative prompt
             negative_prompt = get_negative_prompt_for_platform(target_platform, neg_kw_list)
@@ -1002,6 +1128,13 @@ class TextToImagePromptEnhancer:
                 "reference_image_count": len(reference_images),
                 "main_llm_success": main_llm_success,
                 "main_llm_error": llm_error_message,
+                "llm_attempts": llm_attempts,
+                "llm_token_cap_note": token_cap_note,
+                "max_tokens_requested": max_tokens_requested,
+                "max_tokens_used": capped_tokens,
+                "fallback_used": fallback_used,
+                "fallback_meta": fallback_meta,
+                "density_meta": density_meta,
                 "quality_emphasis": quality_emphasis,
                 "reference_guidance_used": bool(reference_guidance.strip()) if reference_guidance else False,
                 "reference_directives": reference_plan,
@@ -1034,7 +1167,7 @@ class TextToImagePromptEnhancer:
                     "type": "text-to-image",
                     "platform": target_platform,
                     "platform_name": platform_config["name"],
-                    "model": model_name,
+                    "model": llm.model_name or "auto-detected",
                     "backend": llm_backend,
                     "temperature": temperature,
                     "original_prompt": text_prompt,
@@ -1057,6 +1190,13 @@ class TextToImagePromptEnhancer:
                     "main_llm_success": main_llm_success,
                     "main_llm_error": llm_error_message,
                     "reference_warnings": reference_warnings,
+                    "max_tokens_requested": max_tokens_requested,
+                    "max_tokens_used": capped_tokens,
+                    "token_cap_note": token_cap_note,
+                    "llm_attempts": llm_attempts,
+                    "fallback_used": fallback_used,
+                    "fallback_meta": fallback_meta,
+                    "density_meta": density_meta,
                     "random_seed_requested": requested_seed,
                     "random_seed_used": seed_value,
                     "random_seed_mode_requested": seed_mode_normalized,
@@ -1086,6 +1226,26 @@ class TextToImagePromptEnhancer:
                 error_snippet = (llm_error_message or "unknown error").splitlines()[0][:120]
                 error_snippet = error_snippet.replace('|', '/')
                 llm_status_parts.append(f"Main LLM: failed ({error_snippet})")
+
+            if token_cap_note:
+                llm_status_parts.append(
+                    f"Token cap {capped_tokens}/{max_tokens_requested}"
+                )
+
+            if llm_attempts and len(llm_attempts) > 1:
+                llm_status_parts.append(f"LLM attempts: {len(llm_attempts)}")
+
+            if fallback_used:
+                fallback_phrase_count = fallback_meta.get("combined_total") if fallback_meta else None
+                if fallback_phrase_count:
+                    llm_status_parts.append(f"Fallback detail +{fallback_phrase_count}")
+                else:
+                    llm_status_parts.append("Fallback detail applied")
+
+            if density_meta:
+                llm_status_parts.append(
+                    f"Density boost +{density_meta.get('added_phrases', 0)}"
+                )
 
             ref_count = reference_meta.get("reference_count", 0)
             ref_method = reference_meta.get("analysis_method", "none")
@@ -1126,11 +1286,29 @@ class TextToImagePromptEnhancer:
                 + f" | {file_status}"
             )
             
+            # Format vision captions for output
+            vision_captions_list = reference_meta.get("vision_captions", [])
+            if vision_captions_list:
+                vision_caption_output = "\n\n".join(
+                    f"Reference {i+1}: {caption}"
+                    for i, caption in enumerate(vision_captions_list)
+                )
+            else:
+                vision_caption_output = ""
+            
             return (
                 enhanced_prompt,
                 negative_prompt,
                 settings_display,
-                status
+                status,
+                vision_caption_output,
+                seed_value,
+                {
+                    "ui": {
+                        "random_seed": int(seed_value),
+                        "seed_mode": resolved_seed_mode
+                    }
+                }
             )
         
         except Exception as e:
@@ -1141,7 +1319,9 @@ class TextToImagePromptEnhancer:
                 text_prompt,
                 "",
                 "",
-                f"❌ Error: {str(e)}"
+                f"❌ Error: {str(e)}",
+                "",
+                -1
             )
         finally:
             random.setstate(python_random_state)
@@ -2543,9 +2723,252 @@ class TextToImagePromptEnhancer:
 
         # Provide additional headroom for extremely long prompts
         return min(base_tokens + 200, 1800)
-    
+
+    def _cap_tokens_for_backend(
+        self,
+        backend: str,
+        model_name: Optional[str],
+        requested_tokens: int
+    ) -> Tuple[int, Optional[str]]:
+        """Apply backend-aware caps to avoid overloading smaller local models."""
+
+        backend_lower = (backend or "").lower()
+        model_lower = (model_name or "").lower()
+        adjusted = int(requested_tokens)
+        cap_reason: Optional[str] = None
+
+        def apply_cap(limit: int, reason: str) -> None:
+            nonlocal adjusted, cap_reason
+            if adjusted > limit:
+                adjusted = limit
+                if cap_reason is None:
+                    cap_reason = reason
+
+        if backend_lower == "qwen3_vl":
+            apply_cap(512, "Capped max tokens to 512 for local Qwen3-VL stability.")
+        elif backend_lower in {"lm_studio", "ollama"}:
+            small_signals = ["1.5b", "2b", "3b", "4b", "tiny", "mini", "phi-2", "phi-3", "phi3", "smol"]
+            medium_signals = ["5b", "6b", "7b", "8b"]
+            if any(sig in model_lower for sig in small_signals):
+                apply_cap(512, f"Capped max tokens for small model '{model_name}'.")
+            elif any(sig in model_lower for sig in medium_signals):
+                apply_cap(768, f"Capped max tokens for mid-size model '{model_name}'.")
+            apply_cap(1024, f"Capped max tokens to 1024 for backend '{backend}'.")
+        else:
+            apply_cap(1024, "Capped max tokens to 1024 for stability.")
+
+        return adjusted, cap_reason
+
+    def _call_main_llm_with_retries(
+        self,
+        llm: LLMBackend,
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int,
+        backend_params: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], LLMBackend, List[Dict[str, Any]]]:
+        """Send prompt with limited retries and adaptive token ceilings."""
+
+        attempt_tokens: List[int] = [int(max_tokens)]
+        fallback_candidates = [max(240, min(max_tokens, 640)), 320]
+        for candidate in fallback_candidates:
+            if candidate < attempt_tokens[0]:
+                attempt_tokens.append(int(candidate))
+        # Preserve order while removing duplicates
+        seen: set = set()
+        ordered_tokens: List[int] = []
+        for value in attempt_tokens:
+            if value not in seen:
+                ordered_tokens.append(value)
+                seen.add(value)
+
+        attempts_log: List[Dict[str, Any]] = []
+        current_llm = llm
+        last_response: Dict[str, Any] = {"success": False, "response": "", "error": "No attempt"}
+
+        for attempt_index, tokens in enumerate(ordered_tokens):
+            response = current_llm.send_prompt(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                max_tokens=tokens
+            )
+            last_response = response
+            attempt_info = {
+                "attempt": attempt_index + 1,
+                "backend": current_llm.backend_type,
+                "model": getattr(current_llm, "model_name", None),
+                "max_tokens": tokens,
+                "success": bool(response.get("success")),
+                "error": response.get("error"),
+                "empty_response": not bool((response.get("response") or "").strip())
+            }
+            attempts_log.append(attempt_info)
+
+            if response.get("success") and (response.get("response") or "").strip():
+                attempt_info["used"] = True
+                return response, current_llm, attempts_log
+
+            if attempt_index < len(ordered_tokens) - 1:
+                try:
+                    current_llm = LLMBackend(
+                        backend_type=backend_params["backend_type"],
+                        endpoint=backend_params["endpoint"],
+                        model_name=None,
+                        temperature=backend_params["temperature"]
+                    )
+                except Exception as exc:
+                    attempts_log.append({
+                        "attempt": attempt_index + 1,
+                        "backend": backend_params.get("backend_type"),
+                        "max_tokens": tokens,
+                        "success": False,
+                        "error": f"Backend reinit failed: {exc}",
+                        "reinit_failed": True
+                    })
+                    # Continue with existing llm instance if reinit fails
+
+        return last_response, current_llm, attempts_log
+
+    def _settings_to_phrases(self, settings: Dict[str, str]) -> List[str]:
+        """Convert resolved settings into descriptive phrases for fallbacks."""
+
+        phrases: List[str] = []
+        mapping = {
+            "camera_angle": "shot from {value}",
+            "composition": "composition guided by {value}",
+            "lighting_source": "lit by {value}",
+            "lighting_quality": "lighting quality is {value}",
+            "time_of_day": "set during {value}",
+            "historical_period": "evokes the {value}",
+            "weather": "{value} conditions",
+            "color_mood": "{value} color palette",
+            "genre_style": "{value} tone",
+            "subject_framing": "{value} framing",
+            "subject_pose": "subject posed {value}"
+        }
+
+        for key, template in mapping.items():
+            value = settings.get(key)
+            if not value:
+                continue
+            lowered = value.lower()
+            if "auto" in lowered or "none" in lowered:
+                continue
+            phrase = template.format(value=value)
+            if phrase not in phrases:
+                phrases.append(phrase)
+
+        return phrases
+
+    def _build_deterministic_fallback_prompt(
+        self,
+        base_prompt: str,
+        platform: str,
+        platform_config: Dict[str, Any],
+        settings: Dict[str, str],
+        reference_notes: List[str]
+    ) -> Tuple[str, Dict[str, Any]]:
+        """Synthesize a deterministic enhancement when the main LLM fails."""
+
+        base = base_prompt.strip() or "Describe the requested scene vividly"
+        phrases = self._settings_to_phrases(settings)
+        reference_phrases: List[str] = []
+        for note in reference_notes:
+            if not note:
+                continue
+            cleaned = note.split(":", 1)[-1].strip() if ":" in note else note.strip()
+            if cleaned and cleaned not in reference_phrases:
+                reference_phrases.append(cleaned)
+
+        combined = phrases + reference_phrases
+        meta = {
+            "setting_phrases": len(phrases),
+            "reference_phrases": len(reference_phrases),
+            "combined_total": len(combined)
+        }
+
+        if not combined:
+            return base, meta
+
+        addition = ", ".join(combined[:8])
+
+        if platform == "pony":
+            normalized = base
+            prefix_tokens = ["score_9", "score_8_up", "score_7_up"]
+            normalized_lower = normalized.lower()
+            missing_prefix = [token for token in prefix_tokens if token not in normalized_lower]
+            if missing_prefix:
+                normalized = ", ".join(missing_prefix + [normalized])
+            if not normalized.endswith(","):
+                normalized = normalized.rstrip() + ","
+            fallback_prompt = f"{normalized} {addition}".strip()
+        else:
+            cleaned_base = base.rstrip("., ")
+            fallback_prompt = f"{cleaned_base}. {addition}."
+
+        return fallback_prompt, meta
+
+    def _ensure_prompt_density(
+        self,
+        prompt: str,
+        platform: str,
+        platform_config: Dict[str, Any],
+        reference_notes: List[str],
+        settings: Dict[str, str]
+    ) -> Tuple[str, Optional[Dict[str, Any]]]:
+        """Pad prompts that land well below the target word count."""
+
+        target_words = platform_config.get("max_words")
+        if not target_words or target_words < 60:
+            return prompt, None
+
+        min_words = max(80, int(target_words * 0.7))
+        words_before = len(prompt.split())
+        if words_before >= min_words:
+            return prompt, None
+
+        additions: List[str] = []
+        for note in reference_notes:
+            if not note:
+                continue
+            cleaned = note.split(":", 1)[-1].strip() if ":" in note else note.strip()
+            if cleaned and cleaned not in additions:
+                additions.append(cleaned)
+            if words_before + sum(len(entry.split()) for entry in additions) >= min_words:
+                break
+
+        if words_before + sum(len(entry.split()) for entry in additions) < min_words:
+            for phrase in self._settings_to_phrases(settings):
+                if phrase and phrase not in additions:
+                    additions.append(phrase)
+                if words_before + sum(len(entry.split()) for entry in additions) >= min_words:
+                    break
+
+        if not additions:
+            return prompt, None
+
+        if platform == "pony":
+            updated = prompt.rstrip()
+            if not updated.endswith(","):
+                updated = updated.rstrip("., ") + ","
+            updated = f"{updated} {', '.join(additions)}"
+        else:
+            cleaned = prompt.rstrip(".")
+            extra = "; ".join(additions)
+            updated = f"{cleaned}. {extra}."
+
+        density_meta = {
+            "min_words": min_words,
+            "before_words": words_before,
+            "after_words": len(updated.split()),
+            "added_phrases": len(additions)
+        }
+
+        return updated, density_meta
+
     def _build_system_prompt(
         self,
+        platform_key: str,
         platform_config: Dict,
         settings: Dict,
         reference_plan: List[Dict[str, Any]],
@@ -2556,6 +2979,10 @@ class TextToImagePromptEnhancer:
         
         platform_name = platform_config["name"]
         platform = platform_config.get("prompt_style", "natural")
+        target_words = platform_config.get("max_words")
+        min_word_goal: Optional[int] = None
+        if isinstance(target_words, (int, float)) and target_words >= 60:
+            min_word_goal = max(80, int(target_words * 0.75))
         
         prompt = f"""You are an expert prompt engineer for {platform_name} image generation.
 
@@ -2574,6 +3001,25 @@ Prompting Style: {platform_config['prompt_style']}
 Optimal Length: {platform_config['optimal_length']}
 
 """
+        prompt += "\nOUTPUT INTENSITY GUIDANCE:\n"
+        if min_word_goal:
+            prompt += f"- Minimum acceptable length: {min_word_goal} words. Falling short counts as a failure.\n"
+        else:
+            prompt += "- Deliver a multi-sentence, richly layered description (no terse summaries).\n"
+
+        if reference_plan:
+            prompt += "- Dedicate vivid language to every reference directive so each image influences the result.\n"
+            if len(reference_plan) > 1:
+                prompt += "- Keep reference-derived cues distinct; do not merge them into a single generic sentence.\n"
+
+        if platform_key == "pony":
+            prompt += (
+                "- Start with the score tags exactly once, then shift into flowing natural-language prose.\n"
+                "- After the score tags, produce an expansive narrative covering subject, wardrobe, environment, lighting, and atmosphere. Sparse checklists are unacceptable.\n"
+            )
+            if reference_plan:
+                prompt += "- When references are provided, weave their traits into luxuriant supporting clauses for extra detail.\n"
+        prompt += "\n"
         
         # Add platform-specific preferences
         if platform_config.get("preferences"):
@@ -2610,7 +3056,10 @@ Optimal Length: {platform_config['optimal_length']}
 
         max_words = platform_config.get("max_words")
         if max_words:
-            prompt += f"ABSOLUTE MINIMUM DETAIL: deliver no fewer than {int(max_words * 0.6)} words.\n\n"
+            floor_words = int(max_words * 0.6)
+            if min_word_goal and min_word_goal > floor_words:
+                floor_words = min_word_goal
+            prompt += f"ABSOLUTE MINIMUM DETAIL: deliver no fewer than {floor_words} words.\n\n"
         else:
             prompt += "Ensure the description is long-form and exhaustive.\n\n"
         # Handle genre/style if specified
@@ -2649,6 +3098,12 @@ Optimal Length: {platform_config['optimal_length']}
 
         # Prompt context guidance
         context_map = {
+            "expand_short_prompt": "User provided a shorthand idea. Expand it into a full, production-ready description.",
+            "finish_opening_line": "Treat input as the opening line of the prompt. Continue and embellish it coherently.",
+            "prompt_from_item_list": "User supplied a checklist. Transform it into a cohesive narrative scene.",
+            "modify_reference_image": "Focus on altering specific parts of the reference imagery as requested.",
+            "enhance_reference_image": "Use reference images as a base and enrich them with new imaginative elements.",
+            # Legacy mappings for backward compatibility
             "abbreviated_prompt": "User provided a shorthand idea. Expand it into a full, production-ready description.",
             "prompt_seed": "Treat input as the opening line of the prompt. Continue and embellish it coherently.",
             "item_list": "User supplied a checklist. Transform it into a cohesive narrative scene.",
@@ -2706,13 +3161,14 @@ Optimal Length: {platform_config['optimal_length']}
         # Platform-specific format instructions
         if "pony" in platform_name.lower():
             prompt += """
-PONY-SPECIFIC INSTRUCTIONS:
-- START with: score_9, score_8_up, score_7_up
-- Use danbooru tag format (underscores, not spaces)
-- Tags should be comma-separated
-- Quality tags at beginning
-- Character/subject descriptions in tag format
-- Example: score_9, score_8_up, score_7_up, 1girl, long_hair, blue_eyes, etc.
+PONY DIFFUSION FORMAT (CRITICAL):
+- MUST START with exactly: score_9, score_8_up, score_7_up
+- After score tags, use NATURAL LANGUAGE descriptions (NO underscores)
+- Comma-separated detailed phrases
+- DO NOT use danbooru tag format (no long_hair, brown_eyes, etc.)
+- Use readable text: "long flowing hair", "brown eyes", "red dress"
+- Aim for 150-200 words of rich descriptive detail
+- Example: score_9, score_8_up, score_7_up, a young woman with long flowing hair, intense gaze, wearing elegant red dress, soft studio lighting, professional portrait
 """
         
         elif "illustrious" in platform_name.lower():
@@ -2799,6 +3255,12 @@ Example of WRONG output (DO NOT DO THIS):
         """Build user prompt for LLM"""
 
         context_labels = {
+            "expand_short_prompt": "Compressed idea to expand",
+            "finish_opening_line": "Prompt opening line",
+            "prompt_from_item_list": "Checklist of required elements",
+            "modify_reference_image": "Modify references",
+            "enhance_reference_image": "Expand upon references",
+            # Legacy mappings for backward compatibility
             "abbreviated_prompt": "Compressed idea to expand",
             "prompt_seed": "Prompt opening line",
             "item_list": "Checklist of required elements",
@@ -2911,12 +3373,12 @@ Example of WRONG output (DO NOT DO THIS):
         # Add missing keywords
         platform_config = get_platform_config(platform)
         
-        if platform in ["pony", "illustrious"]:
-            # Tag format with underscores
+        if platform in ["illustrious"]:
+            # Illustrious uses tag format with underscores
             formatted_kw = [kw.replace(" ", "_") for kw in missing_keywords]
             return f"{prompt}, {', '.join(formatted_kw)}"
         else:
-            # Natural language
+            # Natural language (including Pony after score tags)
             return f"{prompt}, {', '.join(missing_keywords)}"
     
     def _add_platform_requirements(self, prompt: str, platform: str) -> str:
@@ -3144,6 +3606,12 @@ Example of WRONG output (DO NOT DO THIS):
         lines.append("\nSETTINGS APPLIED:")
 
         context_display = {
+            "expand_short_prompt": "Abbreviated prompt (expand fully)",
+            "finish_opening_line": "Prompt seed (continue logically)",
+            "prompt_from_item_list": "Item list (merge into scene)",
+            "modify_reference_image": "Modify reference traits",
+            "enhance_reference_image": "Expand reference storytelling",
+            # Legacy mappings for backward compatibility
             "abbreviated_prompt": "Abbreviated prompt (expand fully)",
             "prompt_seed": "Prompt seed (continue logically)",
             "item_list": "Item list (merge into scene)",
