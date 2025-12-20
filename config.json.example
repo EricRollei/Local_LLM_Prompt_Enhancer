@@ -1,0 +1,37 @@
+{
+    "backends": {
+        "deepseek": {
+            "name": "DeepSeek API",
+            "base_url": "https://api.deepseek.com/v1",
+            "api_key": "YOUR_API_KEY_HERE",
+            "model": "deepseek-chat"
+        },
+        "mistral": {
+            "name": "Mistral API",
+            "base_url": "https://api.mistral.ai/v1",
+            "api_key": "YOUR_API_KEY_HERE",
+            "model": "mistral-large-latest"
+        },
+        "gemini": {
+            "name": "Google Gemini",
+            "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+            "api_key": "YOUR_API_KEY_HERE",
+            "model": "gemini-1.5-pro"
+        },
+        "openai": {
+            "name": "OpenAI",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "YOUR_API_KEY_HERE",
+            "model": "gpt-4o"
+        },
+        "custom": {
+            "name": "Custom OpenAI Compatible",
+            "base_url": "http://localhost:1234/v1",
+            "api_key": "not-needed",
+            "model": "local-model"
+        }
+    },
+    "wildcards": {
+        "path": "models/wildcards"
+    }
+}

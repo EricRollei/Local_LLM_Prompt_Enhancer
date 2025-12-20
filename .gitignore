@@ -23,10 +23,14 @@ build/
 Thumbs.db
 desktop.ini
 
-# Testing
+# Testing / Development
 .pytest_cache/
 .coverage
 test_*.py
+dev/
+
+# User config (contains API keys)
+config.json
 
 # Temporary files
 *.tmp

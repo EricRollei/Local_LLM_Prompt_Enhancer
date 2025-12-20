@@ -1,0 +1,120 @@
+meta:
+  model: FLUX.2
+  description: >-
+    Structured prompting schema distilled from Black Forest Labs' official FLUX.2
+    guide. Use this for JSON-mode prompts or as reference when expanding
+    natural-language prompts with matching details.
+  references:
+    - https://huggingface.co/blog/flux-2#advanced-prompting
+    - https://docs.bfl.ai/guides/prompting_guide_flux2
+
+prompt_formats:
+  natural_language:
+    summary: >-
+      Cinematic, sensory-rich prose (150-220 words) with photographic and
+      artistic terminology. Include hex colors, camera specs, and multi-reference
+      cues inline. Negative prompts are ignored by the base API but may be routed
+      downstream if the graph expects them.
+    reminders:
+      - No negative prompt support at the API level; only emit negatives if the
+        workflow explicitly consumes them.
+      - Mention reference directives exactly once each.
+      - Quote literal text ("OPEN") and hex codes (#FFAA33) when critical.
+      - Call out camera hardware ("shot on Hasselblad X2D", "85mm lens") for
+        photoreal scenes.
+
+  structured_json:
+    summary: >-
+      Emit a single JSON object (no markdown fences) that follows the schema
+      below. Prioritize clarity over brevity; the model accepts rich descriptions
+      inside every field.
+    required_keys:
+      - scene
+      - subjects
+      - style
+      - lighting
+      - mood
+      - background
+      - composition
+      - camera
+    schema:
+      scene: Overall scene description string.
+      subjects:
+        - description: Detailed subject description.
+          position: Where it sits within the frame.
+          action: What the subject is doing.
+          pose: Optional pose/gesture field.
+          color_palette: Optional array of hex codes or descriptive colors.
+          wardrobe: Optional wardrobe/material specifics.
+          accessories: Optional supporting props tied to the subject.
+        - "Repeat object for every subject in frame."
+      style: Artistic style or medium ("ultra-realistic product photography").
+      color_palette: Optional array describing the global palette.
+      lighting: Light quality, direction, setup ("three-point softbox").
+      mood: Emotional tone ("mysterious, high-tension").
+      background: Environment description.
+      composition: Framing guidance ("rule of thirds", "symmetrical").
+      camera:
+        angle: Camera angle ("low angle", "bird's-eye").
+        distance: Shot distance ("medium shot", "macro close-up").
+        focus: Focus behavior ("shallow depth on subject", "infinite").
+        lens: Lens descriptor ("prime portrait lens").
+        lens_mm: Numeric focal length when relevant.
+        depth_of_field: Qualitative DOF notes.
+        f_number: Aperture value string.
+        iso: ISO value.
+        shutter_speed: Optional shutter/exposure reference.
+      color_grading: Optional note about grade/film stock/processing.
+      props: Optional array of secondary objects with instructions.
+      post_processing: Optional description ("cross-processed Ektachrome").
+      text_overlays: Optional array with literal copy, placement, style.
+      references: Optional mapping describing how each image reference should
+        influence the output when available.
+      instructions: Optional free-form block for extra constraints.
+    validation:
+      - Output must be minified or neatly spaced JSON, never YAML or prose.
+      - Do not include trailing comments or explanations.
+      - Hex colors must include the leading '#'.
+
+examples:
+  json_minimal: |
+    {
+      "scene": "Professional studio product photography setup with polished concrete surface",
+      "subjects": [
+        {
+          "description": "Minimalist ceramic coffee mug with steam rising",
+          "position": "Center foreground",
+          "action": "Stationary",
+          "pose": "upright",
+          "color_palette": ["matte black", "#FF2A2A"],
+          "wardrobe": "glossy ceramic glaze",
+          "accessories": "small chrome spoon to the right"
+        }
+      ],
+      "style": "Ultra-realistic product photography",
+      "color_palette": ["matte black", "concrete gray", "soft white highlights"],
+      "lighting": "Three-point softbox with diffused highlights",
+      "mood": "Clean, professional, minimalist",
+      "background": "Polished concrete surface with blurred studio backdrop",
+      "composition": "rule of thirds",
+      "camera": {
+        "angle": "high angle",
+        "distance": "medium shot",
+        "focus": "Sharp on mug details",
+        "lens": "macro prime",
+        "lens_mm": 85,
+        "depth_of_field": "shallow",
+        "f_number": "f/5.6",
+        "iso": 200,
+        "shutter_speed": "1/125"
+      },
+      "color_grading": "Neutral cinematic grade with gentle contrast",
+      "post_processing": "Subtle clarity boost, no grain"
+    }
+
+notes:
+  - JSON prompts are ideal for automation, multi-reference breakdowns, and
+    precise color control. Natural-language prompts remain better for quick
+    explorations or when downstream systems expect plain text.
+  - Feel free to add extra top-level keys if a workflow benefits from them; the
+    model silently ignores unknown fields.
