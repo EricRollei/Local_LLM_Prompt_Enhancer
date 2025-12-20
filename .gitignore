@@ -17,6 +17,7 @@ build/
 *.swo
 *~
 .history/
+*.code-workspace
 
 # OS
 .DS_Store
