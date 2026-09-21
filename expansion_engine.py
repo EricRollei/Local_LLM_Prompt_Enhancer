@@ -19,6 +19,8 @@ class PromptExpander:
     def __init__(self):
         self.wan_guide = self._load_wan_guide()
         self.last_resolution = None  # core.wildcards Resolution from the most recent _process_wildcards call
+        self._surreal_block = ""     # set per run when preset == "surreal": the surreal engine's instruction block
+        self._surreal_note = ""
     
     def expand_prompt(
         self,
@@ -96,6 +98,17 @@ class PromptExpander:
         
         # STEP 3: Get preset configuration
         preset_config = get_preset(preset)
+
+        # STEP 3b: the `surreal` preset is a procedure now, not a list of style words. The surreal engine picks one
+        # operation for this idea (seeded like the wildcards, so each variation gets its own) and its block replaces
+        # the preset block. If the engine produces nothing, the old preset text is used as before.
+        self._surreal_block, self._surreal_note = "", ""
+        if preset == "surreal":
+            try:
+                from .surreal_support import preset_block
+                self._surreal_block, self._surreal_note = preset_block(processed_prompt, effective_wildcard_seed, "video")
+            except Exception as error:
+                self._surreal_note = f"surreal engine unavailable ({error}); the preset's style words were used"
         
         # STEP 4: Handle random preset - get random elements but use user's concept
         random_elements_selected = None
@@ -136,6 +149,8 @@ class PromptExpander:
                 "processed_prompt": processed_prompt if wildcard_replacements else None,
             }
             breakdown.update(target_info)
+            if self._surreal_note:
+                breakdown.setdefault("target_notes", []).append(self._surreal_note)
             return system_prompt, user_prompt, breakdown
 
         # STEP 5: Build prompts (Pass 2 of 2-pass system)
@@ -187,6 +202,8 @@ class PromptExpander:
         }
         if target_model and target_model != "wan22_video":
             breakdown["target_notes"] = [f"no video profile named '{target_model}' was found; the Wan 2.2 path was used"]
+        if self._surreal_note:
+            breakdown.setdefault("target_notes", []).append(self._surreal_note)
         
         return system_prompt, user_prompt, breakdown
 
@@ -607,6 +624,11 @@ Rich atmospheric motion in every layer of every shot.
     
     def _format_preset_requirements(self, preset_config: Dict, preset_name: str) -> str:
         """Format STRONG preset requirements that LLM will actually follow"""
+
+        if preset_name == "surreal" and self._surreal_block:
+            return (f"\n{'='*60}\nPRESET MODE: SURREAL\n{'='*60}\n\n{self._surreal_block}\n\n"
+                    "This premise defines the whole prompt. Camera, light and motion stay sober and ordinary so that the "
+                    "one anomaly carries the picture.\n\n")
         
         section = f"\n{'='*60}\n"
         section += f"🎬 PRESET MODE: {preset_name.upper()}\n"

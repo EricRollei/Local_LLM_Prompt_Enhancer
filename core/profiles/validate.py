@@ -277,6 +277,14 @@ def _validate_tags(text: str, profile: Profile, warnings: List[str]) -> str:
     long_segments = [segment for segment in re.split(r"[,;.!?]\s*", flat) if len(segment.split()) > 8]
     if long_segments:
         warnings.append("tag format expected, but the answer contains full sentences")
+    if profile.negative == "yes":
+        # "no glow, no mist" in a POSITIVE tag prompt summons glow and mist. Those belong in the negative prompt.
+        tags = [tag.strip() for tag in flat.split(",")]
+        negated = [tag for tag in tags if re.match(r"(?i)^(?:no|without|avoid|never)\s+\w", tag)]
+        if negated:
+            flat = ", ".join(tag for tag in tags if tag and tag not in negated)
+            warnings.append(f"{len(negated)} 'no ...' tags removed from the positive prompt (they belong in the negative): "
+                            + ", ".join(negated[:4]) + (" ..." if len(negated) > 4 else ""))
     return flat
 
 

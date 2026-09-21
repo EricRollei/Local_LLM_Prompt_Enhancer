@@ -4,6 +4,28 @@ All notable changes to Eric's Prompt Enhancers for ComfyUI.
 
 ---
 
+## [2.1.0] - 2026-09-21
+
+### Added - surreal engine (Phase 3)
+
+- `core/strategies/surreal`: eight generator modes taken from how the surrealists worked (affinity search,
+  problem, read the noise, double reading, working machine, archive composite, found strange, process
+  estrangement) feeding one critic (seeded code, or one LLM call). Output: the idea with ONE anomaly stated as
+  plain physical fact, an instruction block that protects it through the rewrite, a `why` trace, a
+  Magritte-style title and counter-terms. `count` is 1 or 2, never more.
+- **Surreal Premise** node. Its `llm_instructions` plugs into every enhancer's `wildcard_instructions`; the
+  Concept Survival Check measures whether the anomaly survived.
+- Lists in `wildcards/surreal/` and a personal `iconography.yaml` template (copy to `models/wildcards`).
+- `docs/SURREAL_GUIDE.md`.
+
+### Changed
+
+- The `surreal` preset (three video nodes) and `genre_style = surreal` (Text-to-Image) route through the engine
+  with the code critic instead of the words "dreamlike, ethereal, magical realism". Outputs for saved workflows
+  that use that preset change. If the engine produces nothing, the old text is used.
+
+---
+
 ## [2.0.1] - 2026-09-21
 
 ### Fixed - local Qwen3-VL backend

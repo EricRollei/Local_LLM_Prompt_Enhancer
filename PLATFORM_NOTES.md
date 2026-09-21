@@ -254,6 +254,12 @@ parameters). A small model also did three things that are now guarded against:
 It also wrote Kling's multi-shot form loosely (`Shot 1, 3 seconds:`). The profile now carries an exact example and
 a `kling_shots` validator that reports inexact lines. A 24B or larger model is the real fix for that kind of slip.
 
+## Surreal engine
+
+Phase 3. See `docs/SURREAL_GUIDE.md`. The engine is platform-agnostic; the per-platform defence is one instruction
+line in its block (tags near the front and weighted where the format allows, an element of its own in JSON, the
+first visual field in H3), and the profile's format rules always win.
+
 ## Testing
 
 `python_embeded\python.exe dev\verify_platforms.py` - part 1 checks the core and every profile

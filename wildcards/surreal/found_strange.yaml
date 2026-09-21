@@ -1,0 +1,40 @@
+# Found strange (Atget, Crewdson): NOTHING impossible. The strangeness is hour, emptiness, stillness,
+# a withheld story. Every entry is a CONDITION laid on the user's own scene, never a new scene.
+# The engine combines the hour with entries from two of the other groups. THE SUBJECT = the idea's main subject.
+surreal:
+  found_strange:
+    hour:
+      - the hour before dawn, artificial lights still on under a sky already pale
+      - noon with hardly a shadow, and nobody else about
+      - the last ten minutes of daylight, the sky still bright and the ground already dark
+      - three in the morning under sodium light
+      - a bright overcast Sunday, everything closed
+      - just after a storm, everything wet, the light suddenly clear
+    emptiness:
+      - the place is built for many people and nobody else is in it
+      - everything that can be opened in the scene stands open
+      - only one light in the whole scene is on
+      - something nearby has been set out for other people who have not arrived
+      - a vehicle in the background has been left with its door open and its interior light on
+      - everything in the scene is tidy except one thing knocked over and left
+    stillness:
+      - THE SUBJECT has stopped mid-gesture as if listening for something
+      - THE SUBJECT stands with arms at the sides, facing away from the obvious thing to look at
+      - THE SUBJECT is fully dressed for going out and has not moved for some time
+      - THE SUBJECT looks at something just outside the frame, and nothing in the picture says what
+      - THE SUBJECT and everyone else present avoid looking at each other
+      - THE SUBJECT holds an ordinary object a little too carefully
+    light:
+      - a pool of light on the ground with no visible source
+      - light coming from under a closed door or from behind a closed gate
+      - a single beam through haze, falling on nothing in particular
+      - the glow of a screen on a place where nobody is sitting
+      - headlights through a hedge or a window, raking the scene
+      - the only light in the scene comes from something that should be closed
+    trace:
+      - a hose or a tap left running
+      - a suitcase standing alone, packed and upright
+      - a telephone receiver off the hook, on the ground
+      - wet footprints that cross the scene and stop at a wall
+      - a neat mound of soil where no digging should happen
+      - one shoe on the steps

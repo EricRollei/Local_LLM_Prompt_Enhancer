@@ -1,0 +1,21 @@
+# YOUR personal iconography: the motifs, places and objects that recur in your own work.
+#
+# The surrealists who lasted worked from a small private vocabulary for decades - Magritte's bowler hat,
+# apple, curtain and sky; Uelsmann's own contact sheets; Dora Maar's own negatives - never from stock.
+# The surreal engine draws from this file FIRST when it needs a partner object, a place or a motif, so
+# results build a recognisable vocabulary across sessions instead of averaging toward everyone's.
+#
+# This shipped file is empty on purpose. Copy it to ComfyUI/models/wildcards/iconography.yaml (that
+# folder wins over this one and is never touched by an update) and fill it in. Same format as
+# objects.yaml: a plain string, or {text, tags} with the tag vocabulary documented there.
+# Also usable as ordinary wildcards: __iconography/objects__, __iconography/**__
+#
+# Examples of what belongs here (delete and replace with your own):
+#   objects:  - {text: a twin-lens reflex camera on a tripod, tags: [metal, glass, tabletop, optics, mechanical, midcentury]}
+#             - a deep-sea diving helmet
+#   places:   - a dry lake bed at first light
+#   motifs:   - a red top hat
+iconography:
+  objects: []
+  places: []
+  motifs: []

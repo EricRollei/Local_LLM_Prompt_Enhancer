@@ -1,0 +1,39 @@
+# Working machine (Remedios Varo): a mechanism, a material it is fed, a purpose - joined by a causal chain
+# that is explained well enough to look as if it works.
+surreal:
+  machines:
+    mechanism:
+      - a hand-cranked gear train in a brass housing
+      - a treadle and flywheel, like a sewing machine
+      - a system of pulleys and counterweights rising into the rafters
+      - an alembic and coiled glass condenser over a spirit lamp
+      - a loom with its warp threads running out through the window
+      - a clockwork escapement regulated by a swinging pendulum
+      - an orrery of brass arms and small spheres
+      - organ pipes fed by a leather bellows
+      - a mill wheel turned by a thin stream of falling sand
+      - a bicycle frame fitted with a sail and a rudder
+      - a violin bow drawn across a taut wire by a cam
+      - a funnel and a long speaking tube ending in a small horn
+    feedstock:
+      - starlight gathered by a funnel in the roof
+      - the moon's reflection, ladled from a basin
+      - birdsong caught in a wire cage
+      - thread unwound from the hem of the operator's own coat
+      - fog drawn in under the door
+      - the shadows of passers-by, collected off the pavement
+      - a single note held by a tuning fork
+      - rainwater from one particular gutter
+      - the ink of a letter, steamed off the page
+      - warmth from a sleeping cat
+    product:
+      - small live birds that fly out of the hopper
+      - a length of patterned cloth that pools on the floor
+      - sheet music, one bar at a time
+      - a fine powder the colour of the sky at that hour
+      - a checkerboard floor that extends tile by tile
+      - sleep, bottled in stoppered vials
+      - a staircase, one step at a time
+      - a second, smaller moon
+      - paint for the very picture being made
+      - paths that unroll across the floor and out of the door

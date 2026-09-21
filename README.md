@@ -1,7 +1,7 @@
 # Eric's Prompt Enhancers for ComfyUI
 
 [![License](https://img.shields.io/badge/License-Dual%20(NC%2FCommercial)-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.1-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.1.0-green.svg)](CHANGELOG.md)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Compatible-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
 
 A comprehensive suite of **5 AI-powered prompt enhancement nodes** for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation.
@@ -44,6 +44,11 @@ LTX-2, HunyuanVideo 1.5; and for API use Seedream 5, Nano Banana, GPT Image, Mid
 Kling 3, Veo 3.1, Wan 3.0 and others. Your own go in `profiles_user/`. The new **Platform Prompt Rewriter** node
 writes for any of them, including the structured formats (MiniMax H3 fields, FLUX.2 and Ideogram JSON, edit
 instructions). See [PLATFORM_NOTES.md](PLATFORM_NOTES.md).
+
+**Surreal as a procedure.** The `surreal` preset and genre now run a generator / critic loop grounded in how
+Magritte, Ernst, Dali, Varo, Uelsmann, Atget and Man Ray actually worked: one anomaly stated as plain fact against
+a credible world, chosen for affinity rather than distance, with a **Surreal Premise** node that shows every
+candidate and the reasoning. See [docs/SURREAL_GUIDE.md](docs/SURREAL_GUIDE.md).
 
 **The video nodes have a `target_model`.** The three video expanders were written around Wan 2.2. They now
 write for any video profile, and the default is **MiniMax H3**. Choose `wan22_video` to get the original
@@ -544,7 +549,7 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-**Version**: 2.0.1  
+**Version**: 2.1.0  
 **Last Updated**: September 21, 2026  
 **Author**: Eric Rollei  
 **Repository**: https://github.com/EricRollei/Local_LLM_Prompt_Enhancer

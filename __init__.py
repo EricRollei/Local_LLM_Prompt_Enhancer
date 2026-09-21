@@ -27,7 +27,7 @@ Features:
 
 Author: Eric Hiss (GitHub: EricRollei)
 Contact: [eric@historic.camera, eric@rollei.us]
-Version: 2.0.1
+Version: 2.1.0
 Date: September 2026
 License: Dual License (Non-Commercial and Commercial Use)
 Copyright (c) 2025 Eric Hiss. All rights reserved.
@@ -85,6 +85,7 @@ from .ideogram_magic_node import IdeogramMagicPrompt
 from .wildcard_processor_node import WildcardProcessor
 from .semantic_variation_node import SemanticVariation
 from .concept_survival_node import ConceptSurvivalCheck
+from .surreal_node import SurrealPremise
 
 # Platform profiles (core/profiles + profiles/*.yaml)
 from .platform_rewriter_node import PlatformPromptRewriter
@@ -108,6 +109,7 @@ NODE_CLASS_MAPPINGS = {
     "EricWildcardProcessor": WildcardProcessor,
     "EricSemanticVariation": SemanticVariation,
     "EricConceptSurvivalCheck": ConceptSurvivalCheck,
+    "EricSurrealPremise": SurrealPremise,
     # Platform profiles
     "EricPlatformPromptRewriter": PlatformPromptRewriter,
 }
@@ -131,6 +133,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "EricWildcardProcessor": "Wildcard Processor",
     "EricSemanticVariation": "Semantic Variation",
     "EricConceptSurvivalCheck": "Concept Survival Check",
+    "EricSurrealPremise": "Surreal Premise",
     # Platform profiles
     "EricPlatformPromptRewriter": "Platform Prompt Rewriter",
 }

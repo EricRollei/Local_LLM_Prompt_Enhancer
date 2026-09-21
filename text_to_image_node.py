@@ -1039,6 +1039,17 @@ class TextToImagePromptEnhancer:
                 resolved_settings.get("creative_randomness", "off")
             )
             
+            # genre_style = surreal is a procedure now, not the words "dreamlike, reality-bending": the surreal engine
+            # picks one operation for this idea and its block replaces the genre line. Nothing produced = old line.
+            self._surreal_block = ""
+            if str(resolved_settings.get("genre_style", "")).strip().lower() == "surreal":
+                try:
+                    from .surreal_support import preset_block
+                    self._surreal_block, surreal_note = preset_block(text_prompt, seed_value, "image")
+                    print(f"[Text-to-Image] {surreal_note}")
+                except Exception as error:
+                    print(f"[Text-to-Image] surreal engine unavailable ({error}); using the genre line")
+
             system_prompt = self._build_system_prompt(
                 target_platform,
                 platform_config,
@@ -3137,7 +3148,10 @@ Optimal Length: {platform_config['optimal_length']}
                 "retro futurism": "optimistic vintage sci-fi, bold colors, nostalgic futurism"
             }
             style_desc = genre_guidance.get(genre, genre)
-            prompt += f"STYLE/GENRE: {genre} - Infuse the prompt with {style_desc}\n\n"
+            if genre.strip().lower() == "surreal" and getattr(self, "_surreal_block", ""):
+                prompt += f"STYLE/GENRE: surreal - as a procedure, not a mood:\n{self._surreal_block}\n\n"
+            else:
+                prompt += f"STYLE/GENRE: {genre} - Infuse the prompt with {style_desc}\n\n"
 
         # Prompt context guidance
         context_map = {
