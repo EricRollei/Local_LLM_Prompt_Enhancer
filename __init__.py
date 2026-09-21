@@ -27,7 +27,7 @@ Features:
 
 Author: Eric Hiss (GitHub: EricRollei)
 Contact: [eric@historic.camera, eric@rollei.us]
-Version: 2.0.0
+Version: 2.0.1
 Date: September 2026
 License: Dual License (Non-Commercial and Commercial Use)
 Copyright (c) 2025 Eric Hiss. All rights reserved.

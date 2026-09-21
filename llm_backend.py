@@ -580,36 +580,15 @@ class LLMBackend:
             import folder_paths
             from pathlib import Path
             
-            # Determine model spec to use
-            # Check api_endpoint first - if it's custom (not default LM Studio URL), use it as model path
-            if self.endpoint and self.endpoint != "http://localhost:1234/v1":
-                # User specified custom path in api_endpoint field
-                model_spec = self.endpoint if self.endpoint.startswith("local:") else f"local:{self.endpoint}"
-                print(f"[Qwen3-VL Backend] Using custom model from api_endpoint: {model_spec}")
-            else:
-                # Auto-detect local model in VLM directory
-                vlm_dir = Path(folder_paths.models_dir) / "VLM" / "Qwen3-VL-4B-Instruct"
-                if vlm_dir.exists():
-                    model_spec = f"local:{str(vlm_dir)}"
-                    print(f"[Qwen3-VL Backend] Auto-detected local model: {vlm_dir}")
-                else:
-                    # Try other common Qwen model names in VLM directory
-                    vlm_base = Path(folder_paths.models_dir) / "VLM"
-                    qwen_models = list(vlm_base.glob("Qwen*-VL-*")) if vlm_base.exists() else []
-                    if qwen_models:
-                        model_spec = f"local:{str(qwen_models[0])}"
-                        print(f"[Qwen3-VL Backend] Auto-detected local model: {qwen_models[0]}")
-                    else:
-                        # Fall back to default (will try to download)
-                        model_spec = None
-                        print("[Qwen3-VL Backend] No local Qwen3-VL model found, will attempt download")
-            
-            # Combine system and user prompts for text generation
-            full_prompt = f"{system_prompt}\n\n{user_prompt}"
-            
+            # The api_endpoint field doubles as the model field for this backend. The backend resolves it:
+            # a folder, a folder name under models/VLM, an explicit org/name id; a URL or a stray value
+            # means auto-detect. Nothing is downloaded unless an org/name id was typed.
+            model_spec = self.endpoint or None
+
             # Call Qwen3-VL for pure text generation (no image)
             result = generate_text_with_qwen3_vl(
-                prompt=full_prompt,
+                prompt=user_prompt,
+                system_prompt=system_prompt,
                 model_spec=model_spec,
                 max_new_tokens=max_tokens,
                 temperature=self.temperature

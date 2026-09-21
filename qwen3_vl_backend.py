@@ -6,12 +6,14 @@ encapsulated so the Video Prompter nodes can optionally call Qwen3-VL
 without additional graph plumbing.
 
 Key capabilities:
-- Resolve/download a Qwen3-VL model (default: 4B Instruct) into ComfyUI's
-  models directory under ``VLM``.
+- Resolve a Qwen3-VL model from ComfyUI's ``models/VLM`` folder. Nothing is ever
+  downloaded silently: a download happens only when the user typed an explicit
+  ``org/name`` repository id that is not on disk. See ``resolve_model_spec``.
 - Optional quantization hints via ``@4bit``/``@8bit`` suffix on the model id.
 - Simple key/value override string (e.g. ``quant=8bit;attn=sdpa``) that can be
   provided via the ComfyUI input currently used for endpoints.
-- Cached model + processor instances so repeated invocations reuse memory.
+- Cached model + processor instances, keyed by the RESOLVED folder, so the image
+  pass and the text pass of one node share a single copy in VRAM.
 - Image caption helper returning a plain string suitable for downstream use.
 
 Dependencies are imported lazily and validated at call-time so that users who
@@ -24,9 +26,9 @@ from __future__ import annotations
 import os
 import re
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import folder_paths
 from PIL import Image
@@ -68,7 +70,7 @@ class Qwen3VLError(RuntimeError):
 class Qwen3VLConfig:
     """Resolved configuration for loading and running a Qwen3-VL model."""
 
-    model_id: str = DEFAULT_MODEL_ID
+    model_id: str = ""           # "" = auto-detect a local model (see resolve_model_spec)
     quantization: str = "auto"
     attention: Optional[str] = None
     device_map: str = "auto"
@@ -213,14 +215,16 @@ def _parse_config(
     model_spec: Optional[str],
     backend_hint: Optional[str],
 ) -> Qwen3VLConfig:
-    spec = (model_spec or DEFAULT_MODEL_ID).strip()
+    # "" = no model was named: resolve_model_spec auto-detects a local one. The default repo id is NOT filled in
+    # here, so that a missing default can never turn into a download nobody asked for.
+    spec = (model_spec or "").strip()
     quantization = "auto"
     attention: Optional[str] = None
     device_map = "auto"
 
     if "@" in spec:
         base, suffix = spec.split("@", 1)
-        spec = base.strip() or DEFAULT_MODEL_ID
+        spec = base.strip()
         quantization = suffix.strip().lower() or "auto"
 
     # Basic key/value override parser (e.g. quant=4bit;attn=sdpa)
@@ -245,7 +249,7 @@ def _parse_config(
         spec = os.path.expanduser(spec.split(":", 1)[1].strip())
 
     return Qwen3VLConfig(
-        model_id=spec or DEFAULT_MODEL_ID,
+        model_id=spec,
         quantization=quantization or "auto",
         attention=attention,
         device_map=device_map or "auto",
@@ -261,12 +265,16 @@ def _get_or_load_model(config: Qwen3VLConfig) -> Dict[str, Any]:
     if torch is None:
         raise Qwen3VLError("PyTorch is required for the local Qwen3-VL backend.")
 
+    # Resolve first, then look in the cache: the image pass names no model and the text pass used to name a full
+    # path, which made two cache keys for one folder and loaded the same model into VRAM twice.
+    model_path = _resolve_model_path(config.model_id)
+    config = _cache_key(config, model_path)
+
     with _CACHE_LOCK:
         cached = _MODEL_CACHE.get(config)
         if cached:
             return cached
-
-    model_path = _resolve_model_path(config.model_id)
+    print(f"[Qwen3-VL Backend] loading {model_path}")
 
     quantization_config = None
     if config.quantization in {"4bit", "8bit"}:
@@ -312,34 +320,126 @@ def _get_or_load_model(config: Qwen3VLConfig) -> Dict[str, Any]:
     return state
 
 
-def _resolve_model_path(model_id: str) -> str:
-    potential_path = Path(model_id)
-    if potential_path.exists():
-        return str(potential_path)
+REPO_ID = re.compile(r"^[A-Za-z0-9][\w.-]*/[A-Za-z0-9][\w.-]*$")
+DEFAULT_SPECS = {"", "default", "auto", "none"}
 
-    models_dir = Path(folder_paths.models_dir) / "VLM"
-    models_dir.mkdir(parents=True, exist_ok=True)
 
-    # Match Granddyser node behavior: extract just the model name (after last slash)
-    # This allows reusing models downloaded by the Granddyser nodes
-    model_name = model_id.rsplit("/", 1)[-1]
-    local_dir = models_dir / model_name
+def vlm_dir() -> Path:
+    return Path(folder_paths.models_dir) / "VLM"
 
-    if local_dir.exists() and any(local_dir.iterdir()):
-        return str(local_dir)
 
-    if snapshot_download is None:
-        raise Qwen3VLError(
-            "huggingface_hub is required to download '{}'".format(model_id)
-        )
+def _is_model_folder(path: Path) -> bool:
+    return path.is_dir() and (path / "config.json").is_file()
 
-    snapshot_download(
-        repo_id=model_id,
-        local_dir=str(local_dir),
-        local_dir_use_symlinks=False,
+
+def list_local_models() -> List[Path]:
+    """Qwen VL model folders in models/VLM (a folder counts when it holds a config.json), in a stable order."""
+    base = vlm_dir()
+    if not base.is_dir():
+        return []
+    found = [child for child in base.iterdir() if _is_model_folder(child) and re.search(r"qwen.*vl", child.name, re.I)]
+    return sorted(found, key=lambda path: path.name.lower())
+
+
+def _auto_detect() -> Optional[Path]:
+    """The default when no model was named: Qwen3-VL-4B-Instruct if present, else an Instruct model, else the first."""
+    models = list_local_models()
+    if not models:
+        return None
+    default_name = DEFAULT_MODEL_ID.rsplit("/", 1)[-1].lower()
+    for wanted in (lambda p: p.name.lower() == default_name,
+                   lambda p: "instruct" in p.name.lower() and "thinking" not in p.name.lower(),
+                   lambda p: True):
+        for path in models:
+            if wanted(path):
+                return path
+    return None
+
+
+def _find_local(name: str) -> Optional[Path]:
+    """A folder under models/VLM by name: exact, 'org_name' (how some nodes save 'org/name'), or case-insensitive."""
+    base = vlm_dir()
+    short = name.rsplit("/", 1)[-1]
+    candidates = [name.replace("/", os.sep), short, name.replace("/", "_")]
+    # By folder listing first, so the path comes back in the folder's real spelling (Windows would accept any case)
+    lowered = {candidate.lower() for candidate in candidates}
+    if base.is_dir():
+        for child in sorted(base.iterdir(), key=lambda path: path.name.lower()):
+            if child.name.lower() in lowered and _is_model_folder(child):
+                return child
+    for candidate in candidates:            # a nested folder such as Qwen/Qwen3-VL-8B-Instruct
+        path = base / candidate
+        if _is_model_folder(path):
+            return path
+    return None
+
+
+def resolve_model_spec(spec: Optional[str]) -> Tuple[str, List[str], bool]:
+    """
+    Turn whatever arrived in a node's model / endpoint field into a model folder.
+
+    Returns (folder or repo id, notes for the log, needs_download). Accepted, in this order:
+      - nothing, "default", the default repo id, or a URL (the field doubles as the LM Studio endpoint)
+        -> auto-detect in models/VLM
+      - an existing folder (with or without the old "local:" prefix)
+      - a folder NAME under models/VLM, e.g. Qwen3-VL-8B-Instruct
+      - an explicit org/name repository id: the local copy if there is one, otherwise - and only then - a download
+      - anything else (a stray value from an old workflow, such as "1") is ignored with a note -> auto-detect
+    Raises Qwen3VLError when no local model can be found; it never falls back to downloading the default.
+    """
+    notes: List[str] = []
+    text = (spec or "").strip()
+    if text.lower().startswith("local:"):
+        text = text.split(":", 1)[1].strip()
+    text = os.path.expanduser(text.strip().strip('"'))
+
+    if text and "://" not in text and text.lower() not in DEFAULT_SPECS:
+        folder = Path(text)
+        if _is_model_folder(folder):
+            return str(folder), notes, False
+        if folder.is_dir():
+            raise Qwen3VLError(f"'{folder}' is a folder but holds no config.json, so it is not a model folder.")
+        local = _find_local(text)
+        if local is not None:
+            return str(local), notes, False
+        if REPO_ID.match(text):
+            notes.append(f"'{text}' is not in {vlm_dir()}; downloading it because it was named explicitly")
+            return text, notes, True
+        notes.append(f"ignored the model field value '{text}': not a folder, not a model in {vlm_dir()}, not an org/name id")
+
+    detected = _auto_detect()
+    if detected is not None:
+        notes.append(f"using local model {detected.name}")
+        return str(detected), notes, False
+
+    present = ", ".join(path.name for path in list_local_models()) or "none"
+    raise Qwen3VLError(
+        f"No local Qwen VL model found in {vlm_dir()} (found: {present}). Nothing is downloaded automatically. "
+        f"Put a model folder there, give a full folder path in the node's endpoint / model field, or type an explicit "
+        f"repository id such as {DEFAULT_MODEL_ID} in that field to download it."
     )
 
+
+def _resolve_model_path(model_id: str) -> str:
+    target, notes, needs_download = resolve_model_spec(model_id)
+    for note in notes:
+        print(f"[Qwen3-VL Backend] {note}")
+    if not needs_download:
+        return target
+
+    if snapshot_download is None:
+        raise Qwen3VLError("huggingface_hub is required to download '{}'".format(target))
+    base = vlm_dir()
+    base.mkdir(parents=True, exist_ok=True)
+    # Match Granddyser node behavior: the folder is the model name (after the last slash)
+    local_dir = base / target.rsplit("/", 1)[-1]
+    snapshot_download(repo_id=target, local_dir=str(local_dir), local_dir_use_symlinks=False)
     return str(local_dir)
+
+
+def _cache_key(config: "Qwen3VLConfig", model_path: str) -> "Qwen3VLConfig":
+    """One cache entry per model FOLDER, however it was named ('Qwen/...', a bare name, a full path)."""
+    return replace(config, model_id=os.path.normcase(os.path.abspath(model_path)))
 
 
 def _resolve_model_device(model: Any) -> Any:
@@ -362,13 +462,16 @@ def generate_text_with_qwen3_vl(
     backend_hint: Optional[str] = None,
     max_new_tokens: int = 2000,
     temperature: float = 0.7,
+    system_prompt: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Generate text using Qwen3-VL model (no image input - pure text generation).
     
     Parameters
     ----------
     prompt:
-        Text prompt for generation (can include system instructions).
+        The user turn.
+    system_prompt:
+        Optional system turn. Long instructions belong here, not glued in front of the user's text.
     model_spec:
         Optional model specification (e.g., "local:/path/to/model" or None for default).
     backend_hint:
@@ -391,7 +494,10 @@ def generate_text_with_qwen3_vl(
         device = _resolve_model_device(model)
         
         # Format as text-only conversation
-        messages = [
+        messages = []
+        if system_prompt and system_prompt.strip():
+            messages.append({"role": "system", "content": [{"type": "text", "text": system_prompt}]})
+        messages += [
             {
                 "role": "user",
                 "content": [
@@ -426,9 +532,13 @@ def generate_text_with_qwen3_vl(
             generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )[0]
         
+        response_text = response_text.strip()
+        if "</think>" in response_text:          # Thinking variants: keep the answer, drop the reasoning
+            response_text = response_text.split("</think>")[-1].strip()
+
         return {
             "success": True,
-            "response": response_text.strip(),
+            "response": response_text,
             "error": None
         }
         

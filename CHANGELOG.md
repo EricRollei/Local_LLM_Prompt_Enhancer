@@ -4,6 +4,26 @@ All notable changes to Eric's Prompt Enhancers for ComfyUI.
 
 ---
 
+## [2.0.1] - 2026-09-21
+
+### Fixed - local Qwen3-VL backend
+
+- **No silent downloads.** A value in the endpoint / model field that was not the default LM Studio URL was treated
+  as a model path, and anything that was not a folder was sent to Hugging Face as a repository id (a stray `1`
+  left in the field by an old workflow asked for the repo `1`). The field is now resolved in this order: an
+  existing model folder, a folder NAME under `models/VLM` (`Qwen3-VL-8B-Instruct`), an explicit `org/name` id
+  (local copy if present, otherwise - and only then - a download). A URL or any other value is ignored with a
+  log line and a local model is auto-detected. With no local model the node stops with an error that lists what
+  is in `models/VLM`.
+- **One model in VRAM, not two.** The image pass cached the model under its repo id and the text pass under its
+  folder path, so the same 4B model was loaded twice. The cache is keyed by the resolved folder, and the Advanced
+  video node's image pass now uses the same model field as its text pass.
+- The system prompt is sent as a system turn instead of being glued in front of the user's text, and the
+  `<think>` block of Thinking variants is removed from text answers as it already was from captions.
+- Test: `dev/verify_qwen_backend.py` (no model, no network).
+
+---
+
 ## [2.0.0] - 2026-09-21
 
 Version 2 keeps every node id, every input name and the order of every existing widget, so saved workflows load.

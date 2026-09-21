@@ -1,7 +1,7 @@
 # Eric's Prompt Enhancers for ComfyUI
 
 [![License](https://img.shields.io/badge/License-Dual%20(NC%2FCommercial)-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.1-green.svg)](CHANGELOG.md)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Compatible-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
 
 A comprehensive suite of **5 AI-powered prompt enhancement nodes** for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation.
@@ -544,7 +544,7 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-**Version**: 2.0.0  
+**Version**: 2.0.1  
 **Last Updated**: September 21, 2026  
 **Author**: Eric Rollei  
 **Repository**: https://github.com/EricRollei/Local_LLM_Prompt_Enhancer

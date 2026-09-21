@@ -563,7 +563,8 @@ class AIVideoPromptExpanderAdvanced:
                     print(f"[Advanced Node] PASS 1: Analyzing reference image with Qwen3-VL...")
                     
                     # Get comprehensive image caption (no mode filtering yet)
-                    vision_caption = self._process_reference_image(reference_image)
+                    # Same model field as the text pass, so one model serves both (a URL there means auto-detect)
+                    vision_caption = self._process_reference_image(reference_image, api_endpoint)
                     
                     if vision_caption:
                         mode = "image-to-video"
@@ -1054,7 +1055,7 @@ class AIVideoPromptExpanderAdvanced:
         
         return mode_instructions.get(reference_mode, mode_instructions["recreate_exact"])
     
-    def _process_reference_image(self, image_tensor):
+    def _process_reference_image(self, image_tensor, model_spec=None):
         """
         PASS 1: Comprehensive Vision Analysis using Qwen3-VL
         Get complete image description without reference_mode filtering.
@@ -1114,7 +1115,7 @@ class AIVideoPromptExpanderAdvanced:
 
 Be comprehensive and detailed - this caption will be used to generate video prompts."""
             
-            caption_result = caption_with_qwen3_vl(pil_image, comprehensive_prompt)
+            caption_result = caption_with_qwen3_vl(pil_image, comprehensive_prompt, model_spec=model_spec)
             
             if caption_result["success"]:
                 return caption_result["caption"]
