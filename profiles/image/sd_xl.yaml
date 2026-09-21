@@ -1,0 +1,36 @@
+id: sd_xl
+name: "Stable Diffusion XL"
+developer: "Stability AI"
+summary: "CLIP-L plus OpenCLIP-bigG. Reads 77-token chunks: short descriptive phrases and keywords, the key content in the first 75 tokens. Negative prompt matters."
+modality: image
+tasks: [t2i]
+encoder: "CLIP ViT-L + OpenCLIP bigG (77-token chunks)"
+encoder_family: clip
+caption_style: tags_prose
+languages: [en]
+target_words: [40, 110]
+max_tokens: 150
+negative: "yes"
+negative_default: "ugly, tiling, poorly drawn, bad anatomy, deformed, disfigured, worst quality, low quality, blurry"
+quality_tokens: help
+quality_token_list: [masterpiece, best quality, highly detailed, professional, intricate details, sharp focus]
+quoted_text: double
+weights: true
+structure: "Subject and medium first, then key attributes, setting, light, style; comma-separated phrases."
+rules:
+  - "Front-load: subject, medium and style in the first 75 tokens - everything later has less pull."
+  - "Comma-separated descriptive phrases rather than long sentences."
+  - "A few quality tokens at the start help, more on fine-tunes than on the base model."
+  - "(term:1.2) emphasis on at most two or three terms."
+avoid:
+  - "Long flowing sentences that burn the token budget"
+  - "Repeated terms"
+  - "Stacks of parentheses"
+legacy:
+  prompt_style: token_optimized
+  supports: [quality_emphasis, booru_tags, natural_language]
+  length_guidance: "Aim for up to 150 tokens (~110 words) with dense, front-loaded details."
+sources:
+  - {url: "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0", supports: "two CLIP text encoders", confidence: medium}
+checked: "2026-09-20"
+confidence: medium

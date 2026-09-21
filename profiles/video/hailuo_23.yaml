@@ -1,0 +1,38 @@
+id: hailuo_23
+name: "MiniMax Hailuo 2.3 / 02 (API)"
+developer: "MiniMax"
+summary: "Hosted, silent video models (6 or 10 s), now listed as legacy behind H3. Prose plus square-bracket camera commands, 2000 characters, no negative prompt. Set prompt_optimizer=false on the API call or MiniMax rewrites the prompt again."
+modality: video
+tasks: [t2v, i2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: bracket_prose
+validator: hailuo_brackets
+languages: [en, zh]
+target_words: [50, 160]
+max_chars: 2000
+negative: "no"
+quality_tokens: neutral
+quoted_text: none
+weights: false
+audio: false
+structure: "Subject + visible action + setting + light and look, with a bracket camera command right after the clause it applies to: 'A man picks up a book [Pedestal up], then reads [Static shot].'"
+rules:
+  - "Only these 15 commands exist: [Truck left] [Truck right] [Pan left] [Pan right] [Push in] [Pull out] [Pedestal up] [Pedestal down] [Tilt up] [Tilt down] [Zoom in] [Zoom out] [Shake] [Tracking shot] [Static shot]."
+  - "Commands inside one bracket happen together: [Pan left,Pedestal up]. Three at most per bracket."
+  - "Commands placed one after another in the text happen in sequence."
+  - "One location, no time jumps: the clip is 6 or 10 seconds."
+avoid:
+  - "Inventing commands ([Orbit], [Dolly]) - unknown brackets are ignored or rendered oddly"
+  - "More than about two camera changes in one clip"
+camera: ["[Truck left]", "[Truck right]", "[Pan left]", "[Pan right]", "[Push in]", "[Pull out]", "[Pedestal up]", "[Pedestal down]", "[Tilt up]", "[Tilt down]", "[Zoom in]", "[Zoom out]", "[Shake]", "[Tracking shot]", "[Static shot]"]
+task_rules:
+  i2v:
+    target_words: [25, 90]
+    rules:
+      - "Spend the words on motion, camera and stability; do not restate what the image already shows."
+sources:
+  - {url: "https://platform.minimax.io/docs/api-reference/video-generation-t2v", supports: "2000 characters, the 15 commands, combination rules, example, optimizer flags, no negative prompt", confidence: medium}
+  - {url: "https://platform.minimax.io/docs/api-reference/video-generation-i2v", supports: "I2V models, optional prompt", confidence: medium}
+checked: "2026-09-20"
+confidence: medium

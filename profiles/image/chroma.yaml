@@ -1,0 +1,37 @@
+id: chroma
+name: "Chroma1-HD"
+developer: "lodestones"
+summary: "8.9B de-distilled FLUX.1-schnell derivative, T5-XXL only (no CLIP), real CFG. Descriptive prose leads; a long negative prompt works better than a short one. (Not related to Meissonic - the earlier label was wrong.)"
+modality: image
+tasks: [t2i]
+encoder: "T5-XXL (512 tokens), no CLIP"
+encoder_family: t5
+caption_style: prose
+languages: [en]
+target_words: [80, 220]
+max_tokens: 512
+negative: "yes"
+negative_default: "low quality, ugly, unfinished, out of focus, deformed, disfigure, blurry, smudged, restricted palette, flat colors, jpeg artifacts, watermark, signature, amateur snapshot, plastic skin, muddy shadows, overexposed highlights, cluttered composition, cropped subject"
+negative_note: "CFG 3-5, about 40 steps. Chroma1-Flash has CFG baked in: run at CFG 1, negative ignored. Community guidance: negatives under ~70 tokens work worse than a long one or none."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "State the medium first ('A photograph of', 'A digital illustration of'), then 2-6 sentences: subjects and their relations, setting, light. Optional tags after the prose."
+rules:
+  - "State the medium explicitly in the first words."
+  - "Describe spatial relations between subjects clearly; Chroma handles multi-subject scenes well."
+  - "Describe features instead of naming artists or obscure characters - most were not learned."
+  - "A closing sentence about finish ('The photo is sharp and well composed') mirrors the model card's own example."
+avoid:
+  - "Relying on artist names"
+  - "Comma tag lists as the main body (pulls toward cartoon); if tags are used, put them after the prose"
+legacy:
+  prompt_style: natural_compositional
+  supports: [complex_scenes, multiple_subjects, natural_language, detailed_positioning]
+  length_guidance: "Deliver around 220 words describing every subject, relation and environment nuance."
+sources:
+  - {url: "https://huggingface.co/lodestones/Chroma1-HD", supports: "architecture, T5-only, example prompt and negative, CFG 3 / 40 steps, Flash variant", confidence: high}
+  - {url: "https://huggingface.co/docs/diffusers/main/api/pipelines/chroma", supports: "512 tokens, negative prompt support", confidence: high}
+  - {url: "https://github.com/maybleMyers/chromaforge/blob/main/levzzz_chroma_guide.md", supports: "THIRD PARTY: Gemini-style captions, aesthetic N tags, long negatives", confidence: low}
+checked: "2026-09-20"
+confidence: medium

@@ -1,0 +1,43 @@
+id: illustrious
+name: "Illustrious XL"
+developer: "OnomaAI Research"
+summary: "SDXL anime fine-tune on Danbooru. A tag model: tags are written with spaces, comma separated, and the quality tags come LAST. From v1.0 short plain-English phrases may be mixed in, but Onoma's own card says tags are more accurate."
+modality: image
+tasks: [t2i]
+encoder: "SDXL CLIPs (77-token chunks)"
+encoder_family: clip
+caption_style: tags
+validator: tags
+languages: [en]
+target_words: [25, 80]      # about 15-45 tags. The earlier ~150 target only produced padding (same finding as NoobAI); Onoma states no length
+negative: "yes"
+negative_default: "worst quality, bad quality, low quality, lowres, bad anatomy, bad hands, extra digits, jpeg artifacts, signature, watermark, username"
+negative_note: "Onoma's v0.1 card: Euler a, 20-28 steps, CFG 5-7.5. 'worst quality' and 'bad quality' are real training labels for this model, so they work in the negative. Onoma publishes no official negative string; this one is those labels plus common Danbooru negatives."
+quality_tokens: required
+suffix: "masterpiece, best quality"
+quality_token_list: [masterpiece, best quality, good quality, absurdres]
+quoted_text: none
+weights: true
+structure: "person count (1girl, 2boys, no humans), character name, series, rating if wanted (general, sensitive), general tags (appearance, clothing, pose, expression, composition, background, lighting), artist, then the quality tags, then an optional year tag."
+rules:
+  - "Danbooru tags written with SPACES, never underscores: 'looking at viewer', 'long hair', 'hatsune miku'. Comma separated."
+  - "Follow the order in the structure. It is the order of the training captions; quality tags near the END, not at the start."
+  - "A tag that contains parentheses is written with them escaped, because bare parentheses are weight syntax in ComfyUI: 'ms paint \\(medium\\)', 'saber \\(fate\\)'."
+  - "Use one framing tag that fits (portrait, upper body, cowboy shot, full body); never two that conflict."
+  - "v1.0 and later: a short plain-English phrase may be mixed in for something no tag covers. Tags first."
+avoid:
+  - "Underscores inside tags"
+  - "Sentences and narrative"
+  - "Photography and 3D-render vocabulary"
+  - "Quality tags at the start of the prompt"
+  - "Padding with near-synonyms to reach a length"
+legacy:
+  prompt_style: booru_detailed
+  supports: [booru_tags, character_details, quality_emphasis, anime_specific]
+  length_guidance: "About 15-45 tags. Stop when the picture is described; do not pad."
+sources:
+  - {url: "https://arxiv.org/html/2409.19946v1", supports: "Onoma's paper: literal prompts with spaced tags, training caption order (person count, character, rating, general, artist, quality, year), quality-tag percentiles", confidence: high}
+  - {url: "https://huggingface.co/OnomaAIResearch/Illustrious-xl-early-release-v0", supports: "sampler, steps, CFG, framing-tag advice", confidence: medium}
+  - {url: "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v1.0", supports: "natural language plus tags from v1.0, 'tag-based approaches are more concise and accurate', 1536 px native", confidence: medium}
+checked: "2026-09-21"
+confidence: high

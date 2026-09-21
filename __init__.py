@@ -10,6 +10,7 @@ Includes:
 - Image-to-Video Prompt Expander: Vision model analyzes image + motion expansion
 - Image-to-Image Prompt Expander: Platform-aware img2img prompt generation (5 platforms)
 - Text-to-Image Prompt Enhancer: Advanced multi-platform image prompt generation (8 platforms)
+- Alice T2V Prompt Refiner: Structures prompts specifically for the Alice T2V 14B MoE model
 
 Features:
 - 8 image platforms: Flux, SDXL, Pony Diffusion, Illustrious XL, Chroma, Qwen Image/Edit, Wan Image
@@ -26,8 +27,8 @@ Features:
 
 Author: Eric Hiss (GitHub: EricRollei)
 Contact: [eric@historic.camera, eric@rollei.us]
-Version: 1.7.0
-Date: October 2025
+Version: 2.0.0
+Date: September 2026
 License: Dual License (Non-Commercial and Commercial Use)
 Copyright (c) 2025 Eric Hiss. All rights reserved.
 
@@ -58,9 +59,10 @@ Platform Knowledge Credits:
 - SDXL by Stability AI
 - Pony Diffusion by Astralite
 - Illustrious XL by OnomaAI Research
-- Chroma/Meissonic by Tencent AI Lab
+- Chroma by lodestones
 - Qwen by Alibaba Cloud
-- Wan by Wuhan AI Institute
+- Wan by Alibaba (Wan team / Tongyi Lab)
+- Alice T2V by Mirage (gomirageai)
 """
 
 from .prompt_expander_node import AIVideoPromptExpander
@@ -68,6 +70,24 @@ from .prompt_expander_node_advanced import AIVideoPromptExpanderAdvanced
 from .image_to_video_node import ImageToVideoPromptExpander
 from .image_to_image_node import ImageToImagePromptExpander
 from .text_to_image_node import TextToImagePromptEnhancer
+from .alice_prompter_node import AlicePromptRefiner
+
+# Prompt Database nodes
+from .save_prompt_node import SavePromptToDatabase
+from .search_prompt_node import SearchPromptDatabase
+from .import_prompts_node import ImportPromptsToDatabase
+from .browse_prompt_node import BrowsePromptDatabase
+
+# Ideogram 4 nodes
+from .ideogram_magic_node import IdeogramMagicPrompt
+
+# Wildcard engine (core/wildcards) and variability engine (core/variability)
+from .wildcard_processor_node import WildcardProcessor
+from .semantic_variation_node import SemanticVariation
+from .concept_survival_node import ConceptSurvivalCheck
+
+# Platform profiles (core/profiles + profiles/*.yaml)
+from .platform_rewriter_node import PlatformPromptRewriter
 
 # Node class mappings for ComfyUI
 NODE_CLASS_MAPPINGS = {
@@ -75,7 +95,21 @@ NODE_CLASS_MAPPINGS = {
     "EricVideoPromptExpanderAdvanced": AIVideoPromptExpanderAdvanced,
     "EricImageToVideoPromptExpander": ImageToVideoPromptExpander,
     "EricImageToImagePromptExpander": ImageToImagePromptExpander,
-    "EricTextToImagePromptEnhancer": TextToImagePromptEnhancer
+    "EricTextToImagePromptEnhancer": TextToImagePromptEnhancer,
+    "EricAlicePromptRefiner": AlicePromptRefiner,
+    # Database nodes
+    "EricSavePromptToDB": SavePromptToDatabase,
+    "EricSearchPromptDB": SearchPromptDatabase,
+    "EricImportPromptsToDB": ImportPromptsToDatabase,
+    "EricBrowsePromptDB": BrowsePromptDatabase,
+    # Ideogram 4
+    "EricIdeogramMagicPrompt": IdeogramMagicPrompt,
+    # Wildcards
+    "EricWildcardProcessor": WildcardProcessor,
+    "EricSemanticVariation": SemanticVariation,
+    "EricConceptSurvivalCheck": ConceptSurvivalCheck,
+    # Platform profiles
+    "EricPlatformPromptRewriter": PlatformPromptRewriter,
 }
 
 # Display names in ComfyUI
@@ -84,7 +118,23 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "EricVideoPromptExpanderAdvanced": "Video Prompt Expander (Advanced)",
     "EricImageToVideoPromptExpander": "Image-to-Video Prompt Expander",
     "EricImageToImagePromptExpander": "Image-to-Image Prompt Expander",
-    "EricTextToImagePromptEnhancer": "Text-to-Image Prompt Enhancer"
+    "EricTextToImagePromptEnhancer": "Text-to-Image Prompt Enhancer",
+    "EricAlicePromptRefiner": "Alice T2V Prompt Refiner",
+    # Database nodes
+    "EricSavePromptToDB": "Save Prompt to DB",
+    "EricSearchPromptDB": "Search Prompt DB",
+    "EricImportPromptsToDB": "Import Prompts to DB",
+    "EricBrowsePromptDB": "Browse / Random Prompt DB",
+    # Ideogram 4
+    "EricIdeogramMagicPrompt": "Ideogram 4 Magic Prompt",
+    # Wildcards
+    "EricWildcardProcessor": "Wildcard Processor",
+    "EricSemanticVariation": "Semantic Variation",
+    "EricConceptSurvivalCheck": "Concept Survival Check",
+    # Platform profiles
+    "EricPlatformPromptRewriter": "Platform Prompt Rewriter",
 }
 
-__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
+WEB_DIRECTORY = "./web"
+
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']

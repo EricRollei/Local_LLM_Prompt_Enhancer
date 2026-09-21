@@ -1,0 +1,36 @@
+id: pony
+name: "Pony Diffusion V6 XL"
+developer: "PurpleSmartAI"
+summary: "SDXL fine-tune steered by score tags. Score tags first, then comma-separated natural-language phrases."
+modality: image
+tasks: [t2i]
+encoder: "SDXL CLIPs (77-token chunks), clip skip 2"
+encoder_family: clip
+caption_style: tags_prose
+languages: [en]
+target_words: [90, 200]
+negative: "yes"
+negative_default: "score_6, score_5, score_4, worst quality, low quality, bad anatomy, sketch, jpeg artifacts, blurry, simple background"
+quality_tokens: required
+prefix: "score_9, score_8_up, score_7_up"
+quality_token_list: [score_9, score_8_up, score_7_up]
+quoted_text: none
+weights: true
+structure: "score tags, optional source_ and rating_ tags, then comma-separated descriptive phrases: character, outfit, pose, setting, light."
+rules:
+  - "Start with exactly: score_9, score_8_up, score_7_up (the model card's full string adds score_6_up, score_5_up, score_4_up)."
+  - "Optional steering tags after the score tags: source_anime, source_cartoon, source_furry, source_pony; rating_safe, rating_questionable, rating_explicit."
+  - "After the tags use readable phrases with spaces: 'long flowing hair', not long_hair."
+  - "Only the score tags keep underscores."
+avoid:
+  - "'masterpiece, best quality' - they do little on Pony; the score tags do the work"
+  - "Underscore tag format in the descriptive part"
+legacy:
+  prompt_style: natural_detailed
+  supports: [natural_language, score_system, quality_modifiers, detailed_descriptions]
+  length_guidance: "Generate 150-200 words with rich descriptive detail after the required score tags."
+  required_negative: [score_6, score_5, score_4, worst quality, low quality, bad anatomy, sketch, jpeg artifacts]
+sources:
+  - {url: "https://civitai.com/models/257749/pony-diffusion-v6-xl", supports: "score tag recommendation, source and rating tags, clip skip 2 (from prior knowledge, not re-read)", confidence: medium}
+checked: "2026-09-20"
+confidence: medium

@@ -1,0 +1,31 @@
+id: grok_imagine_video
+name: "Grok Imagine Video 1.5 (API)"
+developer: "xAI"
+summary: "xAI's video model: 1-15 s with sound, image and voice references cited with angle-bracket tags. xAI documents the parameters and no prompting guide, so this is plain prose plus the tag syntax."
+modality: video
+tasks: [t2v, i2v, flf2v, ref2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [40, 160]
+negative: "no"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: true
+structure: "Subject, action, setting, camera, light, then sound and any spoken line."
+rules:
+  - "Spoken lines in double quotes with the speaker named. (xAI documents no dialogue format; this is the common one.)"
+task_rules:
+  ref2v:
+    rules:
+      - "Reference tags, used only for inputs the user supplied: images <IMAGE_1>, <IMAGE_2> ... (from one), voices <AUDIO_0>, <AUDIO_1>, <AUDIO_2> (from zero). xAI's example: 'The person from <IMAGE_1> presents the product from <IMAGE_2>, speaking with the voice from <AUDIO_0>.'"
+  i2v:
+    target_words: [20, 90]
+api_note: "Sound is on by default (generate_audio=False mutes). No negative prompt, prompt limit or rewrite flag documented."
+sources:
+  - {url: "https://docs.x.ai/developers/model-capabilities/video/generation", supports: "models, durations, audio default", confidence: medium}
+  - {url: "https://docs.x.ai/developers/model-capabilities/video/reference-to-video", supports: "reference tag syntax", confidence: medium}
+checked: "2026-09-21"
+confidence: low

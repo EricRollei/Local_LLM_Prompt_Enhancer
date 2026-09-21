@@ -1,256 +1,123 @@
-# Wildcard Support Guide
+# Wildcard and Variation Guide
 
-## What Are Wildcards?
+Wildcards turn one prompt into many. Every enhancer node in this package resolves them before the
+LLM sees the text, tells the LLM which elements were picked, and checks that the ones you marked as
+exact survived the rewrite. The grammar is the Dynamic Prompts / Impact Pack grammar, so packs you
+have already downloaded work as they are, with a few additions on top.
 
-Wildcards let you create **dynamic prompts** with random variations. Instead of typing the same prompt multiple times with different subjects, use wildcards for automatic randomization.
+Everything written for the first version of this guide still works: `{animal}`,
+`{instrument:piano|guitar|drums}`.
+
+## Where lists live
+
+Put packs in `ComfyUI/models/wildcards`. Every node reads that folder, plus any `wildcards:` entry
+in `extra_model_paths.yaml`, with no configuration. The lists that ship with the package are in its
+own `wildcards/` folder; see the README there for the search order and what happens when two folders
+define the same name (the first folder wins, your pack replaces the shipped list).
+
+`python_embeded\python.exe custom_nodes\video_prompter\dev\scan_wildcard_packs.py` reports on
+everything found: unreadable files, names defined twice, references to packs you do not have.
 
 ## Syntax
 
-### Inline Wildcards (Recommended)
-```
-{category:option1|option2|option3}
-```
+```text
+__animal__                       one entry from animal.txt (or animal.yaml)
+__light/setups__                 a list inside a folder
+__painters__                     depth-agnostic: finds style/painters if no top-level list has that name
+__materials__                    a folder name stands for everything inside it (same as __materials/**__)
+__camera/**__                    any list under a folder
+__colors*__                      glob on the name
 
-**Example:**
-```
-A {animal:cat|dog|bird} playing {instrument:piano|guitar|drums} in a {location:park|studio|street}
-```
+{red|green|blue}                 variant: one of these
+{3::common|1::rare}              weights
+{2$$red|green|blue}              two of them, joined with ", "
+{1-3$$ and $$a|b|c|d}            one to three, joined with " and "
+{-3$$a|b|c|d}  {2-$$a|b|c|d}     open ranges: up to three / two or more
+{@a|b|c}                         cyclical: steps with the node's index instead of rolling
 
-**Generates one of:**
-- "A cat playing piano in a park"
-- "A dog playing guitar in a studio"  
-- "A bird playing drums in a street"
-- (Any combination of the options)
+${who=!__person__} ... ${who}    pick once, reuse the same pick
+${who=__person__} ... ${who}     store the wildcard, roll it again each time it is used
+${mood:calm}                     a variable with a default
+__season(place=harbour)__        pass a value into a list that uses ${place}
 
-### Predefined Wildcards
-```
-{category}
-```
+__objects[metal AND handheld]__  entries of a tagged list that match a tag expression
+__[hollow AND antique]__         the same across every tagged list
+                                 operators: AND OR NOT XOR and parentheses, in capitals
 
-**Example:**
-```
-A {person} using a {tool} to {action} the {object}
-```
+[if rain : umbrella | sunhat]    conditional on what was PICKED so far ({rain|sun} earlier in the prompt),
+[if t=night : neon | sunlight]   or on a variable's value; words you typed yourself do not count
+__db:red door__                  a matching prompt from the prompt database
 
-**Uses built-in categories:**
-- {animal}, {person}, {profession}, {instrument}, {location}
-- {weather}, {time}, {emotion}, {action}, {color}
-- {vehicle}, {tool}, {object}
-
-## Built-in Wildcard Categories
-
-| Category | Options |
-|----------|---------|
-| {animal} | cat, dog, bird, horse, rabbit, fox, deer, wolf |
-| {person} | man, woman, child, elder, teenager, artist, scientist |
-| {profession} | detective, chef, doctor, teacher, engineer, musician, artist |
-| {instrument} | piano, guitar, violin, drums, saxophone, flute |
-| {location} | park, studio, street, forest, beach, city, room |
-| {weather} | sunny, rainy, snowy, foggy, stormy, cloudy |
-| {time} | morning, noon, afternoon, evening, night, midnight |
-| {emotion} | happy, sad, angry, surprised, calm, excited, pensive |
-| {action} | walking, running, dancing, working, playing, creating |
-| {color} | red, blue, green, yellow, purple, orange, black, white |
-| {vehicle} | car, motorcycle, bicycle, truck, bus, train, boat |
-| {tool} | hammer, wrench, paintbrush, camera, telescope, microscope |
-| {object} | book, ball, box, bottle, phone, computer, chair |
-
-## Examples
-
-### Example 1: Character Variations
-```
-Input: A {profession:detective|chef|scientist} in their {location:office|kitchen|laboratory} at {time:dawn|midnight|noon}
-
-Possible outputs:
-- "A detective in their office at dawn"
-- "A chef in their kitchen at midnight"  
-- "A scientist in their laboratory at noon"
+{animal}  {label:a|b|c}          first-version forms, still accepted (legacy_syntax on)
 ```
 
-### Example 2: Vehicle Scenes
-```
-Input: A {color:red|blue|black} {vehicle:sports car|motorcycle|truck} racing through a {weather:rainy|snowy|foggy} {location:city|mountain pass|desert}
+Braces that are not wildcards are left alone: JSON prompts pass through untouched, and so does a
+single-option brace such as `{word}`.
 
-Possible outputs:
-- "A red sports car racing through a rainy city"
-- "A blue motorcycle racing through a snowy mountain pass"
-- "A black truck racing through a foggy desert"
-```
+When a pick lands behind "a" or "an", the article is corrected for it ("a {owl|cat}" reads "an owl"),
+by sound where spelling misleads ("a unicorn", "an hour"). Your own words are never changed.
 
-### Example 3: Mixed Inline & Predefined
-```
-Input: A {person} {emotion:happily|sadly|angrily} holding a {color} {object}
+## Concepts, exact words, inspiration
 
-Uses predefined {person} and {object} with inline emotions and colors.
-```
+A wildcard pick is an idea, not a string. After the picks are made, the LLM is given a short block
+listing them and is free to say each one in whatever words suit the target model: "rusty" may become
+"oxidised steel flaking orange at the seams" for a prose model or `rust, corroded metal` for a tag
+model. Three bindings decide how tightly a pick is held:
 
-### Example 4: Complex Scene
-```
-Input: {profession:astronaut|pilot|diver} explores {location:alien planet|underwater cave|arctic tundra} during {time:sunrise|sunset|night} with {tool:scanner|camera|equipment}
-
-Creates varied exploration scenes automatically.
+```text
+__materials__     concept (default)   the meaning must survive; the wording is the LLM's
+__=lora_triggers__  {=a|b}   verbatim  the exact string must survive. For LoRA triggers, names, text to render.
+__?moods__          {?a|b}   loose     inspiration only; the LLM may transform or absorb it
 ```
 
-## How It Works
+Verbatim picks are checked in the LLM's answer and added back if it dropped them. The
+`wildcard_llm_block` toggle on each node turns the block off, in which case the LLM only sees the
+resolved text.
 
-1. **Wildcard Detection**: Node scans your prompt for `{...}` syntax
-2. **Random Selection**: Picks one option from each wildcard
-3. **Replacement**: Substitutes wildcards with chosen options
-4. **Expansion**: Sends processed prompt to LLM for detail expansion
+## Seeds
 
-## Breakdown Output
+`wildcard_seed` on every enhancer: `-1` rolls fresh picks on every run, `0` or more is reproducible
+(same seed, same lists, same picks). The Text-to-Image node uses its own `random_seed` and
+`seed_mode` instead. With several variations, variation N uses seed + N.
 
-The node shows what was chosen:
+A fresh roll is not lost: the node's report shows the seed that was drawn, for example
+`seed=1739572853 (fresh roll - use this number as the seed to get these picks again)`.
 
-```
-Original Input:
-A {animal:cat|dog|bird} playing {instrument:piano|guitar}
+## Nodes
 
-Wildcard Replacements:
-- animal: cat
-- instrument: piano
+**Wildcard Processor** resolves a prompt with no LLM. Outputs the text, the `llm_instructions` block,
+the full record as JSON, and a report. `mode = combinatorial` with a rising `index` walks every
+combination in order, which pairs well with sweep workflows.
 
-Processed Prompt:
-A cat playing piano
-```
+**Semantic Variation** keeps a prompt's meaning and moves its picks. Each wildcard or `{a|b}` is a
+slot; a variation moves every slot to a semantic neighbour inside its own list. `strength` sets how
+far (0.1 = the nearest 1% of the list, 0.5 = a quarter of the way out, 1.0 = the far end),
+`far_jumps` lets a few slots jump while the rest drift, `variation` numbers are reproducible, and
+`avoid_recent` keeps the candidate least like what you generated lately. `direction` and
+`direction_amount` lean every move along a named axis (ordinary to uncanny, new to decayed, domestic
+to industrial, ...); the axes are example phrases in `variability/directions.yaml`, and your own go
+in `variability/directions_user.yaml`. The report shows each slot's lean, so you can see whether an
+axis bites on a given list.
 
-## With Variations
+**Concept Survival Check** measures whether concept picks survived a rewrite: for each concept it
+shows the phrase in the rewritten prompt that carries it and a similarity score, and for verbatim
+picks whether the exact words are there. `all_survived` can gate a retry.
 
-When generating multiple variations, wildcards are re-rolled for each:
+Resolving upstream: when a Wildcard Processor or Semantic Variation node does the picking, connect
+its `text` to the enhancer's prompt and its `llm_instructions` to the enhancer's
+`wildcard_instructions` input. The enhancer then treats those picks exactly like its own.
 
-```
-Variation 1: A cat playing piano in a park
-Variation 2: A dog playing guitar in a studio  
-Variation 3: A bird playing drums in a street
-```
+## Shipped lists worth knowing
 
-Each variation gets different random selections!
+`__constraints__` is a deck of constraint cards, one rule that forces the picture to be invented
+("lit only from below", "the main subject is present only as a reflection"). `__?observers__` sees the
+scene through a particular kind of attention ("as recorded by a forensic photographer..."); use it
+with the loose marker so it colours the whole prompt. `objects.yaml`, `spaces.yaml` and
+`materials.yaml` are tagged by material, scale, domain and era for tag queries.
 
-## Tips for Using Wildcards
+## Writing lists
 
-### 1. Keep Options Related
-✅ Good: `{location:park|beach|forest}` (all outdoor)
-❌ Bad: `{location:park|spaceship|microscope}` (unrelated)
-
-### 2. Match Grammar
-✅ Good: `A {animal:cat|dog|bird}` (all singular)
-❌ Bad: `A {animal:cat|dogs|birds}` (mixed singular/plural)
-
-### 3. Use Inline for Custom Options
-Use inline wildcards when you need specific options not in predefined lists:
-```
-{character:wizard|warrior|rogue|healer}
-```
-
-### 4. Combine with Presets
-```
-Input: A {profession} in a {location}
-Preset: noir
-Tier: advanced
-
-Result: Noir-style expansion of the random profession/location combo
-```
-
-### 5. Use with Advanced Node Dropdowns
-```
-Input: A {vehicle} racing through {weather} conditions
-Shot Size: wide shot
-Camera Movement: tracking shot
-Preset: action
-
-Result: Action-style wide tracking shot of random vehicle/weather
-```
-
-## With Random Preset
-
-Wildcards work GREAT with random preset:
-
-```
-Input: A {animal} {action}
-Preset: random
-Tier: enhanced
-
-Result:
-- Random animal chosen (e.g., "fox")
-- Random action chosen (e.g., "dancing")
-- Random cinematography applied
-- Output: "A fox dancing" with random aesthetic choices
-```
-
-## Troubleshooting
-
-### Wildcards Not Replaced
-- Check syntax: `{name:opt1|opt2}` (colon and pipes)
-- No spaces in curly braces: `{animal}` not `{ animal }`
-
-### Same Options Every Time
-- Not a bug! Each run picks randomly
-- Use variations (num_variations: 3) to get multiple
-
-### Wildcard in Output
-If you see `{animal}` in the output:
-- Typo in category name
-- Category not in predefined list
-- Use inline format: `{animal:cat|dog|bird}`
-
-## Advanced: Nested Concepts
-
-You can combine wildcards with concepts:
-
-```
-Input: {profession} using {tool} to fix a {object} in a {weather} {time}
-
-Creates complex scenarios like:
-"engineer using wrench to fix a computer in a rainy morning"
-```
-
-## Combining Features
-
-### Wildcards + Keywords + Preset
-```
-Input: A {profession} in dramatic pose
-Preset: cinematic
-Positive Keywords: myLoRA_trigger
-Tier: advanced
-
-Result: Random profession, cinematic style, with LoRA trigger
-```
-
-### Wildcards + Advanced Node Controls
-```
-Input: A {vehicle} in motion
-Preset: action
-Shot Size: wide shot
-Camera Movement: tracking shot
-Time of Day: sunset time
-Lens: wide-angle lens
-
-Result: Random vehicle, but specific cinematography
-```
-
-## Summary
-
-**Wildcards enable:**
-- ✅ Dynamic prompt variations
-- ✅ Quick batch generation with variety
-- ✅ A/B testing different concepts
-- ✅ Creative exploration
-- ✅ Efficient prompt iteration
-
-**Syntax:**
-- Inline: `{name:opt1|opt2|opt3}`
-- Predefined: `{category}`
-
-**Works with:**
-- All presets (especially good with "random")
-- All tiers
-- All modes (text-to-video, image-to-video)
-- Both Standard and Advanced nodes
-- Multiple variations
-
-**Try it!**
-```
-Input: A {animal} {action} in a {location} during {time}
-```
-
-Generate 3 variations and see the variety!
+`.txt`: one entry per line, `# comment` lines ignored, optional weight prefix `3::common entry`.
+`.yaml`: nested keys form the wildcard path; items are strings or `{text, tags, weight}`. Entries may
+contain wildcards themselves. Specific, physical entries ("a barn owl", "soft north-window light from
+the left") render far better than adjectives.

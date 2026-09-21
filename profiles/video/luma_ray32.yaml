@@ -1,0 +1,30 @@
+id: luma_ray32
+name: "Luma Ray 3.2 (API)"
+developer: "Luma AI"
+summary: "Hosted, 5 or 10 s, keyframes and video-to-video Modify. No sound is mentioned anywhere in Luma's Ray 3.2 material, so this profile treats it as silent. Prose: subject, motion, camera movement, lighting, pacing."
+modality: video
+tasks: [t2v, i2v, flf2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [40, 160]
+max_chars: 6000
+negative: "no"
+quality_tokens: neutral
+quoted_text: none
+weights: false
+audio: false
+structure: "Subject, motion, camera movement, lighting, pacing - Luma's own list. The camera is controlled by language."
+rules:
+  - "For Modify (video-to-video) describe the finished look - materials, environment, style - never a sequence of changes: the motion comes from the source clip."
+task_rules:
+  i2v:
+    target_words: [20, 90]
+camera: [push in, pull out, pan, tilt, orbit, tracking, crane, handheld, static, aerial]
+api_note: "1-6,000 characters. 10 s excludes HDR and start / end frames. No negative prompt or rewrite flag documented."
+sources:
+  - {url: "https://docs.agents.lumalabs.ai/guides/videos/generation", supports: "parameters, 6,000 characters, keyframes", confidence: medium}
+  - {url: "https://lumalabs.ai/learning-center/articles/ray-3-2-introduction-and-core-concepts", supports: "Modify: describe the end state", confidence: medium}
+checked: "2026-09-21"
+confidence: medium

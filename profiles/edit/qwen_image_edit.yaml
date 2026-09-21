@@ -1,0 +1,53 @@
+id: qwen_image_edit
+name: "Qwen-Image-Edit (2509 / 2511)"
+developer: "Alibaba Qwen"
+summary: "Edit model read through Qwen2.5-VL. Direct, specific instructions; several input images are called Picture 1, Picture 2. Qwen says editing can be unstable WITHOUT prompt rewriting."
+modality: edit
+tasks: [edit]
+encoder: "Qwen2.5-VL-7B (1024 tokens)"
+encoder_family: llm
+caption_style: instruction
+validator: edit_instruction
+languages: [en, zh]
+target_words: [8, 60]
+max_tokens: 1024
+negative: "yes"
+negative_default: " "
+negative_note: "Qwen's pipelines pass a single space as the negative prompt for edit models."
+quality_tokens: forbid
+quoted_text: double
+weights: false
+structure: "Direct instruction. Add / delete / replace: give category, colour, size, orientation and position when the request is vague. Style changes: describe the style by its visual features and put that clause last."
+rules:
+  - "Refer to input images as Picture 1, Picture 2 - the pipeline itself labels them that way."
+  - "'Replace Y with X' plus the key visual features of X."
+  - "Text edits are always replacements: Replace \"xx\" to \"yy\" - both in English double quotes, original language and capitalisation kept."
+  - "Editing people: state what stays (ethnicity, gender, age, hairstyle, expression, outfit); expression and beauty changes are 'natural and subtle'."
+  - "Fixed forms that work as written: 'Restore and colorize the photo.' / 'Perform inpainting on this image. The original caption is: ...' / 'Extend the image beyond its boundaries using outpainting. The original caption is: ...'"
+avoid:
+  - "Long descriptions of things that do not change"
+  - "Vague requests"
+  - "Decorative language"
+official:
+  - task: edit
+    url: "https://raw.githubusercontent.com/QwenLM/Qwen-Image/main/src/examples/tools/prompt_utils.py"
+    format: python_var
+    variable: polish_edit_prompt.EDIT_SYSTEM_PROMPT
+    note: "Qwen's edit rewriter answers as JSON {\"Rewritten\": ...}; the text is unwrapped automatically. It was written for single-image editing - for several inputs the Picture N rule is added as tailoring."
+tailoring: |
+  When more than one input image is involved, refer to them as Picture 1, Picture 2 (for example: "Replace the girl of Picture 1 with the boy of Picture 2, keeping Picture 2's background unchanged").
+legacy:
+  prompt_style: edit_focused
+  optimal_length: "concise (8-60 words)"
+  length_guidance: "Short, direct edit commands; name what must stay the same."
+  detail_expectation: "Laser-focused on the requested change; avoid full-scene rewrites."
+  edit_templates:
+    - "Change {element} to {new_value}"
+    - "Add {new_element} to {location}"
+    - "Remove {element}"
+    - "Replace {old} with {new}"
+sources:
+  - {url: "https://raw.githubusercontent.com/QwenLM/Qwen-Image/main/src/examples/tools/prompt_utils.py", supports: "official edit rewriter rules", confidence: high}
+  - {url: "https://raw.githubusercontent.com/huggingface/diffusers/main/src/diffusers/pipelines/qwenimage/pipeline_qwenimage_edit_plus.py", supports: "Picture N prefix, 1024 tokens", confidence: high}
+checked: "2026-09-20"
+confidence: high

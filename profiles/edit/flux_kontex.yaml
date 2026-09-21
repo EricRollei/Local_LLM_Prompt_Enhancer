@@ -1,0 +1,41 @@
+id: flux_kontex
+name: "FLUX.1 Kontext [dev] (edit)"
+developer: "Black Forest Labs"
+summary: "Instruction-driven image EDITING model - not a long-prompt variant of FLUX, as this entry used to say. The prompt is an imperative edit plus a clause naming what must stay the same. (The id keeps its old spelling so saved workflows load.)"
+modality: edit
+tasks: [edit]
+encoder: "T5-XXL + CLIP-L (512 tokens)"
+encoder_family: t5
+caption_style: instruction
+validator: edit_instruction
+languages: [en]
+target_words: [12, 60]
+max_tokens: 512
+negative: ignored
+quality_tokens: forbid
+quoted_text: single
+weights: false
+structure: "[Change verb] [the specific thing, described not pronouned] to [exact new state], while maintaining [what must stay: facial features / composition / lighting / position, scale and pose]."
+rules:
+  - "Precise verbs: Change, Replace, Add, Remove. 'Transform' can trigger a complete repaint - only use it together with an explicit preservation clause."
+  - "No pronouns: write 'the woman with short black hair', never 'she' or 'this person'."
+  - "Always end with a preservation clause: 'while maintaining the same facial features, composition and lighting' or 'keep everything else identical'."
+  - "Text edits: Replace 'original text' with 'new text' - quotes around both, case preserved; ask to keep the font style when wanted."
+  - "Style transfer: name the style, describe its traits (brushwork, palette), and state what to keep (composition, subject positions)."
+  - "Swapping a background: say 'keep the subject in the exact same position, scale, and pose'."
+  - "A big change is better as a sequence of small edits: write only the first step and say so."
+avoid:
+  - "Describing the whole finished picture"
+  - "Vague verbs (make it better, improve)"
+  - "Several unrelated edits in one instruction"
+legacy:
+  prompt_style: edit_focused
+  optimal_length: "concise (12-60 words)"
+  length_guidance: "One to three sentences: the change, then what stays the same."
+  detail_expectation: "Laser-focused on the requested change; name what must be preserved."
+sources:
+  - {url: "https://docs.bfl.ai/guides/prompting_guide_kontext_i2i", supports: "official Kontext guide (could not be fetched directly on the check date)", confidence: medium}
+  - {url: "https://comfyui-wiki.com/en/tutorial/advanced/image/flux/flux-1-kontext", supports: "THIRD-PARTY mirror of the official guide: 512 tokens, transform and pronoun pitfalls, preservation phrasing, text quote syntax", confidence: medium}
+  - {url: "https://raw.githubusercontent.com/black-forest-labs/skills/master/skills/flux-image-best-practices/rules/flux1-models.md", supports: "official Kontext tips", confidence: high}
+checked: "2026-09-20"
+confidence: medium

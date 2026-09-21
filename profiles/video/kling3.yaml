@@ -1,0 +1,46 @@
+id: kling3
+name: "Kling 3.0 / Omni / Turbo (API)"
+developer: "Kuaishou"
+summary: "Hosted video model with native sound, 3-15 s, up to six shots. Cinematic prose for one shot; for deterministic cuts, Kuaishou's fixed shot format. The current API has no negative-prompt field and cites references as @id."
+modality: video
+tasks: [t2v, i2v, ref2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+validator: kling_shots
+languages: [en, zh]
+target_words: [60, 220]
+max_chars: 2500
+negative: inline
+negative_note: "The current API has no negative field: 'The prompt can include positive and negative descriptions.' The legacy API had one, with Kuaishou's own note recommending negative sentences inside the prompt instead."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: true
+structure: "One shot: cinematic prose - subject, action, setting, camera, light. Several shots, exactly: shot 1, 3, <words>; shot 2, 4, <words>;  - shot number, that shot's length in whole seconds, then the description, each ended by a plain semicolon."
+rules:
+  - "Multi-shot example, to be copied exactly in form - lower-case 'shot', number, comma, whole seconds, comma, the words, semicolon; no 'seconds', no colon, no line of commentary after it:  shot 1, 3, Medium shot of a woman by a rain-streaked train window at night, cool blue light; shot 2, 5, Close-up as she turns and smiles at someone off screen, slow push in;"
+  - "In the shot format every shot is at least 1 second, the seconds add up to the clip length exactly, each shot's words stay under 512 characters, and there are at most 6 shots."
+  - "Dialogue names the speaker with tone and language: Mom (softly, in a surprised tone): \"Wow, I didn't expect this.\"  A dialect or accent goes before the line: (in Cantonese), (British accent). Pair every line with its character so speakers are not confused."
+  - "Sound effects and music have no label syntax; describe them in a sentence."
+  - "Exclusions are written as sentences in the prompt."
+  - "Simple grammar works better than ornate sentences."
+avoid:
+  - "Long monologues"
+  - "Element names that are part of another name or of a normal word"
+task_rules:
+  ref2v:
+    rules:
+      - "References are cited by the id given in the API call: @image_1, @video_1, or an Element's name (@Grace). Never invent ids."
+  i2v:
+    target_words: [20, 90]
+    rules:
+      - "Motion and feeling only, as in Kuaishou's example: 'A girl sat on the train, looking out the window with a melancholic expression, her head swaying with the train.'"
+camera: [profile shot, macro shot, low-angle wide shot, first-person POV, side-on tracking shot, 360-degree pan, cinematic handheld, bird's-eye view, top-down shot, push in, pull back, orbit, close-up, medium shot, wide shot]
+api_note: "Hard limit 3,072 characters, 2,500 recommended (2,500 hard on 3.0 Turbo). Sound is OFF by default: set settings.audio to 'native'. Multi-shot needs settings.multi_shot true (the default). No vendor rewrite flag is documented. ComfyUI partner nodes and older SDKs still use the legacy <<<image_1>>> citation form."
+sources:
+  - {url: "https://kling.ai/document-api/api/video/3-0-omni/video-omni", supports: "API read rendered: character limits, shot format, @id syntax, reference limits, audio setting", confidence: high}
+  - {url: "https://kling.ai/document-api/api/video/3-0-turbo/image-to-video", supports: "3.0 Turbo, 2,500 characters, first frame only", confidence: high}
+  - {url: "https://kling.ai/quickstart/klingai-video-3-model-user-guide", supports: "dialogue form, languages and dialects", confidence: medium}
+checked: "2026-09-21"
+confidence: high

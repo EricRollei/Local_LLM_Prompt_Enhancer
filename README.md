@@ -1,7 +1,7 @@
 # Eric's Prompt Enhancers for ComfyUI
 
 [![License](https://img.shields.io/badge/License-Dual%20(NC%2FCommercial)-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.8.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](CHANGELOG.md)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Compatible-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
 
 A comprehensive suite of **5 AI-powered prompt enhancement nodes** for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation.
@@ -20,6 +20,35 @@ pip install -r requirements.txt
 ```
 
 Restart ComfyUI. All nodes will appear under: **Add Node → Eric Prompt Enhancers**
+
+---
+
+## 🆕 New in 2.0
+
+Version 2.0 keeps every existing node and every saved workflow, and adds three things underneath them.
+The rest of this README still describes the 1.x nodes and will be brought up to date in a later 2.0.x release;
+the documents linked here are current.
+
+**A real wildcard engine.** The Dynamic Prompts / Impact Pack grammar (`__name__`, `{a|b|c}`, weights, ranges,
+variables, tag queries such as `__objects[metal AND handheld]__`), read straight from `ComfyUI/models/wildcards`,
+in every enhancer node. Picks are handed to the LLM as concepts to express, as exact strings that must survive
+(`__=lora_triggers__`), or as loose inspiration (`__?moods__`). New nodes: **Wildcard Processor**,
+**Semantic Variation** (moves picks to semantic neighbours, with named direction axes) and
+**Concept Survival Check**. See [docs/WILDCARD_GUIDE.md](docs/WILDCARD_GUIDE.md).
+
+**Platform profiles.** Everything the nodes know about a target model is one YAML file in `profiles/`:
+format, length, negative prompt or none, quality tokens or none, how text and dialogue are written, and - where
+the maker publishes one - the maker's own rewriter prompt, downloaded once and cached. Over 60 models, open and
+hosted: FLUX.2, Krea 2, Z-Image, Qwen-Image, HunyuanImage 3, Ideogram 4, Illustrious, NoobAI; MiniMax H3, Wan 2.2,
+LTX-2, HunyuanVideo 1.5; and for API use Seedream 5, Nano Banana, GPT Image, Midjourney V8, Seedance 2.5,
+Kling 3, Veo 3.1, Wan 3.0 and others. Your own go in `profiles_user/`. The new **Platform Prompt Rewriter** node
+writes for any of them, including the structured formats (MiniMax H3 fields, FLUX.2 and Ideogram JSON, edit
+instructions). See [PLATFORM_NOTES.md](PLATFORM_NOTES.md).
+
+**The video nodes have a `target_model`.** The three video expanders were written around Wan 2.2. They now
+write for any video profile, and the default is **MiniMax H3**. Choose `wan22_video` to get the original
+behaviour exactly. Note for existing workflows: a workflow saved before 2.0 has no value for this new input, so
+it loads with the default (MiniMax H3) - set it to `wan22_video` once and save.
 
 ---
 
@@ -515,7 +544,7 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-**Version**: 1.8.0  
-**Last Updated**: October 24, 2025  
+**Version**: 2.0.0  
+**Last Updated**: September 21, 2026  
 **Author**: Eric Rollei  
 **Repository**: https://github.com/EricRollei/Local_LLM_Prompt_Enhancer

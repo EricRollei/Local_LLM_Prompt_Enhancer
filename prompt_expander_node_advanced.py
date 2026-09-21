@@ -15,6 +15,13 @@ from .utils import (
     format_breakdown,
     validate_positive_keywords
 )
+from .wildcard_support import (
+    enforce_verbatim,
+    is_changed_token,
+    normalise_seed,
+    wildcard_optional_inputs,
+)
+from .profile_support import WAN_TARGET, add_required_terms, target_report_lines, video_target_inputs
 
 
 class AIVideoPromptExpanderAdvanced:
@@ -462,8 +469,16 @@ class AIVideoPromptExpanderAdvanced:
                 "reference_image": ("IMAGE", {
                     "tooltip": "Optional: Provide an image to analyze and incorporate into the prompt using Qwen3-VL"
                 }),
+                # New inputs are only ever APPENDED below this line, so saved workflows keep their widget order.
+                **wildcard_optional_inputs(),
+                **video_target_inputs(),      # target_model, duration_seconds
             }
         }
+
+    @classmethod
+    def IS_CHANGED(cls, wildcard_seed: int = -1, **kwargs):
+        """wildcard_seed = -1 means a fresh roll each run, which must defeat ComfyUI's cache."""
+        return is_changed_token(wildcard_seed)
     
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING")
     RETURN_NAMES = (
@@ -510,7 +525,13 @@ class AIVideoPromptExpanderAdvanced:
         num_variations: int,
         save_to_file: bool,
         filename_base: str,
-        reference_image=None  # Optional image input
+        reference_image=None,  # Optional image input
+        wildcard_seed: int = -1,
+        wildcard_llm_block: bool = True,
+        wildcard_instructions: str = "",
+        # Absent only in API-format workflows saved before these inputs existed: those keep the Wan 2.2 path.
+        target_model: str = WAN_TARGET,
+        duration_seconds: float = 0.0
     ) -> Tuple[str, str, str, str, str, str, str]:
         """
         Main processing function with aesthetic controls
@@ -526,8 +547,9 @@ class AIVideoPromptExpanderAdvanced:
             }
             temperature = temperature_map.get(creativity_mode, 0.7)
             
-            # Process alternations first (before LLM)
-            basic_prompt = self._process_alternations(basic_prompt)
+            # Wildcards and {a|b} alternations are resolved inside expander.expand_prompt by the
+            # shared engine (core/wildcards). The old early call to _process_alternations is gone:
+            # it consumed the braces first, which broke {animal} and {label:a|b} in this node.
             
             # Preserve emphasis syntax before LLM processing
             basic_prompt = self._preserve_emphasis_syntax(basic_prompt)
@@ -620,8 +642,15 @@ class AIVideoPromptExpanderAdvanced:
                     shot_structure=shot_structure,
                     creativity_mode=creativity_mode,
                     vision_caption=vision_caption,  # Pass 1 result
-                    reference_mode=reference_mode   # How to apply vision caption
+                    reference_mode=reference_mode,  # How to apply vision caption
+                    wildcard_seed=normalise_seed(wildcard_seed, offset=var_num),
+                    wildcard_llm_block=wildcard_llm_block,
+                    wildcard_instructions=wildcard_instructions,
+                    target_model=target_model,
+                    duration_seconds=duration_seconds,
+                    shots_chosen_by_user=True      # this node has a shot_structure widget
                 )
+                on_profile_path = breakdown_dict.get("target_model", WAN_TARGET) != WAN_TARGET
                 
                 # Call LLM with longer max_tokens for detailed output
                 response = llm.send_prompt(
@@ -645,17 +674,31 @@ class AIVideoPromptExpanderAdvanced:
                     )
                 
                 # Parse response
-                parsed = self.expander.parse_llm_response(response["response"])
+                parsed = self.expander.parse_llm_response(
+                    response["response"],
+                    target_model=breakdown_dict.get("target_model", WAN_TARGET),
+                    task=breakdown_dict.get("target_task", ""),
+                    word_range=breakdown_dict.get("target_words")
+                )
                 enhanced_prompt = parsed["prompt"]
                 
                 # Restore emphasis syntax after LLM processing
                 enhanced_prompt = self._restore_emphasis_syntax(enhanced_prompt)
                 
-                # Ensure positive keywords are included
-                if pos_kw_list:
-                    keywords_present, missing = validate_positive_keywords(pos_kw_list, enhanced_prompt)
-                    if missing:
-                        enhanced_prompt += f" {', '.join(missing)}"
+                if on_profile_path:
+                    # Structured formats (MiniMax H3 fields) cannot take text appended at the end
+                    enhanced_prompt, term_warnings = add_required_terms(
+                        enhanced_prompt, pos_kw_list, self.expander.last_resolution, breakdown_dict["target_model"])
+                    breakdown_dict["target_warnings"] = list(parsed.get("warnings") or []) + term_warnings
+                else:
+                    # Ensure positive keywords are included
+                    if pos_kw_list:
+                        keywords_present, missing = validate_positive_keywords(pos_kw_list, enhanced_prompt)
+                        if missing:
+                            enhanced_prompt += f" {', '.join(missing)}"
+                    
+                    # Verbatim wildcard picks (__=name__) must survive the rewrite word for word
+                    enhanced_prompt, _restored = enforce_verbatim(enhanced_prompt, self.expander.last_resolution)
                 
                 positive_prompts.append(enhanced_prompt)
                 breakdowns.append(breakdown_dict)
@@ -669,7 +712,8 @@ class AIVideoPromptExpanderAdvanced:
                 preset=preset,
                 custom_negatives=neg_kw_list,
                 mode=mode,
-                visual_style=visual_style
+                visual_style=visual_style,
+                target_model=breakdowns[0].get("target_model", WAN_TARGET)
             )
             
             # Format breakdown
@@ -716,7 +760,8 @@ class AIVideoPromptExpanderAdvanced:
             controls_summary = self._summarize_controls(aesthetic_controls)
             mode_display = f"Mode: {mode}" + (" (with image)" if reference_image is not None else "")
             vision_status = f" | Vision: {len(vision_caption)} chars" if vision_caption else ""
-            status = f"✅ Generated {num_variations} variation(s) | {operation_mode} | Detail: {detail_level} | Preset: {preset}\n{mode_display}{vision_status}\n{controls_summary}\n{file_status}"
+            target_display = breakdowns[0].get("target_name") or breakdowns[0].get("target_model", WAN_TARGET)
+            status = f"✅ Generated {num_variations} variation(s) | {target_display} | {operation_mode} | Detail: {detail_level} | Preset: {preset}\n{mode_display}{vision_status}\n{controls_summary}\n{file_status}"
             
             return (
                 positive_prompts[0],
@@ -830,11 +875,24 @@ class AIVideoPromptExpanderAdvanced:
         if breakdowns[0].get('positive_keywords'):
             lines.append(f"Required Keywords: {', '.join(breakdowns[0]['positive_keywords'])}")
         
+        lines.extend(target_report_lines(breakdowns[0]))
+        for number, breakdown in enumerate(breakdowns[1:], start=2):
+            lines.extend(f"WARNING (variation {number}): {warning}" for warning in breakdown.get("target_warnings") or [])
+
         if aesthetic_controls:
             lines.append("\nUser-Specified Aesthetic Controls:")
             for key, value in aesthetic_controls.items():
                 label = key.replace("_", " ").title()
                 lines.append(f"  - {label}: {value}")
+        
+        # Wildcard picks, per variation (each variation rolls its own)
+        for number, breakdown in enumerate(breakdowns, start=1):
+            replacements = breakdown.get('wildcard_replacements')
+            if replacements:
+                picks = "; ".join(f"{name} -> {value}" for name, value in replacements.items())
+                lines.append(f"\nWildcards (variation {number}): {picks}")
+            for warning in breakdown.get('wildcard_warnings') or []:
+                lines.append(f"Wildcard warning: {warning}")
         
         lines.append("\n" + "=" * 70)
         

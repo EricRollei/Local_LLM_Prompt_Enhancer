@@ -1,0 +1,10 @@
+hard
+soft
+diffuse
+raking
+specular
+flat
+contrasty
+low-key
+high-key
+dappled

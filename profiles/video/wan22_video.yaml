@@ -1,0 +1,65 @@
+id: wan22_video
+name: "Wan 2.2 (T2V / I2V)"
+developer: "Alibaba Wan team"
+summary: "Open-weights, silent, about 5 s at 16 fps (A14B) or 24 fps (5B). umT5-XXL, 512 tokens, English or Chinese. Up to four cinematic tags, then dense prose with the motion described as a process."
+modality: video
+tasks: [t2v, i2v]
+encoder: "umT5-XXL (512 tokens)"
+encoder_family: t5
+caption_style: prose
+languages: [en, zh]
+target_words: [80, 160]
+max_tokens: 512
+negative: "yes"
+negative_default: "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走"
+negative_note: "Wan's official negative prompt, in Chinese as published. It has no effect in 4-step LightX2V-style workflows that run at CFG 1."
+quality_tokens: neutral
+quoted_text: none
+weights: false
+audio: false
+structure: "Entity + scene + motion + aesthetic control (light source, light quality, shot size, angle, lens, camera movement) + stylisation. A style, if given, goes first. Up to four cinematic tags lead, prose follows."
+rules:
+  - "Do not change the subject or the action, and add no subjects the user did not give (no people added to a landscape)."
+  - "Describe motion as a process with amplitude and speed ('sways slowly', 'turns sharply'). If the user gave no motion, add some: body sway, drifting clouds, wind in leaves."
+  - "At most four cinematic tags, from Wan's vocabulary: Day / Night / Dawn / Sunrise time; Daylight, Artificial, Moonlight, Practical, Firelight, Fluorescent, Overcast, Sunny lighting; Soft / Hard lighting; Top / Side / Under / Edge lighting; Warm / Cool / Mixed colors; Extreme close-up to Extreme wide shot; Over-the-shoulder, Low angle, High angle, Dutch angle, Aerial, Overhead shot; Center, Balanced, Left-heavy, Right-heavy, Symmetrical, Short-side composition."
+  - "If the user describes a camera move, leave out the shot-angle tag."
+  - "For 2D, anime or illustration styles skip the cinematic lighting tags."
+  - "When sky is mentioned, make it an azure blue sky - Wan's own rewriter does this to avoid blown-out exposure."
+  - "One camera move; all action must fit about five seconds."
+avoid:
+  - "Literary mood sentences ('the scene is full of tension')"
+  - "Readable text, rapid scene changes, long action sequences"
+camera: [camera pushes in, camera pulls back, camera moves left, camera moves right, camera pans up, camera tilts downward, tracking shot, "orbit (keep the arc under 45 degrees)", fixed camera, drone shot, fly-through]
+task_rules:
+  i2v:
+    target_words: [40, 100]
+    structure: "Motion + camera movement. The image already fixes entity, scene and style."
+    rules:
+      - "Keep and emphasise the dynamic parts and any camera-move wording; remove description of static things already visible in the image."
+      - "Expand a bare verb using the image: 'dancing' becomes 'a girl is dancing'."
+      - "Use speed and intensity adverbs; 'fixed camera' locks the frame."
+      - "Under 100 words."
+official:
+  - task: t2v
+    url: "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/utils/system_prompt.py"
+    format: python_var
+    variable: T2V_A14B_EN_SYS_PROMPT
+    language: zh
+    drop_lines:
+      - "^\\s*8\\.\\s*如果用户输入存在"
+      - "^\\s*9\\.\\s*如果用户输入存在"
+      - "^\\s*10\\.\\s*如果用户输入存在"
+    note: "Rules 8-10 of Wan's rewriter were removed: they tell the LLM to silently swap the user's prompt for an unrelated one (for suggestive content, for bikinis, and for same-sex kissing). A local enhancer must stay faithful or say so; see PLATFORM_NOTES.md."
+  - task: i2v
+    url: "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/utils/system_prompt.py"
+    format: python_var
+    variable: I2V_A14B_EN_SYS_PROMPT
+tailoring: |
+  Never depict a minor in a sexualised way; if the idea involves a child, the child is clothed and the scene non-sexual.
+  The text encoder stops at 512 tokens.
+sources:
+  - {url: "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/utils/system_prompt.py", supports: "official rewriter prompts, length targets, vocabulary", confidence: high}
+  - {url: "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/configs/shared_config.py", supports: "umT5-XXL, 512 tokens, negative prompt, 16 fps / 81 frames", confidence: high}
+  - {url: "https://www.alibabacloud.com/help/en/model-studio/text-to-video-prompt", supports: "official prompt formulas, I2V = motion + camera", confidence: medium}
+checked: "2026-09-20"
+confidence: high

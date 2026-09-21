@@ -4,6 +4,50 @@ All notable changes to Eric's Prompt Enhancers for ComfyUI.
 
 ---
 
+## [2.0.0] - 2026-09-21
+
+Version 2 keeps every node id, every input name and the order of every existing widget, so saved workflows load.
+New inputs are only ever appended. Details: `PLATFORM_NOTES.md`, `docs/WILDCARD_GUIDE.md`.
+
+### Changed behaviour to know about
+
+- **The three video nodes default to MiniMax H3.** They gained `target_model` and `duration_seconds` (appended
+  last). `wan22_video` gives the original Wan 2.2 behaviour, unchanged. A workflow saved before 2.0 has no value
+  for the new input and therefore loads with the default, MiniMax H3: set it to `wan22_video` once and save.
+  API-format workflows that lack the input keep the Wan 2.2 path.
+- **Illustrious**: tags are now written with spaces (not underscores), quality tags go at the end, and the
+  length target dropped from ~150 to 25-80 words. All three follow OnomaAI's paper and model cards.
+- **Negative prompts are empty for models that cannot use one** (distilled / CFG-free, or no such field). Keywords
+  you type are still passed through.
+- Platform facts corrected: FLUX no longer asks for quality tokens; FLUX Kontext is an edit-instruction model;
+  Chroma, Wan, AuraFlow and Kolors are credited to the right developers; NoobAI is a tag model; Kolors and
+  PixArt respect their token limits.
+- Random choices use a private generator: the package no longer touches Python's global `random` state.
+
+### Added
+
+- **Wildcard engine** (`core/wildcards`): Dynamic Prompts / Impact Pack grammar, tag queries, variables,
+  conditionals, concept / verbatim / loose bindings, reproducible seeds, article agreement. Wired into every
+  enhancer node. Nodes: Wildcard Processor, Semantic Variation, Concept Survival Check.
+- **Platform profiles** (`core/profiles`, `profiles/`): one YAML file per model, user overrides in
+  `profiles_user/`, vendor rewriter prompts fetched once and cached, validators for JSON, MiniMax H3 fields,
+  Hailuo brackets, tag lists and edit instructions. Node: Platform Prompt Rewriter.
+- **Hosted / API models**: Seedream 5, Nano Banana 2 / Pro, GPT Image 2 / 2.5, Midjourney V8, FLUX.2 pro / max /
+  flex, Ideogram 3, Recraft V4, Leonardo Phoenix, Kling IMAGE 3, Runway Gen-4 Image, Luma Uni-1, Grok Imagine;
+  Seedance 2.0 and 2.5, Kling 3.0, Veo 3.1, Gemini Omni Flash, Runway Gen-4.5 and Aleph 2.0, Wan 3.0, Luma
+  Ray 3.2, hosted MiniMax H3, Grok Imagine Video, Vidu Q3, PixVerse V6. Each report says how to switch the
+  vendor's own prompt rewriting off.
+- Semantic variation: direction axes, float16-consistent vector cache, Qwen3-VL embedder device setting.
+
+### Fixed
+
+- `{animal}` and `{label:a|b|c}` were inert in the video nodes (an early regex consumed the braces).
+- Image-to-Video node: `save_to_file` raised a NameError (two undefined variable names).
+- Text-to-Image: fixed 80-word floor padded short-prompt models; the closing example showed quality tokens to
+  models that must not get them.
+
+---
+
 ## [1.9.7] - 2025-01-27
 
 ### 🎯 Model-Agnostic Creativity Control

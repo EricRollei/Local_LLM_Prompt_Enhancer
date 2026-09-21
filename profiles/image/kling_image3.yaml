@@ -1,0 +1,34 @@
+id: kling_image3
+name: "Kling IMAGE 3.0 / Omni (API)"
+developer: "Kuaishou"
+summary: "Kuaishou's image models (the Kolors line): generation, editing and up to 10 reference images. Natural language; the vendor guide gives two fixed formulas, for edits and for face references."
+modality: image
+tasks: [t2i, edit]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [40, 140]
+max_chars: 2500
+negative: "yes"
+negative_default: ""
+negative_note: "The API (documented for the older kling-v1 .. v2-1 image models) has a negative_prompt field. The consumer app limits prompts to 500 characters; the limit for IMAGE 3.0 over the API could not be read."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Cinematic prose: subject, clothing, action, setting, composition, focal length and aperture, light, atmosphere."
+rules:
+  - "Face reference formula: Keep [person]'s facial features, character has [hairstyle], wearing [clothing], performing [action], background is [setting], with [lighting], and [atmosphere]."
+  - "Use clear directional and positional words."
+task_rules:
+  edit:
+    target_words: [8, 50]
+    structure: "Keep everything else unchanged, modify [target] to [desired effect]."
+    rules:
+      - "Kuaishou's own example: 'Keep everything else unchanged, change the cat into a dog.'"
+sources:
+  - {url: "https://kling.ai/quickstart/klingai-image-3-model-user-guide", supports: "edit and face formulas, 10 references", confidence: high}
+  - {url: "https://kling.ai/quickstart/klingai-image-3-omni-user-guide", supports: "cinematic prose examples", confidence: high}
+  - {url: "https://github.com/aself101/kling-api", supports: "THIRD-PARTY wrapper: 2,500-character limits, negative_prompt, older model names", confidence: low}
+checked: "2026-09-21"
+confidence: medium

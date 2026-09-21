@@ -1,0 +1,22 @@
+# Observers: the same scene, seen by someone with a particular kind of attention.
+# Use as inspiration so the LLM lets it colour the whole prompt:   __?observers__
+as recorded by a forensic photographer: flat flash, a scale ruler in frame, nothing flattered
+as seen by a botanist: every plant identified and rendered exactly, people incidental
+as lit by a theatre set designer: sightlines, painted depth, light with visible motivation
+as drawn for an insurance claim: damage, serial numbers, condition of every surface
+as seen by a child of four: from low down, huge adults, fascination with the wrong object
+as shot by a night-shift security guard on a phone: tilted, harsh, accidental
+as observed by a structural engineer: loads, joints, what holds up what
+as painted by someone who has only had the scene described to them over the telephone
+as photographed for a 1970s mail-order catalogue: even light, colour cast, stiff arrangement
+as seen by a bird passing overhead: plan view, roofs, shadows longer than the things that cast them
+as catalogued by a museum registrar: on a neutral ground, numbered, with a colour chart
+as remembered forty years later: three details pin-sharp, the rest dissolved
+as surveyed by an archaeologist: strata, fragments, a trowel for scale
+as staged by a Dutch still-life painter: one window, dark ground, every texture earned
+as found by a location scout: empty, wide, morning light, possibilities noted
+as watched by a bored lifeguard: heat haze, distance, small figures, vast flat water
+as examined by a tailor: seams, drape, how the cloth hangs on the body
+as filed by a wire-service photographer on deadline: one decisive gesture, cluttered edges
+as seen by a lighthouse keeper: weather first, horizon second, people last
+as inspected by a customs officer: opened, laid out, looked at without sympathy

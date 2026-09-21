@@ -1,0 +1,20 @@
+id: flux2_edit
+extends: flux2_dev
+name: "FLUX.2 reference editing"
+summary: "FLUX.2 [dev] or [klein] given one or more reference images. One concise analytical instruction: what changes and what stays. BFL now recommends this over Kontext."
+modality: edit
+tasks: [edit]
+caption_style: instruction
+validator: edit_instruction
+target_words: [30, 80]
+structure: "One instruction: what changes, then what stays the same (face, lighting, composition). Several inputs are 'image 1', 'image 2'."
+rules:
+  - "One concise instruction, 50-80 words, about 30 for a brief request."
+  - "Analytical language; no decorative words."
+  - "Say what changes AND what stays the same."
+  - "Refer to real elements of the source image; several inputs are 'image 1', 'image 2' (klein takes up to 4 references)."
+  - "Turn negatives into positives: 'don't change X' becomes 'keep X'."
+avoid:
+  - "Describing the whole finished picture"
+tailoring: ""
+checked: "2026-09-20"

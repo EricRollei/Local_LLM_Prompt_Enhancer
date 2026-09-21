@@ -383,7 +383,7 @@ def generate_text_with_qwen3_vl(
     Dictionary with 'success' bool, 'response' text, and optional 'error'.
     """
     try:
-        config = _parse_model_spec(model_spec, backend_hint)
+        config = _parse_config(model_spec, backend_hint)
         state = _get_or_load_model(config)
         
         model = state["model"]

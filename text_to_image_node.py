@@ -14,6 +14,15 @@ from typing import Tuple, Optional, Dict, List, Any, Union
 from .llm_backend import LLMBackend
 from .qwen3_vl_backend import caption_with_qwen3_vl
 from .platforms import get_platform_config, get_negative_prompt_for_platform
+from .profile_support import extended_choices
+from .wildcard_support import (
+    WILDCARD_INSTRUCTIONS_INPUT,
+    WILDCARD_LLM_BLOCK_INPUT,
+    enforce_verbatim,
+    llm_block,
+    report_lines,
+    resolve_wildcards,
+)
 from .utils import save_prompts_to_file, parse_keywords
 
 
@@ -407,7 +416,7 @@ class TextToImagePromptEnhancer:
                 }),
                 
                 # Platform selection
-                "target_platform": ([
+                "target_platform": (extended_choices([
                     "flux",
                     "flux_kontex",
                     "sd_xl",
@@ -422,7 +431,7 @@ class TextToImagePromptEnhancer:
                     "qwen_image",
                     "qwen_image_edit",
                     "wan_image"
-                ], {
+                ], ("image", "edit")), {
                     "default": "flux"
                 }),
                 
@@ -649,6 +658,10 @@ class TextToImagePromptEnhancer:
                     "multiline": True,
                     "placeholder": "Optional external caption for Reference 2"
                 }),
+                # New inputs are only ever APPENDED below this line, so saved workflows keep their widget order.
+                # Wildcards use this node's own random_seed / seed_mode, so no separate wildcard seed is needed.
+                "wildcard_llm_block": WILDCARD_LLM_BLOCK_INPUT,
+                "wildcard_instructions": WILDCARD_INSTRUCTIONS_INPUT,
             }
         }
     
@@ -719,7 +732,9 @@ class TextToImagePromptEnhancer:
         reference_image_1: Optional[torch.Tensor] = None,
         reference_image_2: Optional[torch.Tensor] = None,
         reference_caption_override_1: str = "",
-        reference_caption_override_2: str = ""
+        reference_caption_override_2: str = "",
+        wildcard_llm_block: bool = True,
+        wildcard_instructions: str = ""
     ) -> Tuple[str, str, str, str]:
         """Main processing function"""
         try:
@@ -737,8 +752,12 @@ class TextToImagePromptEnhancer:
         np.random.seed(seed_value % (2**32))
 
         try:
-            # STEP 0: Process alternations first (before LLM)
-            text_prompt = self._process_alternations(text_prompt)
+            # STEP 0: Resolve wildcards and {a|b} alternations first (before LLM) with the shared
+            # engine (core/wildcards), seeded by this node's resolved seed so "fixed" mode reproduces.
+            wildcard_resolution = resolve_wildcards(
+                text_prompt, seed=seed_value, legacy=True, upstream_instructions=wildcard_instructions
+            )
+            text_prompt = wildcard_resolution.text
             
             # STEP 0.5: Protect emphasis syntax
             text_prompt = self._preserve_emphasis_syntax(text_prompt)
@@ -1037,6 +1056,11 @@ class TextToImagePromptEnhancer:
                 creative_brainstorm,
                 reference_caption_payload
             )
+
+            # STEP 3b: Tell the LLM which elements were picked at random, so it keeps them
+            selected_elements = llm_block(wildcard_resolution, wildcard_llm_block)
+            if selected_elements:
+                user_prompt = f"{user_prompt}\n\n{selected_elements}"
             
             # STEP 4: Prepare keyword overrides and call LLM
             pos_kw_list = parse_keywords(positive_keywords)
@@ -1095,6 +1119,9 @@ class TextToImagePromptEnhancer:
             # STEP 6: Add custom keywords
             if pos_kw_list:
                 enhanced_prompt = self._add_keywords(enhanced_prompt, pos_kw_list, target_platform)
+
+            # STEP 6b: Verbatim wildcard picks (__=name__) must survive the rewrite word for word
+            enhanced_prompt, _restored_verbatim = enforce_verbatim(enhanced_prompt, wildcard_resolution)
             
             # STEP 7: Add platform-specific required tokens
             enhanced_prompt = self._add_platform_requirements(enhanced_prompt, target_platform)
@@ -1160,6 +1187,9 @@ class TextToImagePromptEnhancer:
                 reference_notes,
                 display_context
             )
+            wildcard_report = report_lines(wildcard_resolution)
+            if wildcard_report:
+                settings_display = f"{settings_display}\n\n{wildcard_report}"
             
             # STEP 10: Save if requested
             if save_to_file:
@@ -1278,6 +1308,12 @@ class TextToImagePromptEnhancer:
                 llm_status_parts.append(f"Reference warnings: {warning_preview}")
 
             llm_status_parts.append(f"Seed: {seed_value} ({resolved_seed_mode})")
+
+            wildcard_slot_count = len(wildcard_resolution.top_level_slots())
+            if wildcard_slot_count:
+                llm_status_parts.append(f"Wildcards: {wildcard_slot_count}")
+            if wildcard_resolution.warnings:
+                llm_status_parts.append(f"Wildcard warnings: {len(wildcard_resolution.warnings)} (see settings_used)")
 
             status_prefix = "✅" if main_llm_success else "⚠️"
             status = (
@@ -2922,7 +2958,8 @@ class TextToImagePromptEnhancer:
         if not target_words or target_words < 60:
             return prompt, None
 
-        min_words = max(80, int(target_words * 0.7))
+        # A profile states its own lower bound; the old 80-word floor padded short-prompt models past their target.
+        min_words = platform_config.get("min_words") or max(80, int(target_words * 0.7))
         words_before = len(prompt.split())
         if words_before >= min_words:
             return prompt, None
@@ -2981,7 +3018,11 @@ class TextToImagePromptEnhancer:
         platform = platform_config.get("prompt_style", "natural")
         target_words = platform_config.get("max_words")
         min_word_goal: Optional[int] = None
-        if isinstance(target_words, (int, float)) and target_words >= 60:
+        profile_min_words = platform_config.get("min_words")
+        if isinstance(profile_min_words, (int, float)) and profile_min_words > 0:
+            # Profiles state the lower bound themselves; the old 80-word floor overshoots short-prompt models.
+            min_word_goal = int(profile_min_words)
+        elif isinstance(target_words, (int, float)) and target_words >= 60:
             min_word_goal = max(80, int(target_words * 0.75))
         
         prompt = f"""You are an expert prompt engineer for {platform_name} image generation.
@@ -3057,7 +3098,9 @@ Optimal Length: {platform_config['optimal_length']}
         max_words = platform_config.get("max_words")
         if max_words:
             floor_words = int(max_words * 0.6)
-            if min_word_goal and min_word_goal > floor_words:
+            if profile_min_words:
+                floor_words = int(profile_min_words)
+            elif min_word_goal and min_word_goal > floor_words:
                 floor_words = min_word_goal
             prompt += f"ABSOLUTE MINIMUM DETAIL: deliver no fewer than {floor_words} words.\n\n"
         else:
@@ -3158,8 +3201,14 @@ Optimal Length: {platform_config['optimal_length']}
                 label = key.replace("_", " ").title()
                 prompt += f"- {label}: {value}\n"
         
-        # Platform-specific format instructions
-        if "pony" in platform_name.lower():
+        # Platform-specific format instructions: from the platform's profile when there is one
+        profile_format = platform_config.get("format_instructions", "")
+        if profile_format and platform_key != "pony":
+            prompt += f"\n{profile_format}"
+            if profile_min_words and max_words:
+                prompt += f"- Length: {int(profile_min_words)}-{int(max_words)} words. Do not exceed the upper figure.\n"
+
+        elif "pony" in platform_name.lower():
             prompt += """
 PONY DIFFUSION FORMAT (CRITICAL):
 - MUST START with exactly: score_9, score_8_up, score_7_up
@@ -3174,12 +3223,12 @@ PONY DIFFUSION FORMAT (CRITICAL):
         elif "illustrious" in platform_name.lower():
             prompt += """
 ILLUSTRIOUS-SPECIFIC INSTRUCTIONS:
-- Start with quality tags: masterpiece, best quality
-- Use danbooru tag format with underscores
+- Danbooru tags written with SPACES, not underscores, comma separated
+- Order: subject count, character, general tags, artist, then quality tags LAST: masterpiece, best quality
 - Detailed character appearance tags
 - Clothing and accessory tags
 - Background and atmosphere tags
-- Example: masterpiece, best quality, 1girl, detailed_face, flowing_dress, etc.
+- Example: 1girl, solo, long hair, flowing dress, looking at viewer, beach, sunset, masterpiece, best quality
 """
         
         elif "flux" in platform_name.lower():
@@ -3222,7 +3271,24 @@ SDXL-SPECIFIC INSTRUCTIONS:
 - Keep concise but descriptive
 """
         
-        prompt += """
+        # The example must match the platform: quality tokens only where the model was trained on them.
+        if platform_config.get("prompt_style") == "edit_focused":
+            correct_example = (
+                "Change the dress to deep red silk while keeping her face, pose, the lighting and the "
+                "background exactly the same."
+            )
+        elif quality_emphasis:
+            correct_example = (
+                "masterpiece, best quality, detailed portrait of a woman with flowing hair, "
+                "golden hour sunlight, shot from low angle, dramatic composition..."
+            )
+        else:
+            correct_example = (
+                "A woman with wind-tossed auburn hair stands at the edge of a wheat field, low golden-hour sun "
+                "behind her left shoulder rimming her profile, photographed from a low angle on an 85mm lens..."
+            )
+
+        prompt += f"""
 CRITICAL OUTPUT REQUIREMENTS:
 - Output ONLY the final image prompt text
 - DO NOT include any settings information in your output
@@ -3233,8 +3299,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 - Start generating NOW (no preamble, no explanations)
 
 Example of CORRECT output:
-"masterpiece, best quality, detailed portrait of a woman with flowing hair, 
-golden hour sunlight, shot from low angle, dramatic composition..."
+"{correct_example}"
 
 Example of WRONG output (DO NOT DO THIS):
 "...flowing hair in golden hour sunlight | Settings: camera angle: low angle..."
@@ -3374,9 +3439,9 @@ Example of WRONG output (DO NOT DO THIS):
         platform_config = get_platform_config(platform)
         
         if platform in ["illustrious"]:
-            # Illustrious uses tag format with underscores
-            formatted_kw = [kw.replace(" ", "_") for kw in missing_keywords]
-            return f"{prompt}, {', '.join(formatted_kw)}"
+            # Illustrious tags are written with SPACES (Onoma's paper and model card: "looking at viewer",
+            # "hatsune miku"). This used to convert spaces to underscores, which the model was not trained on.
+            return f"{prompt}, {', '.join(missing_keywords)}"
         else:
             # Natural language (including Pony after score tags)
             return f"{prompt}, {', '.join(missing_keywords)}"
@@ -3395,6 +3460,9 @@ Example of WRONG output (DO NOT DO THIS):
         missing = [token for token in required if token.lower() not in prompt_lower]
         
         if missing:
+            # A profile can ask for its quality tags at the end (Illustrious was trained with them there)
+            if platform_config.get("required_position") == "end":
+                return f"{prompt.rstrip().rstrip(',')}, {', '.join(missing)}"
             # Add at the beginning for these platforms
             if platform in ["pony", "illustrious"]:
                 return f"{', '.join(missing)}, {prompt}"

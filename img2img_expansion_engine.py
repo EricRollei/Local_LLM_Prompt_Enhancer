@@ -73,13 +73,19 @@ class ImageToImageExpander:
     ) -> str:
         """Build LLM system prompt with platform-specific instructions"""
         quality_emphasis = bool(config.get("quality_emphasis", True))
+        # Profiles (core/profiles) supply the format in words; the comma-list rule only suits tag models.
+        format_instructions = config.get("format_instructions", "")
+        format_rule = (
+            "Follow the FORMAT section below exactly" if format_instructions
+            else "Write as a comma-separated list of descriptive elements"
+        )
         
         prompt = f"""You are an expert prompt engineer for {config['name']} image generation.
 
 CRITICAL OUTPUT RULES:
 1. Output ONLY the final prompt - no labels, explanations, or meta-commentary
 2. Do NOT include phrases like "Here is...", "Prompt:", etc.
-3. Write as a comma-separated list of descriptive elements
+3. {format_rule}
 4. Start directly with the description
 
 TARGET PLATFORM: {config['name']}
@@ -105,8 +111,14 @@ Optimal Length: {config['optimal_length']}
             for avoid in config["avoid"]:
                 prompt += f"- {avoid}\n"
         
-        # Platform-specific instructions
-        if platform == "qwen_image_edit":
+        # Platform-specific instructions: from the platform's profile when there is one
+        if format_instructions:
+            low_words, high_words = config.get("min_words"), config.get("max_words")
+            prompt += f"\nFORMAT:\n{format_instructions}"
+            if low_words and high_words:
+                prompt += f"- Length: {low_words}-{high_words} words.\n"
+
+        elif platform == "qwen_image_edit":
             prompt += """
 EDIT MODE INSTRUCTIONS:
 - Be VERY concise (20-50 tokens max)

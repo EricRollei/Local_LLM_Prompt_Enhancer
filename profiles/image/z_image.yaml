@@ -1,0 +1,8 @@
+id: z_image
+extends: z_image_turbo
+name: "Z-Image (base)"
+summary: "Undistilled Z-Image: same prompting as Turbo, but it runs with CFG 3-5 and a negative prompt is strongly recommended."
+negative: "yes"
+negative_default: "blurry, low resolution, distorted anatomy, malformed hands, oversaturated, waxy skin, watermark, text artifacts"
+negative_note: "Tongyi recommends negatives with guidance 3.0-5.0 on the base model."
+checked: "2026-09-20"

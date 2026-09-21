@@ -1,0 +1,11 @@
+id: alice_t2v
+extends: wan22_video
+name: "Alice T2V 14B"
+developer: "Mirage"
+summary: "Wan 2.2 A14B derivative distilled to 4 steps; same umT5-XXL encoder and the same prompt format as Wan 2.2. Its repo ships a copy of Wan's rewriter prompts. At 4 steps CFG is effectively off, so the negative prompt does little."
+negative: ignored
+negative_note: "rCM-distilled to 4 steps: CFG is effectively off. The config still lists Wan's negative prompt and guide scales for undistilled use."
+sources:
+  - {url: "https://github.com/mirage-video/Alice", supports: "Wan 2.2 derivative, umT5-XXL, 4-step distillation, resolutions", confidence: high}
+  - {url: "https://raw.githubusercontent.com/mirage-video/Alice/main/alice/utils/system_prompt.py", supports: "identical rewriter prompts", confidence: high}
+checked: "2026-09-20"

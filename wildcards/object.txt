@@ -1,0 +1,15 @@
+# Legacy category {object}. For tagged, searchable objects use __objects/**__ instead.
+a hardbound book
+a red rubber ball
+a cardboard box
+a glass bottle
+a rotary telephone
+a manual typewriter
+a wooden chair
+a pocket watch
+a door key
+a suitcase
+an umbrella
+a teacup
+a candle
+a hand mirror

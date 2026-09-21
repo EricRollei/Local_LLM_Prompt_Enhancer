@@ -1,0 +1,61 @@
+id: flux2_dev
+name: "FLUX.2 [dev]"
+developer: "Black Forest Labs"
+summary: "32B model read through Mistral-Small-3.2-24B. Prose or structured JSON, exact hex colours, strong text rendering, text-to-image and reference editing in one model."
+modality: image
+tasks: [t2i, edit]
+encoder: "Mistral-Small-3.2-24B-Instruct (512 tokens)"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [40, 110]
+max_tokens: 512
+negative: "no"
+quality_tokens: forbid
+quoted_text: double
+weights: false
+hex_colors: true
+structure: "Subject + action or pose + style or medium + context or setting + lighting + technical. Word order matters: earlier = stronger."
+rules:
+  - "Front-load the subject; FLUX.2 pays most attention to what comes first."
+  - "Always describe the light: source, direction, quality, colour temperature. It is the biggest quality lever."
+  - "For photorealism give camera, lens, aperture and film stock rather than words like 'realistic'."
+  - "Anything that would carry text in reality (signs, labels, screens) needs explicit quoted text, or the model writes gibberish."
+  - "30-80 words suits most ideas; go past 80 only for complex multi-subject scenes."
+avoid:
+  - "Negative phrasing: 'no glasses' becomes 'clear face, eyes visible'"
+  - "Keyword soup ('woman, portrait, beautiful, 8k, detailed')"
+  - "A hex code that is not bound to an object"
+  - "Prompt weights"
+task_rules:
+  edit:
+    target_words: [30, 80]
+    structure: "One instruction: what changes, then what stays the same (face, lighting, composition)."
+    validator: edit_instruction
+    rules:
+      - "One concise instruction, 50-80 words, about 30 for a brief request."
+      - "Analytical language; no decorative words such as 'whimsical' or 'cascading'."
+      - "Say what changes AND what stays the same."
+      - "Refer to real elements of the source image; refer to several inputs as 'image 1', 'image 2'."
+      - "Turn negatives into positives: 'don't change X' becomes 'keep X'."
+      - "Make abstractions concrete."
+    replace_rules: true
+official:
+  - task: t2i
+    url: "https://raw.githubusercontent.com/black-forest-labs/flux2/main/src/flux2/system_messages.py"
+    format: python_var
+    variable: SYSTEM_MESSAGE_UPSAMPLING_T2I
+  - task: edit
+    url: "https://raw.githubusercontent.com/black-forest-labs/flux2/main/src/flux2/system_messages.py"
+    format: python_var
+    variable: SYSTEM_MESSAGE_UPSAMPLING_I2I
+    note: "BFL's edit prompt contains the line 'Keep content PG-13' (their hosted-service policy). It is left as published; add a drop_lines pattern in a profiles_user copy to remove it."
+tailoring: |
+  Length: 30-80 words for most ideas, up to about 110 for complex scenes. Describe the light source and direction in every prompt.
+  When exact colours matter, bind a hex code to the object and announce it with the word "color": "a scarf in color #C4725A".
+sources:
+  - {url: "https://docs.bfl.ml/guides/prompting_guide_flux2", supports: "structure, lengths, JSON schema, hex colours, no negatives, typography", confidence: high}
+  - {url: "https://raw.githubusercontent.com/black-forest-labs/flux2/main/src/flux2/text_encoder.py", supports: "512-token limit, encoders", confidence: high}
+  - {url: "https://raw.githubusercontent.com/black-forest-labs/flux2/main/src/flux2/system_messages.py", supports: "official upsampling prompts", confidence: high}
+checked: "2026-09-20"
+confidence: high

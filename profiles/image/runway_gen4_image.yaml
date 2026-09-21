@@ -1,0 +1,28 @@
+id: runway_gen4_image
+name: "Runway Gen-4 Image (API)"
+developer: "Runway"
+summary: "Hosted image model built around references: up to three tagged reference images are cited in the prompt as @tag. Conversational natural language; start simple and add detail."
+modality: image
+tasks: [t2i]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [20, 110]
+max_chars: 1000
+negative: "no"
+quality_tokens: neutral
+quoted_text: none
+weights: false
+structure: "Plain description; references woven in by tag: '@EiffelTower painted in the style of @StarryNight'."
+rules:
+  - "Cite a reference only by the tag the user gave it, as @tag. Never invent tags. An untagged reference acts as a style influence and is not mentioned."
+  - "For a full-body figure, describe the shoes or trousers - Runway's own tip for getting the whole body in frame."
+avoid:
+  - "Negative phrasing"
+api_note: "The 1,000-character limit is the commonly cited one and was not confirmed on Runway's pages. Ratios are pixel strings (1920:1080). No vendor rewriter documented."
+sources:
+  - {url: "https://docs.dev.runwayml.com/guides/using-the-api/", supports: "referenceImages, @tag syntax, 3 references", confidence: high}
+  - {url: "https://help.runwayml.com/hc/en-us/articles/40042718905875-Creating-with-Gen-4-Image-References", supports: "prompting advice", confidence: high}
+checked: "2026-09-21"
+confidence: medium

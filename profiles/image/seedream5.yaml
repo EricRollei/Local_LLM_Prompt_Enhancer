@@ -1,0 +1,44 @@
+id: seedream5
+name: "Seedream 5.0 / 4.x (API)"
+developer: "ByteDance Seed"
+summary: "Hosted image model (BytePlus ModelArk / Volcengine Ark): generation, editing, up to 10-14 reference images, image sets. Plain sentences - subject + action + environment - with short words for style, colour, light and composition. There is no Seedream 2.5: the line runs 3.0, 4.0, 4.5, 5.0 Lite, 5.0 Pro."
+modality: image
+tasks: [t2i, edit]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [50, 220]
+max_tokens: 4000
+negative: "no"
+negative_note: "The 4.x / 5.x API has no negative-prompt field. Say what must stay unchanged, and describe what is there."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+hex_colors: true
+structure: "Name the format or use first (poster, product shot, storyboard frame), then subject + action + environment in full sentences, then composition, light, any text in the image, style, and last the constraints."
+rules:
+  - "Complete sentences; concise, precise wording beats stacked adjectives."
+  - "Text to render goes in double quotes, exactly as wanted: a poster with the title \"Harbour Nights\"."
+  - "Reference images are named by upload order and given a role: 'Place the character from Image 1 into the background of Image 2, using the style of Image 3.' Add a few words of what each shows."
+  - "Image sets are asked for in words: 'a series of 4 images' - then say what changes between them and what stays the same."
+  - "ByteDance advises staying under about 600 English words; long prompts scatter the model's attention."
+avoid:
+  - "Keyword stacks"
+  - "Vague edit targets ('it', 'that')"
+task_rules:
+  edit:
+    target_words: [10, 70]
+    structure: "Action + object + attribute. Verbs the guide uses: add, remove, replace, modify / change. Then what stays unchanged."
+    rules:
+      - "Examples in ByteDance's form: 'Remove the girl's hat.' 'Replace the largest bread man with a croissant man.' 'Change the knight's helmet to gold.'"
+      - "Name the target by what it is and where it is; say what must stay the same."
+      - "Seedream 5.0 Pro accepts a hex code for a colour change (#3E4A2E)."
+api_note: "Vendor rewriting: optimize_prompt_options.mode is 'standard' by default ('fast' also exists); no documented off switch. Size and aspect ratio are API parameters, not prompt text."
+sources:
+  - {url: "https://seed.bytedance.com/en/blog/beyond-generation-it-understands-design-introducing-seedream-5-0-pro", supports: "5.0 Pro release 2026-07-08, languages, interactive editing, hex colours", confidence: high}
+  - {url: "https://docs.byteplus.com/en/docs/ModelArk/1829186", supports: "official prompt guide - exists, body could not be read (JavaScript page)", confidence: low}
+  - {url: "https://evolink.ai/docs/en/api-manual/image-series/seedream/seedream-5.0-pro-image-generate", supports: "MIRROR of the API reference: 4000-token limit, 600-word advice, reference counts, optimize modes", confidence: low}
+  - {url: "https://www.seedream4.net/prompt-guide", supports: "RESTATEMENT of the official guide: quoted text, edit verbs, Image N phrasing, 'a series of'", confidence: low}
+checked: "2026-09-21"
+confidence: medium

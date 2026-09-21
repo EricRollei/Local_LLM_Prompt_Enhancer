@@ -1,0 +1,36 @@
+id: noobai
+name: "NoobAI-XL"
+developer: "Laxhar Lab"
+summary: "SDXL anime fine-tune on Danbooru plus e621. A tag model: the earlier 'balanced natural language' setting was wrong. Quality and period tags are trained in."
+modality: image
+tasks: [t2i]
+encoder: "SDXL CLIPs (77-token chunks)"
+encoder_family: clip
+caption_style: tags
+validator: tags
+languages: [en]
+target_words: [25, 70]      # about 15-40 tags. Longer lists are padding: a live test at 40-150 produced 147 words of filler
+negative: "yes"
+negative_default: "nsfw, worst quality, old, early, low quality, lowres, signature, username, logo, bad hands, mutated hands, mammal, anthro, furry, ambiguous form, feral, semi-anthro"
+negative_note: "CFG 5-6, 25-30 steps, Euler a. Remove 'nsfw' and the furry terms from the negative when that content is wanted."
+quality_tokens: required
+prefix: "masterpiece, best quality, newest, absurdres, highres, safe"
+quality_token_list: [masterpiece, best quality, good quality, newest, recent, absurdres, highres]
+quoted_text: none
+weights: true
+structure: "<1girl / 1boy / 1other>, <character>, <series>, <artists>, <special tags>, <general tags>, <other tags>"
+rules:
+  - "Danbooru and e621 tags, comma separated, in the order of the structure."
+  - "Quality tags are percentile based: masterpiece, best quality, good quality, normal quality, worst quality."
+  - "Period tags: newest (2021-24), recent (2018-20), mid, early, old."
+  - "Swap 'safe' in the prefix for sensitive, nsfw or explicit to match the content."
+avoid:
+  - "Sentences"
+  - "Photography vocabulary"
+legacy:
+  prompt_style: booru_detailed
+  supports: [booru_tags, e621_tags, quality_emphasis]
+sources:
+  - {url: "https://huggingface.co/Laxhar/noobai-XL-1.1/blob/main/README.md", supports: "tag order, quality and period tags, prefixes, negative, settings", confidence: high}
+checked: "2026-09-20"
+confidence: high

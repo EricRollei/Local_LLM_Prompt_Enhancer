@@ -10,6 +10,7 @@ import re
 from typing import Dict, List, Tuple, Optional
 from .presets import get_preset, get_random_elements, RANDOM_POOLS
 from .utils import detect_complexity, parse_keywords, clean_llm_output, extract_prompt_from_response
+from .wildcard_support import llm_block, resolve_wildcards
 
 
 class PromptExpander:
@@ -17,6 +18,7 @@ class PromptExpander:
     
     def __init__(self):
         self.wan_guide = self._load_wan_guide()
+        self.last_resolution = None  # core.wildcards Resolution from the most recent _process_wildcards call
     
     def expand_prompt(
         self,
@@ -30,18 +32,34 @@ class PromptExpander:
         shot_structure: str = "3_shot_structure",
         creativity_mode: str = "balanced",
         vision_caption: str = "",
-        reference_mode: str = "recreate_exact"
+        reference_mode: str = "recreate_exact",
+        wildcard_seed: Optional[int] = None,
+        wildcard_llm_block: bool = True,
+        wildcard_instructions: str = "",
+        target_model: str = "wan22_video",
+        duration_seconds: float = 0.0,
+        shots_chosen_by_user: bool = False
     ) -> Tuple[str, str, Dict]:
         """
+        target_model: a video profile id. "wan22_video" (the default here) is the original Wan 2.2 path,
+        unchanged. Any other id builds the instructions from that model's profile; see _build_profile_prompts.
+        duration_seconds: clip length, used by the profile path only. 0 = not stated.
+        shots_chosen_by_user: True when the node has a shot_structure widget, so its value is a real choice.
+
         2-PASS EXPANSION:
         Pass 1: Vision analysis already done (vision_caption parameter)
         Pass 2: This function - expand prompt using vision caption + reference_mode
         
         Expand a basic prompt with wildcard support, aesthetic controls, and optional vision context
         
-        Wildcards syntax:
+        Wildcards: full core/wildcards grammar (see wildcards/README.md), plus the v1 forms
         - {animal:cat|dog|bird} - picks one randomly
-        - {animal} - if you have predefined categories
+        - {animal} - a category that exists as a wildcard file
+
+        wildcard_seed: None = fresh roll; an int = reproducible picks. When omitted, the old
+        behaviour applies and variation_seed is used.
+        wildcard_llm_block: append the selected-elements block to the user prompt so the LLM
+        keeps the random picks (concepts by meaning, verbatim picks word for word).
         
         tier parameter accepts both old and new names:
         - Old: auto, basic, enhanced, advanced, cinematic
@@ -61,21 +79,20 @@ class PromptExpander:
             "exhaustive": "cinematic"
         }
         
+        # STEP 1: Process wildcards in the input prompt - exactly once, before anything reads it
+        effective_wildcard_seed = wildcard_seed if wildcard_seed is not None else variation_seed
+        processed_prompt, wildcard_replacements = self._process_wildcards(
+            basic_prompt, effective_wildcard_seed, upstream_instructions=wildcard_instructions
+        )
+
         # Convert new names to old internal names
         if tier in tier_mapping:
             detected_tier = tier_mapping[tier]
         elif tier == "auto":
-            # STEP 1: Process wildcards in the input prompt
-            processed_prompt, wildcard_replacements = self._process_wildcards(basic_prompt, variation_seed)
             detected_tier = detect_complexity(processed_prompt)
         else:
             # Old tier names still work
             detected_tier = tier
-            processed_prompt, wildcard_replacements = self._process_wildcards(basic_prompt, variation_seed)
-        
-        # STEP 1b: Process wildcards if not done yet (for non-auto cases)
-        if tier != "auto":
-            processed_prompt, wildcard_replacements = self._process_wildcards(basic_prompt, variation_seed)
         
         # STEP 3: Get preset configuration
         preset_config = get_preset(preset)
@@ -95,6 +112,32 @@ class PromptExpander:
             
             preset_config = self._build_random_config(random_elements_selected)
         
+        # STEP 4b: any target other than Wan 2.2 is written from that model's profile
+        profile_plan = self._build_profile_prompts(
+            target_model, processed_prompt, detected_tier, mode, preset_config, preset, variation_seed,
+            aesthetic_controls, random_elements_selected, shot_structure, shots_chosen_by_user,
+            creativity_mode, vision_caption, reference_mode, positive_keywords, duration_seconds,
+            llm_block(self.last_resolution, wildcard_llm_block),
+        )
+        if profile_plan is not None:
+            system_prompt, user_prompt, target_info = profile_plan
+            breakdown = {
+                "detected_tier": detected_tier,
+                "applied_preset": preset,
+                "mode": mode,
+                "positive_keywords": positive_keywords,
+                "preset_focus": preset_config.get("focus_areas", []),
+                "aesthetic_controls": aesthetic_controls,
+                "was_auto_detected": (tier == "auto"),
+                "random_elements": random_elements_selected if preset == "random" else None,
+                "wildcard_replacements": wildcard_replacements if wildcard_replacements else None,
+                "wildcard_warnings": (self.last_resolution.warnings or None) if self.last_resolution else None,
+                "original_prompt": basic_prompt if wildcard_replacements else None,
+                "processed_prompt": processed_prompt if wildcard_replacements else None,
+            }
+            breakdown.update(target_info)
+            return system_prompt, user_prompt, breakdown
+
         # STEP 5: Build prompts (Pass 2 of 2-pass system)
         system_prompt = self._build_system_prompt(
             detected_tier,
@@ -118,6 +161,11 @@ class PromptExpander:
             vision_caption,
             reference_mode
         )
+
+        # STEP 5b: Tell the LLM which elements were picked at random, so it keeps them
+        selected_elements = llm_block(self.last_resolution, wildcard_llm_block)
+        if selected_elements:
+            user_prompt = f"{user_prompt}\n\n{selected_elements}"
         
         # STEP 6: Build breakdown
         breakdown = {
@@ -130,88 +178,131 @@ class PromptExpander:
             "was_auto_detected": (tier == "auto"),
             "random_elements": random_elements_selected if preset == "random" else None,
             "wildcard_replacements": wildcard_replacements if wildcard_replacements else None,
+            "wildcard_warnings": (self.last_resolution.warnings or None) if self.last_resolution else None,
             "original_prompt": basic_prompt if wildcard_replacements else None,
-            "processed_prompt": processed_prompt if wildcard_replacements else None
+            "processed_prompt": processed_prompt if wildcard_replacements else None,
+            "target_model": "wan22_video",
+            "target_name": "Wan 2.2 (this node's original path)",
+            "target_task": "i2v" if mode == "image-to-video" else "t2v",
         }
+        if target_model and target_model != "wan22_video":
+            breakdown["target_notes"] = [f"no video profile named '{target_model}' was found; the Wan 2.2 path was used"]
         
         return system_prompt, user_prompt, breakdown
-    
-    def _process_wildcards(self, prompt: str, seed: Optional[int] = None) -> Tuple[str, Dict]:
+
+    # ------------------------------------------------------------------------------------------
+    # Profile path: every target model except Wan 2.2
+    # ------------------------------------------------------------------------------------------
+    SHOT_REQUESTS = {
+        "continuous_paragraph": "one continuous shot, no cuts",
+        "2_shot_structure": "two shots (an opening and a final reveal)",
+        "3_shot_structure": "three shots (opening, development, final reveal)",
+        "4_shot_structure": "four shots (introduction, build, climax, resolution)",
+    }
+
+    def _build_profile_prompts(self, target_model, idea, tier, mode, preset_config, preset_name, variation_seed,
+                               aesthetic_controls, random_elements, shot_structure, shots_chosen_by_user,
+                               creativity_mode, vision_caption, reference_mode, positive_keywords,
+                               duration_seconds, selected_elements):
         """
-        Process wildcards in the prompt
-        
-        Supported formats:
-        - {category:option1|option2|option3} - inline options
-        - {category} - predefined categories
-        
-        Returns:
-            Tuple of (processed_prompt, replacements_dict)
+        (system_prompt, user_prompt, info) for a target model other than Wan 2.2, or None to use the Wan path.
+
+        The model-specific part (format, length, rules, camera vocabulary, sound, the vendor's own rewriter
+        prompt where one is published) comes from core/profiles. What this engine adds are the blocks that
+        are about the USER's direction rather than about the model: preset, aesthetic controls, creativity
+        mode, reference-image mode, shot count, variation. The Wan tier text, Wan shot format, Wan option
+        list and the tier word minimums are not used here.
         """
-        if not prompt or '{' not in prompt:
-            return prompt, {}
-        
-        # Set random seed for reproducibility if provided
-        if seed is not None:
-            random.seed(seed)
-        
-        replacements = {}
-        processed = prompt
-        
-        # Pattern for inline wildcards: {name:opt1|opt2|opt3}
-        inline_pattern = r'\{([^:}]+):([^}]+)\}'
-        
-        for match in re.finditer(inline_pattern, prompt):
-            full_match = match.group(0)
-            category = match.group(1).strip()
-            options_str = match.group(2)
-            options = [opt.strip() for opt in options_str.split('|')]
-            
-            # Pick random option
-            chosen = random.choice(options)
-            replacements[category] = chosen
-            
-            # Replace in prompt
-            processed = processed.replace(full_match, chosen, 1)
-        
-        # Pattern for predefined wildcards: {name}
-        predefined_pattern = r'\{([^:}]+)\}'
-        
-        # Predefined wildcard categories
-        predefined_wildcards = {
-            "animal": ["cat", "dog", "bird", "horse", "rabbit", "fox", "deer", "wolf"],
-            "person": ["man", "woman", "child", "elder", "teenager", "artist", "scientist"],
-            "profession": ["detective", "chef", "doctor", "teacher", "engineer", "musician", "artist"],
-            "instrument": ["piano", "guitar", "violin", "drums", "saxophone", "flute"],
-            "location": ["park", "studio", "street", "forest", "beach", "city", "room"],
-            "weather": ["sunny", "rainy", "snowy", "foggy", "stormy", "cloudy"],
-            "time": ["morning", "noon", "afternoon", "evening", "night", "midnight"],
-            "emotion": ["happy", "sad", "angry", "surprised", "calm", "excited", "pensive"],
-            "action": ["walking", "running", "dancing", "working", "playing", "creating"],
-            "color": ["red", "blue", "green", "yellow", "purple", "orange", "black", "white"],
-            "vehicle": ["car", "motorcycle", "bicycle", "truck", "bus", "train", "boat"],
-            "tool": ["hammer", "wrench", "paintbrush", "camera", "telescope", "microscope"],
-            "object": ["book", "ball", "box", "bottle", "phone", "computer", "chair"]
+        if not target_model or target_model == "wan22_video":
+            return None
+        try:
+            from .core.profiles import RunFacts, plan_rewrite
+            from .profile_support import CACHE_DIR, get_profile, tier_word_range
+        except Exception as error:
+            print(f"[Video Prompt Expander] profile support unavailable ({error}); using the Wan 2.2 path")
+            return None
+        profile = get_profile(target_model)
+        if profile is None or profile.modality != "video":
+            return None
+
+        # An image that is the start frame makes this image-to-video. A reference used only for style,
+        # colour, pose or character is still text-to-video as far as the target model is concerned.
+        start_frame = mode == "image-to-video" and (not vision_caption or reference_mode == "recreate_exact")
+        task = profile.resolve_task("i2v" if start_frame else "t2v")
+        word_range = tier_word_range(profile, task, tier, duration_seconds)
+
+        blocks = []
+        if preset_name == "random":
+            blocks.append(self._format_random_instructions(random_elements, aesthetic_controls))
+        elif preset_name != "custom":
+            blocks.append(self._format_preset_requirements(preset_config, preset_name))
+        if aesthetic_controls:
+            blocks.append(self._format_aesthetic_controls(aesthetic_controls))
+        blocks.append(self._format_creativity_instructions(creativity_mode))
+        if vision_caption and not (start_frame and task == "i2v"):
+            blocks.append(self._format_reference_mode_instructions(vision_caption, reference_mode))
+        if shots_chosen_by_user and shot_structure in self.SHOT_REQUESTS:
+            blocks.append(
+                f"=== SHOTS ===\nThe user asked for {self.SHOT_REQUESTS[shot_structure]}. Express that the way "
+                f"{profile.name} expresses shots (see its format above), and only as far as the clip length allows.\n"
+            )
+        if variation_seed is not None:
+            blocks.append(
+                f"VARIATION {variation_seed + 1}: make this version differ from the others in camera approach, "
+                f"lighting or the specific action, while keeping the user's concept.\n"
+            )
+        if positive_keywords:
+            blocks.append(
+                "=== REQUIRED TERMS ===\nThese exact strings must appear in the visual description, spelled as given "
+                f"(they are trigger words): {', '.join(positive_keywords)}\n"
+                "In a format with named fields they go inside the FIRST field, at the end of its text - never on a line "
+                "of their own and never after the last field.\n"
+            )
+        direction = "=== THE USER'S DIRECTION FOR THIS PROMPT ===\n(The model's format rules above always win over anything below.)\n\n" + "\n".join(
+            block.strip("\n") + "\n" for block in blocks if block and block.strip())
+        extra_system = direction if not selected_elements else f"{direction}\n{selected_elements}"
+
+        facts = RunFacts(
+            duration_seconds=float(duration_seconds or 0.0),
+            image_description=vision_caption if (start_frame and task == "i2v") else "",
+            length_words=word_range,
+        )
+        plan = plan_rewrite(profile, idea, task=task, facts=facts, cache_dir=CACHE_DIR, extra_system=extra_system)
+        notes = list(plan.notes)
+        if mode == "image-to-video" and task != "i2v":
+            notes.append(f"{profile.name} has no image-to-video task in its profile, or the image is a style reference; written as {task}")
+        info = {
+            "target_model": profile.id,
+            "target_name": profile.name,
+            "target_task": plan.task,
+            "target_format": profile.caption_style,
+            "target_words": word_range,
+            "target_base": plan.base,
+            "target_notes": notes,
+            "target_api_note": profile.api_note,
         }
-        
-        for match in re.finditer(predefined_pattern, processed):
-            full_match = match.group(0)
-            category = match.group(1).strip().lower()
-            
-            # Skip if already processed (was inline format)
-            if category in replacements:
-                continue
-            
-            # Check if we have this category
-            if category in predefined_wildcards:
-                chosen = random.choice(predefined_wildcards[category])
-                replacements[category] = chosen
-                processed = processed.replace(full_match, chosen, 1)
-        
-        # Reset random state
-        if seed is not None:
-            random.seed()
-        
-        return processed, replacements if replacements else {}
+        return plan.system, plan.user, info
+    
+    def _process_wildcards(self, prompt: str, seed: Optional[int] = None,
+                           upstream_instructions: str = "") -> Tuple[str, Dict]:
+        """
+        Resolve wildcards in the prompt with the shared engine (core/wildcards).
+
+        Same signature and return shape as the v1 implementation, so callers are unchanged:
+            Tuple of (processed_prompt, replacements_dict)
+        replacements_dict maps a slot name to what was chosen, e.g. {"animal": "a barn owl"}.
+
+        The full record (bindings, origins, warnings) is kept on self.last_resolution.
+        Legacy syntax is on, so {animal} and {label:a|b|c} keep working.
+        """
+        self.last_resolution = None
+        if not prompt:
+            return prompt, {}
+
+        # upstream_instructions: llm_instructions from a Wildcard Processor / Semantic Variation node earlier in the graph
+        resolution = resolve_wildcards(prompt, seed=seed, legacy=True, upstream_instructions=upstream_instructions)
+        self.last_resolution = resolution
+        return resolution.text, resolution.legacy_replacements()
     
     def _merge_random_with_controls(self, random_elements: Dict, user_controls: Dict) -> Dict:
         """
@@ -871,9 +962,19 @@ Select appropriate elements and use them naturally in your description.
         preset: str,
         custom_negatives: List[str],
         mode: str,
-        visual_style: str = "photorealistic"
+        visual_style: str = "photorealistic",
+        target_model: str = "wan22_video"
     ) -> str:
-        """Generate Wan 2.2-optimized negative prompt"""
+        """Generate Wan 2.2-optimized negative prompt. Another target_model: that model's own negative, or none."""
+
+        if target_model and target_model != "wan22_video":
+            try:
+                from .profile_support import legacy_negative
+                from_profile = legacy_negative(target_model, custom_negatives)
+                if from_profile is not None:
+                    return from_profile
+            except Exception as error:
+                print(f"[Video Prompt Expander] profile negative unavailable ({error}); using the Wan 2.2 one")
         
         # Wan 2.2 base negatives for all styles
         base_negatives = [
@@ -923,9 +1024,25 @@ Select appropriate elements and use them naturally in your description.
         # Remove duplicates while preserving order
         return ", ".join(list(dict.fromkeys(negatives)))
     
-    def parse_llm_response(self, response: str) -> Dict:
-        """Parse and clean LLM response with SAFER fallback handling"""
-        
+    def parse_llm_response(self, response: str, target_model: str = "wan22_video", task: str = "",
+                           word_range=None) -> Dict:
+        """
+        Parse and clean LLM response with SAFER fallback handling.
+        For a target other than Wan 2.2 the profile's own checker is used instead: the Wan heuristics below
+        (dropping a short first line, cutting at 'output:') would damage field and JSON formats.
+        Returns {"prompt", "raw_response"} and, on the profile path, "warnings".
+        """
+        if target_model and target_model != "wan22_video":
+            try:
+                from .core.profiles import check
+                from .profile_support import get_profile
+                profile = get_profile(target_model)
+                if profile is not None:
+                    text, warnings = check(response, profile, task or profile.default_task(), word_range=word_range)
+                    return {"prompt": text, "raw_response": response, "warnings": warnings}
+            except Exception as error:
+                print(f"[Video Prompt Expander] profile check unavailable ({error}); using the Wan 2.2 parser")
+
         original_response = response
         cleaned = clean_llm_output(response)
         

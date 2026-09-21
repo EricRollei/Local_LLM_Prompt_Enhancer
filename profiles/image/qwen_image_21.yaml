@@ -1,0 +1,24 @@
+id: qwen_image_21
+extends: qwen_image
+name: "Qwen-Image 2.1"
+summary: "7B unified text-to-image and edit model read through Qwen3-VL-8B, native 2K. Ships its own fine-tuned rewriter models; prompting rules follow Qwen-Image 2512."
+tasks: [t2i, edit]
+encoder: "Qwen3-VL-8B"
+max_tokens: 0
+negative_note: "The vLLM example runs at guidance 1, where a negative prompt has no effect. Checked on release day: treat as provisional."
+task_rules:
+  edit:
+    target_words: [15, 60]
+    validator: edit_instruction
+    structure: "Direct instruction; refer to inputs as <image1>, <image2>; say what stays."
+    replace_rules: true
+    rules:
+      - "Refer to input images as <image1>, <image2>."
+      - "Text edits are replacements: Replace \"old\" to \"new\", both in English double quotes, original language and capitalisation kept."
+      - "For people, state what stays: ethnicity, gender, age, hairstyle, expression, outfit."
+official: []
+tailoring: ""
+sources:
+  - {url: "https://raw.githubusercontent.com/QwenLM/Qwen-Image-2.1/main/README.md", supports: "architecture, encoder, PE models, released 2026-09-20", confidence: high}
+checked: "2026-09-20"
+confidence: medium

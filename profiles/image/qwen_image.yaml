@@ -1,0 +1,46 @@
+id: qwen_image
+name: "Qwen-Image (2508 / 2512)"
+developer: "Alibaba Qwen"
+summary: "20B MMDiT read through Qwen2.5-VL-7B. Fluent natural language in English or Chinese, the best open model for rendered text, real CFG with a negative prompt."
+modality: image
+tasks: [t2i]
+encoder: "Qwen2.5-VL-7B (1024 tokens)"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [120, 220]
+max_tokens: 1024
+negative: "yes"
+negative_default: "low resolution, low quality, deformed limbs, deformed fingers, oversaturated, waxy look, face without detail, over-smoothed, AI look, chaotic composition, blurry or distorted text"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Overall style stated explicitly, then subject in detail, then setting, light, composition. Portraits: ethnicity, gender, narrow age, face, skin, makeup, clothing, hair, pose, gaze, hands, background, lighting."
+rules:
+  - "Every string to be rendered goes in English double quotes, unaltered and untranslated, with position, layout direction, font style, colour, size and medium (printed, neon, embroidered)."
+  - "If text is only implied ('a list of names'), invent the exact concrete text."
+  - "If the image has no text at all, end with: The image contains no recognizable text."
+  - "Never modify proper nouns."
+  - "State one explicit overall style."
+  - "Keep logical relations the user gave (order, arrows, hierarchy)."
+avoid:
+  - "Markdown lists or headings in the prompt"
+  - "Negation words: leave the unwanted thing out instead of naming it"
+  - "Adding text the user did not ask for"
+official:
+  - task: t2i
+    url: "https://raw.githubusercontent.com/QwenLM/Qwen-Image/main/src/examples/tools/prompt_utils_2512.py"
+    format: python_var
+    variable: polish_prompt_en.SYSTEM_PROMPT
+    note: "Qwen's 2512 rewriter prompt is about 35,000 characters; it needs an LLM context of 12k tokens or more. Set official_prompt to off to use the short built-in rules."
+tailoring: |
+  The 2508 checkpoint benefits from the suffix ", Ultra HD, 4K, cinematic composition." - Qwen's own rewriter stopped appending it for 2512, so do not add it unless the user asks.
+legacy:
+  prompt_style: balanced_natural
+  supports: [natural_descriptions, style_variety, cultural_elements]
+sources:
+  - {url: "https://raw.githubusercontent.com/QwenLM/Qwen-Image/main/README.md", supports: "negatives, rewriting recommendation, magic suffix", confidence: high}
+  - {url: "https://raw.githubusercontent.com/QwenLM/Qwen-Image/main/src/examples/tools/prompt_utils_2512.py", supports: "2512 rewriter rules", confidence: high}
+  - {url: "https://raw.githubusercontent.com/huggingface/diffusers/main/src/diffusers/pipelines/qwenimage/pipeline_qwenimage.py", supports: "1024-token cap", confidence: high}
+checked: "2026-09-20"
+confidence: high

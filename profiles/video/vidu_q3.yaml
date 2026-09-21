@@ -1,0 +1,30 @@
+id: vidu_q3
+name: "Vidu Q3 (API)"
+developer: "Shengshu Technology"
+summary: "Hosted video model with sound, up to 16 s, known for reference-to-video: subjects are cited in the prompt as @1, @2. Only the API reference could be read, so the prompting rules here are few."
+modality: video
+tasks: [t2v, i2v, ref2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [40, 180]
+max_chars: 5000
+negative: "no"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: true
+structure: "Subject, action, setting, camera, light, sound."
+rules:
+task_rules:
+  ref2v:
+    rules:
+      - "Reference subjects are cited by their position in the API's subjects list: @1, @2. Vidu's own example: '@1 and @2 are cooking together, and both say they love hot pot.'"
+  i2v:
+    target_words: [20, 90]
+api_note: "audio, bgm and movement_amplitude (auto / small / medium / large) are API parameters. No negative prompt or rewrite flag documented."
+sources:
+  - {url: "https://platform.vidu.com/docs/reference-to-video", supports: "5,000 characters, @N syntax, parameters", confidence: medium}
+checked: "2026-09-21"
+confidence: low

@@ -1,9 +1,24 @@
 """
 Platform-specific configurations for image generation models
 Each platform has different prompting preferences and optimal formats
+
+Since v2 the facts live in YAML profiles (profiles/*.yaml, read by core/profiles). The functions
+below ask the profile library first and fall back to the PLATFORMS dictionary in this file, which
+is kept unchanged as the safety net: if the profiles folder is missing or a file is broken, every
+node behaves exactly as it did before. What changed per platform and why: PLATFORM_NOTES.md.
 """
 
 from typing import Optional, Sequence
+
+
+def _profile_config(platform_name: str) -> Optional[dict]:
+    """platforms.py-shaped dict from the profile library, or None (never raises)."""
+    try:
+        from .profile_support import legacy_config
+        return legacy_config(platform_name)
+    except Exception as error:
+        print(f"[Prompt Profiles] falling back to built-in platform table for '{platform_name}': {error}")
+        return None
 
 PLATFORMS = {
     "flux": {
@@ -493,13 +508,22 @@ PLATFORMS = {
 
 
 def get_platform_config(platform_name: str) -> dict:
-    """Get configuration for a specific platform"""
+    """Get configuration for a specific platform (profile first, built-in table as fallback)"""
+    from_profile = _profile_config(platform_name)
+    if from_profile is not None:
+        return from_profile
     return PLATFORMS.get(platform_name, PLATFORMS["flux"])
 
 
 def get_platform_list() -> list:
-    """Get list of supported platform names"""
-    return list(PLATFORMS.keys())
+    """Get list of supported platform names: the original ones in their original order, then new image/edit profiles"""
+    names = list(PLATFORMS.keys())
+    try:
+        from .profile_support import extended_choices
+        names = extended_choices(names, ("image", "edit"))
+    except Exception as error:
+        print(f"[Prompt Profiles] profile list unavailable: {error}")
+    return names
 
 
 def get_platform_display_names() -> list:
@@ -665,7 +689,15 @@ def get_negative_prompt_for_platform(
     custom_negatives: Optional[Sequence[str]] = None
 ) -> str:
     """Generate platform-optimized negative prompts"""
-    
+
+    try:
+        from .profile_support import legacy_negative
+        from_profile = legacy_negative(platform, custom_negatives)
+        if from_profile is not None:
+            return from_profile
+    except Exception as error:
+        print(f"[Prompt Profiles] falling back to built-in negatives for '{platform}': {error}")
+
     base_negatives = {
         "flux": "blurry, low quality, distorted, deformed, ugly, bad anatomy, watermark, signature, text",
         "flux_kontex": "blurry, low quality, distorted, deformed, ugly, bad anatomy, watermark, text artifacts",

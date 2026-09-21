@@ -1,0 +1,29 @@
+id: luma_uni1
+name: "Luma Uni-1 / Photon (API)"
+developer: "Luma AI"
+summary: "Luma's image models: uni-1 / uni-1-max on the Agents API (generation and editing, up to 8 references), photon-1 on the older Dream Machine API. Plain specific prose. Luma publishes parameters but no prompt-style guide, so the rules here are few."
+modality: image
+tasks: [t2i, edit]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [40, 160]
+max_chars: 6000
+negative: "no"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Subject, setting, light (with its direction), composition, style."
+rules:
+  - "Give each reference image a role in words: 'Apply the lighting from the first reference and the texture from the second.'"
+task_rules:
+  edit:
+    target_words: [12, 60]
+    rules:
+      - "Luma's own example: 'Replace the background with a tropical beach at sunset, warm golden light matching the direction of light on the subject.' - say how the change fits the light already in the picture."
+sources:
+  - {url: "https://docs.agents.lumalabs.ai/guides/image-editing/", supports: "uni-1, 6,000 characters, references, edit example", confidence: high}
+  - {url: "https://docs.lumalabs.ai/docs/image-generation", supports: "photon parameters", confidence: high}
+checked: "2026-09-21"
+confidence: medium

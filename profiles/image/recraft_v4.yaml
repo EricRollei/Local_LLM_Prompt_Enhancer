@@ -1,0 +1,32 @@
+id: recraft_v4
+name: "Recraft V4 / V4.1 (API)"
+developer: "Recraft"
+summary: "Hosted design-oriented model, raster and vector. Two valid ways to prompt: three to six words to explore, or structured prose ordered from global to local for control. This profile writes the structured kind."
+modality: image
+tasks: [t2i]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [40, 180]
+max_chars: 10000
+negative: inline
+negative_note: "negative_prompt exists for Recraft V2 / V3 only. On V4 write constraints into the prompt ('flat colors only - no gradients, shadows or texture')."
+quality_tokens: forbid
+quoted_text: double
+weights: false
+structure: "Global to local: core concept, background, framing and pose, physical attributes, secondary subjects, lighting, camera and depth, mood. Style first or scene first shifts the emphasis."
+rules:
+  - "Recraft's phrase: define structure, surface, space, hierarchy and control - not verbosity."
+  - "Vector and logo work: define the shape logic and a strict palette; 'flat colors only'; leave out texture and material words."
+  - "Illustration: use drawing logic (line, fill, shape), not camera logic."
+  - "Text in double quotes with hierarchy, size and placement; avoid tiny text."
+avoid:
+  - "Stacked evaluative adjectives and vague quality words"
+  - "Dramatic adjectives piled onto photoreal prompts"
+api_note: "10,000-character limit on V4 / V4.1 (1,000 on V3 / V2). No vendor rewriter documented. text_layout and most 'controls' are V3 only."
+sources:
+  - {url: "https://www.recraft.ai/docs/prompt-engineering-guide/prompting-with-recraft-v4.md", supports: "both prompting modes, global-to-local order, vector and illustration advice", confidence: high}
+  - {url: "https://www.recraft.ai/docs/api-reference/endpoints.md", supports: "limits, negative_prompt on V2/V3 only", confidence: high}
+checked: "2026-09-21"
+confidence: high

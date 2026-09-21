@@ -1,0 +1,26 @@
+id: leonardo_phoenix
+name: "Leonardo Phoenix (API)"
+developer: "Leonardo.Ai"
+summary: "Hosted model sold on prompt adherence and text rendering. Prose prompts, a real negative-prompt field, 2,000-character limit."
+modality: image
+tasks: [t2i]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [40, 160]
+max_chars: 2000
+negative: "yes"
+negative_default: ""
+negative_note: "A separate field. Leonardo publishes no default string."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Subject, action, setting, light, composition, style."
+rules:
+  - "Leave the look to the preset style and contrast parameters where the user has set them; do not contradict them in prose."
+api_note: "Set prompt enhance to OFF (AUTO and ON rewrite the prompt again). No vendor prompt-style guide was found; the rules here are general."
+sources:
+  - {url: "https://docs.leonardo.ai/docs/phoenix", supports: "2,000 characters, negative prompt, enhance AUTO/ON/OFF, parameters", confidence: high}
+checked: "2026-09-21"
+confidence: medium

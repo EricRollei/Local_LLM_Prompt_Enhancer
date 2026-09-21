@@ -1,0 +1,15 @@
+# Legacy category {location}. For tagged, searchable places use __spaces/**__ instead.
+a municipal park
+a photographer's studio
+a cobbled side street
+a pine forest
+a shingle beach
+a city square
+a rented room
+a railway platform
+a hotel corridor
+a rooftop
+a kitchen
+a classroom
+a harbour wall
+a ploughed field

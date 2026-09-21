@@ -1,0 +1,29 @@
+id: runway_aleph2
+name: "Runway Aleph 2.0 (video edit, API)"
+developer: "Runway"
+summary: "Edits an existing clip from a short instruction: action verb + description. Whatever the instruction does not mention is preserved. Simplicity and one edit per pass work best."
+modality: video
+tasks: [edit]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: instruction
+languages: [en]
+target_words: [3, 30]
+max_chars: 1000
+negative: "no"
+quality_tokens: neutral
+quoted_text: none
+weights: false
+audio: false
+structure: "[add | remove | change | replace | re-light | re-style] + what, as precisely as needed."
+rules:
+  - "Runway's own examples: 'Change the outfit and bag to soft yellow', 'change background to ancient city ruins', 'heavy overcast and raining', 'Chiaroscuro lighting', 'Swap for black leather clutch with gold buckle', '1920s silent era film'."
+  - "One edit per instruction. Do not describe the rest of the clip and do not add a keep-clause: unmentioned elements are preserved by the model."
+avoid:
+  - "Describing motion that is already in the source clip"
+api_note: "promptText is optional and at most 1,000 characters. With keyframe images an edit often needs no text at all."
+sources:
+  - {url: "https://help.runwayml.com/hc/en-us/articles/52150503729171-Aleph-2-0-Prompting-Guide", supports: "verb + description style, examples", confidence: medium}
+  - {url: "https://docs.dev.runwayml.com/api/", supports: "aleph2, keyframes, limits", confidence: high}
+checked: "2026-09-21"
+confidence: medium

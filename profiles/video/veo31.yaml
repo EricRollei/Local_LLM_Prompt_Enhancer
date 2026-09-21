@@ -1,0 +1,47 @@
+id: veo31
+name: "Google Veo 3.1 (API)"
+developer: "Google"
+summary: "Hosted video model with native sound, 4, 6 or 8 s clips, still Google's latest Veo line. Five-part formula; dialogue, sound effects and ambience each in their own labelled sentence. English is the only validated prompt language, and the text input is capped at 1,024 tokens."
+modality: video
+tasks: [t2v, i2v, flf2v, ref2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [60, 170]
+max_tokens: 1024
+negative: "yes"
+negative_default: ""
+negative_note: "A separate parameter (negativePrompt). Google's rule: list the unwanted things as nouns ('wall, frame'); never write 'no' or 'don't' in it."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: true
+structure: "[Cinematography] + [Subject] + [Action] + [Context] + [Style and ambiance]. Optional timestamp beats inside one clip: [00:00-00:02] Medium shot ... [00:02-00:04] Reverse shot ..."
+rules:
+  - "Sound goes in separate sentences. Dialogue with the speaker: A woman says, \"We have to leave now.\"  (Google's Vertex guide also uses the colon form without quotes - The detective says: Your story has holes. - which many use to avoid burned-in subtitles.)"
+  - "Sound effects labelled: SFX: thunder cracks in the distance.  Ambience labelled: Ambient noise: the quiet hum of a starship bridge.  Music in a plain sentence."
+  - "In the prompt itself describe absence positively ('a desolate landscape with no buildings or roads' is Google's own example of acceptable phrasing)."
+avoid:
+  - "More dialogue than fits 8 seconds"
+task_rules:
+  ref2v:
+    rules:
+      - "Reference images have no tag syntax; cite them by what they show: 'Using the provided images for the detective, the woman, and the office setting, ...'"
+  i2v:
+    target_words: [40, 120]
+    rules:
+      - "The image is the first frame: describe motion, camera and sound."
+  flf2v:
+    target_words: [40, 120]
+    rules:
+      - "Describe the path between the two frames and the sound, as in Google's example: 'The camera performs a smooth 180-degree arc shot, starting with the front-facing view of the singer and circling around her to seamlessly end on the POV shot from behind her on stage.'"
+camera: [dolly shot, tracking shot, crane shot, aerial view, slow pan, POV shot, arc shot, wide shot, close-up, extreme close-up, low angle, two-shot, shallow depth of field, wide-angle lens, macro lens, deep focus, rack focus, match cut, jump cut, establishing shot]
+api_note: "Vertex: enhancePrompt defaults to true and then a seed no longer guarantees the same result; whether Veo 3.x honours false is not confirmed. durationSeconds is 4, 6 or 8 (8 is required with reference images, 1080p and 4k). Up to 3 reference images."
+sources:
+  - {url: "https://cloud.google.com/blog/products/ai-machine-learning/ultimate-prompting-guide-for-veo-3-1", supports: "five-part formula, audio syntax, timestamp prompting, reference and first/last-frame phrasing", confidence: high}
+  - {url: "https://ai.google.dev/gemini-api/docs/models/veo-3.1-generate-preview", supports: "1,024-token text limit, model ids", confidence: high}
+  - {url: "https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/Shared.Types/VideoGenerationModelParams", supports: "negativePrompt, enhancePrompt default true, generateAudio", confidence: high}
+  - {url: "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/video/video-gen-prompt-guide", supports: "separate audio sentences, colon dialogue form, negative prompt do and don't", confidence: high}
+checked: "2026-09-21"
+confidence: high

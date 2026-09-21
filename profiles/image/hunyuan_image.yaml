@@ -1,0 +1,42 @@
+id: hunyuan_image
+name: "HunyuanImage 2.1"
+developer: "Tencent Hunyuan"
+summary: "17B DiT, native 2K, read through Qwen2.5-VL plus a ByT5 glyph encoder for quoted text. Longer and more detailed prompts measurably help."
+modality: image
+tasks: [t2i]
+encoder: "Qwen2.5-VL (1000 tokens) + Glyph-ByT5 for quoted text"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [120, 250]
+max_tokens: 1000
+negative: "yes"
+negative_default: "low quality, blurry, distorted, unrealistic, bad details"
+negative_note: "CFG 3.5 (3.25 distilled). The pipeline accepts a negative prompt; Tencent's own examples leave it empty."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Overall - detail - conclusion: the whole scene in a sentence, then main subject to secondary elements to background, then one closing sentence naming the overall style or image type."
+rules:
+  - "Objective and neutral: describe, do not praise."
+  - "Most important element first, then secondary, then background."
+  - "Keep strict spatial logic so the picture can be rebuilt from the words."
+  - "End with one sentence that names the overall style or type of image."
+  - "Text to render goes in double quotes - that is what routes it to the glyph encoder."
+avoid:
+  - "Subjective adjectives (beautiful, stunning)"
+  - "Single quotes around text to render"
+official:
+  - task: t2i
+    url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanImage-2.1/main/hyimage/models/reprompt/reprompt.py"
+    format: python_var
+    variable: SYSTEM_PROMPT
+    language: zh
+legacy:
+  prompt_style: clear_concise
+  supports: [realistic_descriptions, asian_aesthetics]
+sources:
+  - {url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanImage-2.1/main/README.md", supports: "encoders, ByT5 quoted text, longer prompts help, guidance values", confidence: high}
+  - {url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanImage-2.1/main/hyimage/models/reprompt/reprompt.py", supports: "official reprompt structure", confidence: high}
+checked: "2026-09-20"
+confidence: high

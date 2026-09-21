@@ -1,0 +1,153 @@
+# Tagged objects. Used by plain wildcards (__objects/kitchen__, __objects/**__) and by
+# tag queries (__objects[metal AND handheld]__, __[hollow AND NOT modern]__).
+#
+# Tag vocabulary (keep it small and consistent - the surreal engine searches on it):
+#   material  metal wood glass ceramic fabric paper stone plastic leather rubber wax organic bone
+#   scale     tiny handheld tabletop furniture large
+#   form      round long flat hollow container hinged wheeled sharp coiled paired soft rigid
+#   domain    kitchen office medical nautical farm music lab toy ritual sport garden workshop
+#             travel clothing optics timekeeping writing lighting
+#   era       antique midcentury modern
+#   quality   fragile heavy reflective transparent mechanical electrical worn
+#
+# Entries are mundane on purpose. Strangeness comes from what is done to an ordinary
+# thing, never from the thing itself.
+
+objects:
+  kitchen:
+    - {text: a cast-iron skillet, tags: [metal, handheld, round, flat, kitchen, heavy, antique]}
+    - {text: a white enamel colander, tags: [metal, handheld, round, hollow, container, kitchen, midcentury]}
+    - {text: a wooden rolling pin, tags: [wood, handheld, long, round, kitchen]}
+    - {text: a copper kettle, tags: [metal, tabletop, round, hollow, container, kitchen, reflective, antique]}
+    - {text: a porcelain teacup on its saucer, tags: [ceramic, handheld, round, hollow, container, kitchen, fragile, paired]}
+    - {text: a wire egg whisk, tags: [metal, handheld, long, coiled, kitchen]}
+    - {text: a stack of white dinner plates, tags: [ceramic, tabletop, round, flat, kitchen, fragile]}
+    - {text: a glass milk bottle, tags: [glass, handheld, long, hollow, container, kitchen, transparent, midcentury]}
+    - {text: a bread knife with a worn wooden handle, tags: [metal, wood, handheld, long, sharp, kitchen, worn]}
+    - {text: a hand-cranked meat grinder, tags: [metal, tabletop, mechanical, kitchen, heavy, antique]}
+    - {text: a salt shaker, tags: [glass, tiny, container, kitchen]}
+    - {text: a folded linen tea towel, tags: [fabric, handheld, flat, soft, kitchen]}
+    - {text: a single hen's egg, tags: [organic, tiny, round, hollow, container, fragile, kitchen, farm]}
+    - {text: a loaf of crusty bread, tags: [organic, handheld, long, round, kitchen]}
+
+  household:
+    - {text: a ladder-back wooden chair, tags: [wood, furniture, rigid, antique]}
+    - {text: a brass door key, tags: [metal, tiny, long, antique]}
+    - {text: an oval wall mirror in a gilt frame, tags: [glass, metal, tabletop, flat, round, reflective, fragile, antique]}
+    - {text: a claw-foot bathtub, tags: [metal, ceramic, large, hollow, container, heavy, antique]}
+    - {text: a folding ironing board, tags: [metal, fabric, furniture, long, flat, hinged, midcentury]}
+    - {text: a wire coat hanger, tags: [metal, handheld, coiled, clothing]}
+    - {text: a wall-mounted rotary telephone, tags: [plastic, metal, tabletop, mechanical, electrical, coiled, midcentury]}
+    - {text: an upright vacuum cleaner, tags: [metal, fabric, furniture, long, wheeled, electrical, midcentury]}
+    - {text: a bare light bulb on a cord, tags: [glass, metal, handheld, round, hollow, fragile, transparent, electrical, lighting]}
+    - {text: a feather pillow in a striped ticking cover, tags: [fabric, organic, tabletop, soft]}
+    - {text: a wooden bed frame with no mattress, tags: [wood, large, rigid, hollow]}
+    - {text: a panelled interior door, tags: [wood, large, flat, hinged, rigid]}
+    - {text: a sash window frame, tags: [wood, glass, large, flat, transparent]}
+    - {text: a cast-iron radiator, tags: [metal, furniture, heavy, coiled, antique]}
+    - {text: a birdcage with its door open, tags: [metal, tabletop, hollow, container, hinged, antique]}
+    - {text: a bar of white soap, tags: [wax, tiny, soft]}
+    - {text: a steamer trunk with brass corners, tags: [wood, leather, metal, furniture, hollow, container, hinged, travel, antique, heavy]}
+
+  workshop:
+    - {text: a claw hammer, tags: [metal, wood, handheld, long, workshop, heavy]}
+    - {text: a hand saw, tags: [metal, wood, handheld, long, flat, sharp, workshop]}
+    - {text: a bench vise, tags: [metal, tabletop, mechanical, heavy, workshop]}
+    - {text: a coil of hemp rope, tags: [organic, fabric, tabletop, coiled, long, soft, nautical, workshop]}
+    - {text: a carpenter's folding rule, tags: [wood, metal, handheld, long, hinged, workshop, antique]}
+    - {text: a galvanised steel bucket, tags: [metal, tabletop, round, hollow, container, farm, workshop]}
+    - {text: a wooden stepladder, tags: [wood, furniture, long, hinged, workshop]}
+    - {text: a pair of pliers, tags: [metal, handheld, hinged, paired, workshop]}
+    - {text: a paint-crusted brush, tags: [wood, organic, handheld, long, workshop, worn]}
+    - {text: an anvil, tags: [metal, furniture, heavy, rigid, workshop, antique]}
+    - {text: a wheelbarrow, tags: [metal, wood, large, hollow, container, wheeled, garden, farm]}
+
+  office_and_writing:
+    - {text: a manual typewriter, tags: [metal, tabletop, mechanical, office, writing, heavy, midcentury]}
+    - {text: a fountain pen, tags: [metal, plastic, tiny, long, writing]}
+    - {text: a stack of manila folders, tags: [paper, tabletop, flat, office]}
+    - {text: a rubber date stamp, tags: [rubber, wood, tiny, office]}
+    - {text: a four-drawer steel filing cabinet, tags: [metal, furniture, hollow, container, office, heavy, midcentury]}
+    - {text: a sealed paper envelope, tags: [paper, handheld, flat, hollow, container, writing]}
+    - {text: an open hardbound ledger, tags: [paper, leather, tabletop, flat, hinged, writing, office, antique]}
+    - {text: a desk lamp with a green glass shade, tags: [metal, glass, tabletop, hinged, electrical, lighting, office, antique]}
+    - {text: a globe on a wooden stand, tags: [paper, wood, tabletop, round, hollow, office, antique]}
+    - {text: a blackboard on an easel, tags: [stone, wood, furniture, flat, writing]}
+
+  clothing:
+    - {text: a pair of worn leather work boots, tags: [leather, handheld, paired, hollow, container, clothing, worn]}
+    - {text: a black bowler hat, tags: [fabric, handheld, round, hollow, container, clothing, antique]}
+    - {text: a wool overcoat on a hanger, tags: [fabric, furniture, soft, hollow, clothing]}
+    - {text: a pair of white cotton gloves, tags: [fabric, handheld, paired, soft, hollow, clothing]}
+    - {text: a black umbrella, tags: [fabric, metal, handheld, long, hinged, clothing, travel]}
+    - {text: a dressmaker's mannequin, tags: [fabric, wood, furniture, hollow, rigid, clothing, antique]}
+    - {text: a wedding veil, tags: [fabric, tabletop, soft, transparent, fragile, clothing, ritual]}
+    - {text: a pair of round wire spectacles, tags: [metal, glass, tiny, paired, round, transparent, optics, clothing]}
+    - {text: a necktie, tags: [fabric, handheld, long, soft, clothing, office]}
+
+  instruments_of_measure:
+    - {text: a pocket watch with its case open, tags: [metal, glass, tiny, round, hinged, mechanical, timekeeping, antique]}
+    - {text: a pendulum wall clock, tags: [wood, metal, glass, tabletop, mechanical, timekeeping, antique]}
+    - {text: an hourglass, tags: [glass, wood, handheld, hollow, container, paired, transparent, timekeeping, fragile]}
+    - {text: a brass balance scale, tags: [metal, tabletop, paired, mechanical, lab, antique]}
+    - {text: a mercury barometer, tags: [glass, wood, metal, tabletop, long, lab, antique, fragile]}
+    - {text: a brass telescope on a tripod, tags: [metal, glass, furniture, long, hollow, optics, nautical, antique]}
+    - {text: a microscope, tags: [metal, glass, tabletop, optics, lab, mechanical]}
+    - {text: a metronome, tags: [wood, metal, handheld, mechanical, music, timekeeping]}
+    - {text: a ship's compass in gimbals, tags: [metal, glass, handheld, round, nautical, mechanical, antique]}
+    - {text: a folding plate camera on a wooden tripod, tags: [wood, leather, glass, metal, furniture, hinged, hollow, optics, antique]}
+
+  music:
+    - {text: an upright piano with the lid open, tags: [wood, metal, large, hollow, hinged, music, heavy, antique]}
+    - {text: a cello leaning in a corner, tags: [wood, furniture, hollow, long, music, fragile]}
+    - {text: a brass tuba, tags: [metal, furniture, hollow, coiled, round, reflective, music]}
+    - {text: a snare drum, tags: [wood, metal, organic, tabletop, round, hollow, music]}
+    - {text: a gramophone with a flower horn, tags: [wood, metal, tabletop, hollow, mechanical, music, antique]}
+    - {text: a music stand holding blank sheets, tags: [metal, paper, furniture, long, hinged, music]}
+
+  medical_and_lab:
+    - {text: a glass laboratory flask, tags: [glass, handheld, round, hollow, container, transparent, fragile, lab]}
+    - {text: a stethoscope, tags: [metal, rubber, handheld, coiled, long, medical]}
+    - {text: an anatomical model of a heart, tags: [plastic, handheld, hollow, medical, organic]}
+    - {text: a white enamel kidney dish, tags: [metal, handheld, hollow, container, medical, midcentury]}
+    - {text: a wooden wheelchair with a cane seat, tags: [wood, metal, furniture, wheeled, medical, antique]}
+    - {text: a rack of test tubes, tags: [glass, wood, tabletop, long, hollow, container, transparent, fragile, lab]}
+    - {text: a bell jar, tags: [glass, tabletop, round, hollow, container, transparent, fragile, lab, antique]}
+
+  nautical_and_travel:
+    - {text: a ship's anchor, tags: [metal, large, heavy, sharp, nautical, antique]}
+    - {text: a wooden rowing boat, tags: [wood, large, hollow, container, long, nautical]}
+    - {text: a canvas sail, tags: [fabric, large, flat, soft, nautical]}
+    - {text: a brass diving helmet, tags: [metal, glass, tabletop, round, hollow, container, nautical, heavy, antique, reflective]}
+    - {text: a leather suitcase, tags: [leather, furniture, hollow, container, hinged, travel, midcentury]}
+    - {text: a steam locomotive, tags: [metal, large, wheeled, mechanical, heavy, travel, antique]}
+    - {text: a bicycle with a wicker basket, tags: [metal, rubber, organic, furniture, wheeled, paired, mechanical, travel]}
+    - {text: a folded road map, tags: [paper, handheld, flat, hinged, travel]}
+    - {text: a railway signal lantern, tags: [metal, glass, handheld, hollow, lighting, travel, antique]}
+
+  natural:
+    - {text: a green apple, tags: [organic, handheld, round]}
+    - {text: a large conch shell, tags: [bone, organic, handheld, hollow, coiled, container, nautical]}
+    - {text: a river stone worn smooth, tags: [stone, handheld, round, heavy, rigid]}
+    - {text: a bare winter tree, tags: [wood, organic, large, long]}
+    - {text: a bird's nest with three eggs, tags: [organic, handheld, round, hollow, container, fragile]}
+    - {text: a single white feather, tags: [organic, tiny, long, soft, fragile]}
+    - {text: a block of river ice, tags: [organic, tabletop, transparent, heavy, rigid, fragile]}
+    - {text: a honeycomb, tags: [wax, organic, handheld, hollow, container, flat, farm]}
+    - {text: a ram's skull, tags: [bone, organic, tabletop, hollow, coiled, paired, farm]}
+    - {text: a cumulus cloud, tags: [organic, large, soft, round]}
+    - {text: a full moon, tags: [stone, large, round, reflective]}
+    - {text: a pomegranate split open, tags: [organic, handheld, round, hollow, container]}
+    - {text: a sunflower gone to seed, tags: [organic, handheld, round, flat, long, garden, farm]}
+
+  ritual_and_play:
+    - {text: a beeswax altar candle, tags: [wax, handheld, long, ritual, lighting]}
+    - {text: a brass hand bell, tags: [metal, handheld, hollow, round, ritual, music]}
+    - {text: a wooden rocking horse, tags: [wood, furniture, toy, antique]}
+    - {text: a tin wind-up robot, tags: [metal, tiny, mechanical, toy, midcentury]}
+    - {text: a porcelain doll with glass eyes, tags: [ceramic, fabric, glass, handheld, hollow, fragile, toy, antique]}
+    - {text: a chess set mid-game, tags: [wood, tabletop, flat, toy]}
+    - {text: a red rubber ball, tags: [rubber, handheld, round, hollow, toy, sport]}
+    - {text: a carousel horse on its pole, tags: [wood, metal, large, long, toy, antique]}
+    - {text: a kite with a long tail, tags: [paper, wood, fabric, tabletop, flat, long, toy, fragile]}
+    - {text: a plaster cast of a classical head, tags: [stone, tabletop, hollow, rigid, fragile, antique]}

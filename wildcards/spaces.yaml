@@ -1,0 +1,80 @@
+# Tagged spaces. __spaces/domestic__, __spaces/**__, __spaces[empty AND institutional]__
+#
+# Tags:
+#   kind       domestic institutional industrial commercial transit natural sacred leisure
+#   enclosure  interior exterior threshold
+#   scale      intimate room hall vast
+#   state      empty lived-in abandoned pristine
+#   light      daylight dim artificial
+#   era        antique midcentury modern
+
+spaces:
+  domestic:
+    - {text: a narrow kitchen with a linoleum floor and one window over the sink, tags: [domestic, interior, intimate, lived-in, daylight, midcentury]}
+    - {text: a wallpapered bedroom with a single made bed, tags: [domestic, interior, room, pristine, daylight, antique]}
+    - {text: an unfurnished living room with bare floorboards, tags: [domestic, interior, room, empty, daylight]}
+    - {text: a tiled bathroom lit by a frosted window, tags: [domestic, interior, intimate, pristine, daylight, midcentury]}
+    - {text: an attic under sloping rafters, tags: [domestic, interior, room, abandoned, dim, antique]}
+    - {text: a hallway with a staircase and a row of coat hooks, tags: [domestic, interior, threshold, lived-in, dim]}
+    - {text: a suburban back garden with a washing line, tags: [domestic, exterior, room, lived-in, daylight, midcentury]}
+    - {text: a dining room with the table laid for six and nobody seated, tags: [domestic, interior, room, pristine, empty, daylight]}
+    - {text: a cellar with whitewashed brick walls, tags: [domestic, interior, room, empty, dim, antique]}
+    - {text: a front doorstep seen from the pavement, tags: [domestic, exterior, threshold, daylight]}
+
+  institutional:
+    - {text: a school classroom with rows of wooden desks, tags: [institutional, interior, hall, empty, daylight, midcentury]}
+    - {text: a hospital corridor with a polished floor, tags: [institutional, interior, hall, empty, artificial, pristine, modern]}
+    - {text: a public library reading room with green lamps, tags: [institutional, interior, hall, pristine, dim, antique]}
+    - {text: a municipal swimming pool drained of water, tags: [institutional, leisure, interior, vast, empty, abandoned, daylight, midcentury]}
+    - {text: a courtroom with empty benches, tags: [institutional, interior, hall, empty, pristine, daylight, antique]}
+    - {text: a natural history museum gallery of glass cases, tags: [institutional, interior, hall, pristine, dim, antique]}
+    - {text: a waiting room with plastic chairs along the wall, tags: [institutional, interior, room, empty, artificial, modern]}
+    - {text: a lecture theatre with steep tiered seating, tags: [institutional, interior, hall, empty, dim, midcentury]}
+    - {text: a post office counter hall, tags: [institutional, commercial, interior, hall, pristine, daylight, midcentury]}
+
+  industrial:
+    - {text: a factory floor with idle machines under skylights, tags: [industrial, interior, vast, empty, daylight, midcentury]}
+    - {text: a grain silo seen from its base, tags: [industrial, exterior, vast, empty, daylight]}
+    - {text: a shipyard dry dock, tags: [industrial, exterior, vast, empty, daylight]}
+    - {text: a boiler room of pipes and gauges, tags: [industrial, interior, room, dim, artificial, antique]}
+    - {text: a warehouse aisle between tall steel racks, tags: [industrial, commercial, interior, vast, empty, artificial, modern]}
+    - {text: a railway goods yard, tags: [industrial, transit, exterior, vast, empty, daylight, antique]}
+    - {text: a quarry with terraced stone walls, tags: [industrial, natural, exterior, vast, empty, abandoned, daylight]}
+
+  commercial_and_transit:
+    - {text: a barber shop with three chairs, tags: [commercial, interior, room, pristine, daylight, midcentury]}
+    - {text: a hotel corridor of identical doors, tags: [commercial, interior, hall, empty, artificial, pristine]}
+    - {text: a department store window display, tags: [commercial, threshold, room, pristine, artificial, midcentury]}
+    - {text: a roadside diner at a quiet hour, tags: [commercial, interior, room, empty, artificial, midcentury]}
+    - {text: a railway platform under an iron canopy, tags: [transit, exterior, threshold, hall, empty, daylight, antique]}
+    - {text: an underground car park, tags: [transit, interior, vast, empty, artificial, modern]}
+    - {text: a covered shopping arcade with a glass roof, tags: [commercial, interior, hall, empty, daylight, antique]}
+    - {text: an airport departure lounge before dawn, tags: [transit, interior, vast, empty, artificial, modern]}
+    - {text: a laundromat, tags: [commercial, interior, room, empty, artificial, midcentury]}
+    - {text: a petrol station forecourt, tags: [commercial, transit, exterior, room, empty, artificial, midcentury]}
+
+  civic_exterior:
+    - {text: a town square with a long arcade on one side, tags: [institutional, exterior, vast, empty, daylight, antique]}
+    - {text: a residential street of identical terraced houses, tags: [domestic, exterior, hall, empty, daylight]}
+    - {text: a seaside promenade out of season, tags: [leisure, exterior, vast, empty, daylight]}
+    - {text: an empty fairground, tags: [leisure, exterior, vast, empty, abandoned, daylight]}
+    - {text: a tennis court behind a chain-link fence, tags: [leisure, exterior, hall, empty, pristine, daylight]}
+    - {text: a cemetery of evenly spaced white headstones, tags: [sacred, exterior, vast, empty, pristine, daylight]}
+    - {text: a flat rooftop among water tanks and chimneys, tags: [domestic, industrial, exterior, room, empty, daylight]}
+
+  natural:
+    - {text: a salt flat reaching to a level horizon, tags: [natural, exterior, vast, empty, pristine, daylight]}
+    - {text: a pine forest in even rows, tags: [natural, exterior, vast, empty, dim]}
+    - {text: a shingle beach at low tide, tags: [natural, exterior, vast, empty, daylight]}
+    - {text: a ploughed field under a heavy sky, tags: [natural, exterior, vast, empty, daylight]}
+    - {text: a still lake ringed by reeds, tags: [natural, exterior, vast, empty, pristine, daylight]}
+    - {text: a chalk cliff path, tags: [natural, exterior, threshold, empty, daylight]}
+    - {text: a snowfield with one line of footprints, tags: [natural, exterior, vast, empty, pristine, daylight]}
+
+  sacred_and_stage:
+    - {text: a small whitewashed chapel, tags: [sacred, interior, room, empty, pristine, daylight, antique]}
+    - {text: a cloister walk around a gravel court, tags: [sacred, threshold, hall, empty, daylight, antique]}
+    - {text: a theatre stage with the house lights up, tags: [leisure, interior, vast, empty, artificial, antique]}
+    - {text: a cinema auditorium before the film starts, tags: [leisure, interior, hall, empty, dim, midcentury]}
+    - {text: a ballroom with a parquet floor, tags: [leisure, interior, vast, empty, pristine, daylight, antique]}
+    - {text: a photographer's studio with a painted backdrop, tags: [commercial, interior, room, pristine, artificial, antique]}

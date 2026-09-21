@@ -1,0 +1,38 @@
+id: ltx25
+extends: ltx2
+name: "LTX-2.5 (video + audio)"
+summary: "22B joint audio-video model read through a Gemma 4 12B fine-tuned for LTX. Same paragraph style as LTX-2, but the official enhancer now wants camera motion ALWAYS stated, exactly one shot type and one viewpoint, and image-to-video prompts that open by matching the start image."
+encoder: "Gemma 4 12B, LTX fine-tune (1024 tokens)"
+target_words: [150, 220]
+rules:
+  - "Begin directly with the action or a visual detail. Never 'The scene opens with', 'We see', 'There is'."
+  - "Objective and observable only: no inferred emotions or intentions."
+  - "Every shot states, woven into the prose and never as tags: exactly one shot type (extreme wide / wide / medium / medium close-up / close-up / extreme close-up), a viewpoint (front-facing, back-facing, side view, over-the-shoulder, top-down, low-angle, high-angle) and the camera motion - or says plainly that the camera remains static."
+  - "Camera movement is expected: match the user's if given, otherwise choose what presents the scene best."
+  - "Spoken words go in quotation marks with the speaker identified by looks and the voice described; non-English dialogue in its own script. Never alter supplied dialogue; invent none unless speech is part of the idea."
+  - "Weave sound through the action in time order."
+  - "Time links: 'Initially...', 'A moment later...', 'Simultaneously...'."
+  - "Multi-shot only when asked: name the edit in prose ('A hard cut transitions to...'), two to four cuts, re-establish framing and subjects after each cut, say whether audio continues across it."
+  - "Do not infer ethnicity or nationality."
+task_rules:
+  i2v:
+    target_words: [120, 200]
+    replace_rules: false
+    rules:
+      - "OPEN by matching the start image exactly - subject, clothing, setting, light, composition - then narrate the requested action. (This is the opposite of LTX-2 / 2.3.)"
+      - "One continuous take, no hard cuts."
+official:
+  - task: t2v
+    url: "https://raw.githubusercontent.com/Lightricks/LTX-2/main/packages/ltx-core/src/ltx_core/text_encoders/gemma/encoders/prompts/gemma4_t2v_system_prompt.txt"
+    format: text
+  - task: i2v
+    url: "https://raw.githubusercontent.com/Lightricks/LTX-2/main/packages/ltx-core/src/ltx_core/text_encoders/gemma/encoders/prompts/gemma4_i2v_system_prompt.txt"
+    format: text
+    note: "Lightricks' image-to-video enhancer was written for a vision model that sees the start image. Give this node a description of the image, or the rewriter works blind."
+tailoring: |
+  Aim for roughly 150-220 words.
+sources:
+  - {url: "https://github.com/Lightricks/LTX-2", supports: "LTX-2.5 release notes (2026-08-11), Gemma 4 encoder, gemma4 enhancer prompts", confidence: high}
+  - {url: "https://ltx.io/blog/ltx-2-5-prompt-guide", supports: "multi-shot prose cuts, native-script dialogue, single-take I2V", confidence: medium}
+checked: "2026-09-20"
+confidence: high

@@ -1,0 +1,11 @@
+id: flux2_pro
+extends: flux2_dev
+name: "FLUX.2 [pro] / [max] / [flex] (API)"
+summary: "The hosted FLUX.2 models. Prompted exactly like FLUX.2 [dev] - prose, 30-80 words usually ideal, hex colours, quoted text, no negative prompt - with up to 8 reference images over the API. The difference that matters is in the API call: BFL's own prompt upsampling is ON by default."
+api_note: "Turn BFL's rewriting off when this node wrote the prompt. [pro]: disable_pup: true. [flex]: prompt_upsampling: false (the flag is named differently on the two endpoints). [max] was not read; assume it matches [pro]. References are cited as 'image 1', 'image 2'."
+sources:
+  - {url: "https://docs.bfl.ai/guides/prompting_guide_flux2", supports: "shared prompting guide for the hosted models", confidence: high}
+  - {url: "https://docs.bfl.ai/api-reference/models/generate-or-edit-an-image-with-flux2-%5Bpro%5D", supports: "disable_pup, 8 input images", confidence: high}
+  - {url: "https://docs.bfl.ai/api-reference/models/generate-or-edit-an-image-with-flux2-%5Bflex%5D", supports: "prompt_upsampling default true, guidance and steps", confidence: high}
+checked: "2026-09-21"
+confidence: high

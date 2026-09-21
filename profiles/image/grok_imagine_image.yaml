@@ -1,0 +1,27 @@
+id: grok_imagine_image
+name: "Grok Imagine Image 2.0 (API)"
+developer: "xAI"
+summary: "xAI's image model (grok-imagine-image-2.0): generation and instruction editing. xAI documents the parameters and no prompting guide, so this profile is plain descriptive prose and little else."
+modality: image
+tasks: [t2i, edit]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [40, 150]
+negative: "no"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Subject, action, setting, light, composition, style."
+task_rules:
+  edit:
+    target_words: [8, 50]
+    rules:
+      - "An instruction about the supplied image, in xAI's form: 'Render this image as an oil painting in the style of impressionism.'"
+api_note: "No negative prompt, no masks, no documented prompt limit or rewriter. aspect_ratio, resolution and quality are API parameters."
+sources:
+  - {url: "https://docs.x.ai/developers/model-capabilities/images/generation", supports: "model id, parameters", confidence: high}
+  - {url: "https://docs.x.ai/developers/model-capabilities/images/editing", supports: "editing by instruction", confidence: high}
+checked: "2026-09-21"
+confidence: low

@@ -1,0 +1,40 @@
+id: hunyuan_image_3
+name: "HunyuanImage 3.0"
+developer: "Tencent Hunyuan"
+summary: "80B MoE autoregressive multimodal model: the LLM is its own text encoder. Wants a five-part, objective, single-line prompt. If this node rewrites the prompt, run the model with bot_task=image so it does not rewrite it again."
+modality: image
+tasks: [t2i]
+encoder: "the model's own LLM (no CLIP or T5)"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [150, 400]
+negative: "no"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "1 main subject and scene -> 2 image quality and style -> 3 composition and viewpoint -> 4 lighting and atmosphere -> 5 technical parameters (aperture, focal length). Subject and style first: they carry the most weight."
+rules:
+  - "Absolute objectivity: no 'beautiful', 'sad', 'stunning'. Describe what is visible."
+  - "General to specific, background to foreground; place things with 'foreground', 'mid-ground', 'left side of the frame'."
+  - "Present tense; precise quantities, sizes and colours."
+  - "Always name a light source."
+  - "Mention the core style 3-5 times across the prompt and end with a sentence declaring the style."
+  - "If no style is given, default to ultra-realistic photography."
+  - "Interface and graphic text goes in double quotes. For typographic art, start the description with the text itself, seen front-on."
+  - "One line, no markdown, 500 words at most."
+avoid:
+  - "Openers like 'This image shows'"
+  - "Subjective adjectives"
+  - "Physically or logically inconsistent details"
+official:
+  - task: t2i
+    url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanImage-3.0/main/hunyuan_image_3/system_prompt.py"
+    format: python_var
+    variable: t2i_system_prompt_en_recaption
+    note: "Tencent's recaption prompt answers inside <recaption> tags; they are unwrapped automatically. In the model's own node use bot_task=image (or the base checkpoint) so the prompt is not rewritten twice."
+sources:
+  - {url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanImage-3.0/main/README.md", supports: "variants, bot_task modes, external rewrite recommendation", confidence: high}
+  - {url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanImage-3.0/main/PE/system_prompt.py", supports: "five-part structure, 500-word cap", confidence: high}
+checked: "2026-09-20"
+confidence: high

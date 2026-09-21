@@ -1,0 +1,15 @@
+id: sd_1_5
+extends: sd_xl
+name: "Stable Diffusion 1.5"
+developer: "Runway / CompVis"
+summary: "CLIP ViT-L only, 77-token chunks. Dense comma-separated keywords; quality tokens and a strong negative prompt are part of the craft."
+encoder: "CLIP ViT-L/14 (77-token chunks)"
+target_words: [30, 90]
+max_tokens: 120
+negative_default: "worst quality, low quality, blurry, bad anatomy, deformed, disfigured, extra limbs, artifacts"
+quality_token_list: [masterpiece, best quality, ultra detailed, sharp focus, high resolution, professional lighting, intricate details]
+legacy:
+  prompt_style: token_optimized
+  supports: [quality_emphasis, booru_tags, attention_syntax]
+  length_guidance: "Stay under ~120 tokens (~90 words) while front-loading essential quality and scene descriptors."
+checked: "2026-09-20"

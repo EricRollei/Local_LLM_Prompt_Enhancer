@@ -1,0 +1,40 @@
+id: krea2
+name: "Krea 2 (Raw / Turbo)"
+developer: "Krea"
+summary: "Open-weights single-stream DiT read through Qwen3-VL-4B. Long, faithful natural-language prompts; the official expander warns against over-specifying."
+modality: image
+tasks: [t2i]
+encoder: "Qwen3-VL-4B-Instruct (512 tokens)"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [60, 150]
+max_tokens: 512
+negative: ignored
+negative_note: "Turbo runs at CFG 0, so a negative prompt is ignored. Raw (52 steps, CFG 3.5) can use one."
+quality_tokens: forbid
+quoted_text: double
+weights: false
+structure: "One cohesive paragraph. Each subject is grouped with its own attributes and actions; then setting, light, medium and framing."
+rules:
+  - "Faithfulness first: keep every subject, action, colour and spatial relation; add no new objects, props, characters or animals the user did not imply."
+  - "Group each subject with its own attributes and its own action, so nothing leaks between subjects."
+  - "Use grounded phrasing for poses, interactions and layout."
+  - "Keep the user's stated medium ('photo of', 'illustration of')."
+  - "If the user's prompt is already detailed, polish it; do not inflate it."
+avoid:
+  - "Over-specification: piling on details the idea does not need"
+  - "Bullets, JSON, markdown, planning notes in the answer"
+official:
+  - task: t2i
+    url: "https://raw.githubusercontent.com/krea-ai/krea-2/main/docs/expansion.txt"
+    format: text
+    note: "Krea's expander asks the LLM to think step by step first; reasoning is stripped from the answer automatically."
+tailoring: |
+  Stay under 512 tokens (roughly 350 words); 60-150 words is the useful range.
+sources:
+  - {url: "https://raw.githubusercontent.com/krea-ai/krea-2/main/docs/prompting.md", supports: "official prompting guide and examples", confidence: high}
+  - {url: "https://raw.githubusercontent.com/krea-ai/krea-2/main/encoder.py", supports: "512 tokens, Qwen3-VL encoder template", confidence: high}
+  - {url: "https://raw.githubusercontent.com/krea-ai/krea-2/main/README.md", supports: "Raw 52 steps CFG 3.5, Turbo 8 steps CFG 0", confidence: high}
+checked: "2026-09-20"
+confidence: high

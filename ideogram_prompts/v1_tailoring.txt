@@ -1,0 +1,3 @@
+[ERIC TAILORING - additive guidance layered on top of Ideogram's official magic-prompt v1 system prompt. Rationale is documented in IDEOGRAM_NOTES.md. Turn this off with use_tailoring=false on the node to run the unmodified official prompt.]
+
+CANVAS PLACEMENT INTENT: This caption may be loaded into a visual bounding-box canvas for manual adjustment. Therefore emit a `bbox` for EVERY individually-placeable element (every `obj` and `text` element that is not part of the background shell). Do not omit bboxes for placeable elements. Continue to follow all BBOX STRATEGY rules above exactly (0-1000 grid, `[ymin, xmin, ymax, xmax]`, top-left origin, sane shapes). Background-only things (sky, ground, walls, atmosphere) remain in `background` and get no bbox.

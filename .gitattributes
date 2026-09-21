@@ -1,0 +1,7 @@
+# The repository stores text with LF; Windows checkouts get CRLF. Without this, a file saved with CRLF
+# shows up as a whole-file change.
+* text=auto
+*.db binary
+*.png binary
+*.jpg binary
+*.safetensors binary

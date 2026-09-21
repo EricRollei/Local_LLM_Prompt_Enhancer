@@ -1,0 +1,38 @@
+id: wan_api_audio
+name: "Wan 2.5 - 2.7 (API, with sound)"
+developer: "Alibaba Cloud Model Studio"
+summary: "Hosted Wan generations that produce sound: 2-15 s, multi-shot from 2.6. Wan 2.2's formula plus a sound description. Set prompt_extend=false on the API call if this node wrote the prompt."
+modality: video
+tasks: [t2v, i2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [80, 220]
+max_chars: 1500
+negative: "yes"
+negative_default: "low quality, blurry, distorted, subtitles, watermark"
+negative_note: "Separate API field, 500 characters. Wan 2.7 raises the prompt limit to 5000 characters; 1500 is the 2.5 / 2.6 limit."
+quality_tokens: neutral
+quoted_text: single
+weights: false
+audio: true
+structure: "Entity + scene + motion + sound description (voice / sound effect / background music) + aesthetic control + stylisation. Multi-shot: overall description, then 'Shot 1 [0-3 s] ...', 'Shot 2 [3-6 s] ...'."
+rules:
+  - "Voice: the character's line + emotion + tone + speed + timbre + accent - 'A man doing stand-up says, 'Study hard and make progress every day,' in a relaxed tone, at moderate speed, with a clear voice, in American English.'"
+  - "Sound effect: source material + action + ambient sound. Music: background music or score + style."
+  - "Several speakers: unique consistent labels and no pronouns; tie each line to a visible action; give each a distinct voice; join lines with explicit time words ('Immediately, ...') so they do not merge."
+  - "Silence is requested in words: 'No dialogue.' 'No background music.'"
+  - "For one continuous take on 2.7 write: Generate single shot."
+avoid:
+  - "Real people by name, exact readable text, exact lip-sync to specific words, rapid scene changes"
+task_rules:
+  i2v:
+    target_words: [40, 140]
+    rules:
+      - "Motion + camera movement + sound; the image already fixes entity, scene and style."
+sources:
+  - {url: "https://www.alibabacloud.com/help/en/model-studio/text-to-video-prompt", supports: "sound formula, multi-speaker rules, multi-shot format, version table", confidence: medium}
+  - {url: "https://www.alibabacloud.com/help/en/model-studio/text-to-video-api-reference", supports: "character limits, negative_prompt, prompt_extend default", confidence: medium}
+checked: "2026-09-20"
+confidence: medium

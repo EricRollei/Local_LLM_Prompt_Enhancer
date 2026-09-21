@@ -1,0 +1,42 @@
+id: z_image_turbo
+name: "Z-Image-Turbo"
+developer: "Alibaba Tongyi-MAI"
+summary: "6B single-stream DiT read through Qwen3-4B. Few-step distilled, no CFG. Long, objective, literal descriptions; bilingual text rendering."
+modality: image
+tasks: [t2i]
+encoder: "Qwen3-4B (512 tokens by default, 1024 when raised locally)"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [80, 250]
+max_tokens: 512
+negative: ignored
+negative_note: "Turbo must run at guidance 0; the negative prompt is ignored."
+quality_tokens: forbid
+quoted_text: double
+weights: false
+structure: "Locked core (subject, count, action, state, names, colours, text) first, then composition, light, materials, colour scheme, spatial layering."
+rules:
+  - "Lock what the user fixed - subject, count, action, state, brand or character names, colours, text - and never change it."
+  - "Objective, literal description only: no metaphors, no emotional rhetoric."
+  - "If the user asks for a design or a solution, first decide the concrete visual answer, then describe that."
+  - "For posters, menus and interfaces list every text item with its font and layout; for signs and screens give content, position, size and material."
+avoid:
+  - "Meta tags and drawing instructions ('8K', 'masterpiece'): the official enhancer forbids them"
+  - "Metaphor and mood talk"
+  - "Negations"
+official:
+  - task: t2i
+    url: "https://huggingface.co/spaces/Tongyi-MAI/Z-Image-Turbo/raw/main/pe.py"
+    format: python_var
+    variable: prompt_template
+    language: zh
+    note: "Tongyi's enhancer template is written in Chinese and asks for JSON with a revised_prompt key; the key is unwrapped automatically."
+tailoring: |
+  Write the final prompt in the language stated below even though these instructions are in Chinese.
+sources:
+  - {url: "https://raw.githubusercontent.com/Tongyi-MAI/Z-Image/main/README.md", supports: "variants, guidance 0 for Turbo, bilingual text", confidence: high}
+  - {url: "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo/discussions/8", supports: "official prompting thread: long detailed prompts, 512 vs 1024 tokens, no negatives on Turbo", confidence: high}
+  - {url: "https://huggingface.co/spaces/Tongyi-MAI/Z-Image-Turbo/raw/main/pe.py", supports: "official enhancer template, ban on meta tags", confidence: high}
+checked: "2026-09-20"
+confidence: high

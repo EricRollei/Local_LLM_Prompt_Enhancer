@@ -48,3 +48,16 @@ tmp/
 
 # Local notes
 notes_local/
+
+# Variability engine: phrase vector caches and repulsion memory; cached vendor rewriter prompts
+cache/
+
+# Your own platform profiles (profiles_user/ overrides profiles/ by id)
+profiles_user/
+
+# Personal prompt database (created on first use by the prompt database nodes)
+prompt_database.db
+*.db-journal
+
+# Ideogram's published magic-prompt text: fetched on first use, not redistributed with this package
+ideogram_prompts/v1_official.txt

@@ -1,0 +1,40 @@
+id: flux
+name: "FLUX.1 [dev] / [schnell]"
+developer: "Black Forest Labs"
+summary: "12B rectified-flow model read through T5-XXL plus CLIP-L. Wants natural-language prose; keyword lists and quality tokens do nothing useful."
+modality: image
+tasks: [t2i]
+encoder: "T5-XXL (512 tokens) + CLIP-L"
+encoder_family: t5
+caption_style: prose
+languages: [en]
+target_words: [120, 200]
+max_tokens: 512
+negative: ignored
+negative_note: "Guidance-distilled: the negative prompt has no effect at CFG 1. De-distilled fine-tunes run with real CFG can use one."
+quality_tokens: forbid
+quoted_text: double
+weights: false
+hex_colors: false
+structure: "Subject + action or pose + style or medium + setting + lighting + technical (camera, lens, film stock)"
+rules:
+  - "Front-load the subject: what comes first gets the most attention."
+  - "Always describe the light: source, direction, quality, colour."
+  - "For photorealism name camera, lens and film stock instead of adjectives like 'realistic'."
+  - "State the medium explicitly (photograph, oil painting, ink drawing)."
+  - "Describe spatial relations plainly: left of, behind, in the foreground."
+avoid:
+  - "Keyword soup and comma-separated tag lists"
+  - "Negative phrasing ('no people'): describe what is there instead"
+  - "Repeating the same adjective without adding information"
+legacy:
+  prompt_style: natural_detailed
+  optimal_length: "extended (~200 words)"
+  length_guidance: "Aim for about 200 words with layered, cinematic imagery."
+  detail_expectation: "Deliver ultra-detailed, sensory-rich storytelling with multiple focal elements."
+  supports: [style_references, artist_names]
+sources:
+  - {url: "https://raw.githubusercontent.com/black-forest-labs/skills/master/skills/flux-image-best-practices/rules/core-principles.md", supports: "prose over keywords, no negatives, lighting as the main quality lever", confidence: high}
+  - {url: "https://raw.githubusercontent.com/black-forest-labs/skills/master/skills/flux-image-best-practices/rules/flux1-models.md", supports: "FLUX.1 family notes", confidence: high}
+checked: "2026-09-20"
+confidence: high

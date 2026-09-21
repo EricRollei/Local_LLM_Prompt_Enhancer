@@ -8,8 +8,18 @@ from typing import Tuple, Optional
 from .llm_backend import LLMBackend
 from .img2img_expansion_engine import ImageToImageExpander
 from .platforms import get_platform_list, get_platform_config
+from .profile_support import extended_choices
 from .utils import save_prompts_to_file, parse_keywords
 from .qwen3_vl_backend import caption_with_qwen3_vl
+from .wildcard_support import (
+    enforce_verbatim,
+    is_changed_token,
+    llm_block,
+    normalise_seed,
+    report_lines,
+    resolve_wildcards,
+    wildcard_optional_inputs,
+)
 
 
 class ImageToImagePromptExpander:
@@ -40,14 +50,14 @@ class ImageToImagePromptExpander:
                 }),
                 
                 # Platform selection
-                "target_platform": ([
+                "target_platform": (extended_choices([
                     "flux",
                     "sd_xl",
                     "wan22",
                     "hunyuan_image",
                     "qwen_image",
                     "qwen_image_edit"
-                ], {
+                ], ("edit", "image")), {
                     "default": "flux"
                 }),
                 
@@ -206,8 +216,17 @@ class ImageToImagePromptExpander:
                     "default": "img2img_prompt",
                     "multiline": False
                 })
+            },
+            # New inputs are only ever APPENDED here, so saved workflows keep their widget order.
+            "optional": {
+                **wildcard_optional_inputs(),
             }
         }
+
+    @classmethod
+    def IS_CHANGED(cls, wildcard_seed: int = -1, **kwargs):
+        """wildcard_seed = -1 means a fresh roll each run, which must defeat ComfyUI's cache."""
+        return is_changed_token(wildcard_seed)
     
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
     RETURN_NAMES = ("positive_prompt", "negative_prompt", "image_description", "status")
@@ -236,11 +255,21 @@ class ImageToImagePromptExpander:
         positive_keywords: str,
         negative_keywords: str,
         save_to_file: bool,
-        filename_base: str
+        filename_base: str,
+        wildcard_seed: int = -1,
+        wildcard_llm_block: bool = True,
+        wildcard_instructions: str = ""
     ) -> Tuple[str, str, str, str]:
         """Main processing function"""
         
         try:
+            # STEP 0: Resolve wildcards in the change request (core/wildcards). New in this node.
+            wildcard_resolution = resolve_wildcards(
+                change_request, seed=normalise_seed(wildcard_seed), legacy=True,
+                upstream_instructions=wildcard_instructions,
+            )
+            change_request = wildcard_resolution.text
+            
             # STEP 1: Analyze image with vision model
             if use_vision_model:
                 image_desc_result = self._analyze_image_for_editing(
@@ -288,6 +317,11 @@ class ImageToImagePromptExpander:
                 aesthetic_controls=aesthetic_controls,
                 custom_negatives=neg_kw_list
             )
+
+            # STEP 3b: Tell the LLM which elements were picked at random, so it keeps them
+            selected_elements = llm_block(wildcard_resolution, wildcard_llm_block)
+            if selected_elements:
+                user_prompt = f"{user_prompt}\n\n{selected_elements}"
             
             # STEP 4: Call expansion LLM (model_name auto-detected)
             expansion_llm = LLMBackend(
@@ -314,6 +348,9 @@ class ImageToImagePromptExpander:
             # STEP 5: Add required keywords
             if pos_kw_list:
                 enhanced_prompt += f", {', '.join(pos_kw_list)}"
+
+            # Verbatim wildcard picks (__=name__) must survive the rewrite word for word
+            enhanced_prompt, _restored = enforce_verbatim(enhanced_prompt, wildcard_resolution)
             
             # STEP 6: Generate negative prompt
             negative_prompt = self.expander.generate_negative_prompt(
@@ -350,6 +387,9 @@ class ImageToImagePromptExpander:
             
             platform_name = get_platform_config(target_platform)["name"]
             status = f"✅ Image-to-Image | Platform: {platform_name} | {file_status}"
+            wildcard_report = report_lines(wildcard_resolution)
+            if wildcard_report:
+                status = f"{status}\n{wildcard_report}"
             
             return (
                 enhanced_prompt,

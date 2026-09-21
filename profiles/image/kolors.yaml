@@ -1,0 +1,33 @@
+id: kolors
+name: "Kolors"
+developer: "Kuaishou Kolors team"
+summary: "SDXL-style U-Net read through ChatGLM3-6B with a hard 256-token window. Natural language in Chinese or English; renders Chinese text. (Developer corrected: Kuaishou, not 'Kolas Labs'.)"
+modality: image
+tasks: [t2i]
+encoder: "ChatGLM3-6B (256 tokens, hard error above)"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [90, 170]
+max_tokens: 256
+negative: "yes"
+negative_default: "low quality, muddy colors, flat lighting, artifacts, color banding, bland composition"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Subject, setting, colour design, light direction and softness, mood, medium."
+rules:
+  - "Colour-led description: palettes, gradients, reflections."
+  - "Give light direction, intensity and softness."
+  - "Material and texture contrasts."
+avoid:
+  - "Colour contradictions"
+  - "Going past 256 tokens: the pipeline raises an error, it does not truncate"
+legacy:
+  prompt_style: natural_detailed
+  supports: [color_theory, lighting_scenarios, style_references, mood_descriptors]
+  length_guidance: "Aim for about 170 words emphasising colour design and light. The earlier 230-word target overran the 256-token hard limit."
+sources:
+  - {url: "https://raw.githubusercontent.com/huggingface/diffusers/main/src/diffusers/pipelines/kolors/pipeline_kolors.py", supports: "ChatGLM encoder, 256-token hard limit", confidence: high}
+checked: "2026-09-20"
+confidence: medium

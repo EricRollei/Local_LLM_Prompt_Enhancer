@@ -1,0 +1,31 @@
+id: pixverse_v6
+name: "PixVerse V6 / C1 (API)"
+developer: "PixVerse"
+summary: "Hosted video model, 1-15 s, sound and multi-clip both optional and OFF by default. PixVerse recommends 25-200 words; beyond the limits it publishes little about prompt style."
+modality: video
+tasks: [t2v, i2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [25, 200]
+max_chars: 5000
+negative: "yes"
+negative_default: ""
+negative_note: "negative_prompt is an API field; PixVerse publishes no default."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: true
+structure: "Subject, action, setting, camera, light, sound."
+rules:
+  - "Spoken lines in double quotes with the speaker named. (PixVerse documents no dialogue format; this is the common one.)"
+task_rules:
+  i2v:
+    target_words: [20, 90]
+api_note: "generate_audio_switch defaults to FALSE: turn it on or the sound cues are wasted. generate_multi_clip_switch (multi-shot) also defaults to false. camera_movement is a separate optional field."
+sources:
+  - {url: "https://docs.platform.pixverse.ai/text-to-video-generation-13016634e0", supports: "API read rendered: limits, durations, audio and multi-clip switches", confidence: high}
+  - {url: "https://docs.platform.pixverse.ai/how-to-use-text-to-video-882970m0", supports: "25-200 words", confidence: medium}
+checked: "2026-09-21"
+confidence: low

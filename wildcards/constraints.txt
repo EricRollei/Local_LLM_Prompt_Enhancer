@@ -1,0 +1,34 @@
+# Constraint cards: one rule that forces the picture to be invented instead of defaulted.
+# Use one per prompt:   a lighthouse keeper's kitchen, __constraints__
+# Every card is phrased as what IS in the frame, so it also works for models with no negative prompt.
+# Weights: N:: in front of a line makes it N times as likely.
+seen from inside something, looking out through its opening
+lit only from below
+lit by a single source that is itself in the frame
+the main subject fills less than a tenth of the frame
+the main subject is present only as a reflection; the thing itself is out of frame
+the main subject is present only as a shadow cast across the scene
+photographed the moment after the event, with its traces still settling
+photographed the moment before, everything poised
+only hands are visible, the rest of the person out of frame
+empty of people, with signs of very recent presence everywhere
+seen from directly above, flattened into a pattern
+seen from floor level, the world towering overhead
+half the frame is a plain wall, the subject pushed to the edge
+everything in the frame is one colour family except a single object
+the background is sharper than the subject
+framed through a doorway two rooms away
+the horizon sits in the top tenth of the frame
+the subject is turned away from the camera
+two scales collide: something tiny and something enormous share the frame as equals
+the scene is doubled in still water, and the reflection differs from the scene in one detail
+every surface is wet
+every object is wrapped in cloth and tied with string
+everything is arranged in strict symmetry except one displaced thing
+the weather is indoors
+night outside, full daylight inside
+seen through a pane of old rippled glass
+the only light comes from a screen, out of frame
+the subject is mid-fall, everything else perfectly still
+a long exposure: what moves has become a smear, what is still is razor sharp
+the scene is a scale model, and the photograph does not hide it

@@ -1,0 +1,29 @@
+id: pony_v7
+name: "Pony V7"
+developer: "PurpleSmartAI"
+summary: "AuraFlow-based 7B, not SDXL. Natural language works in most cases; the score and style-cluster tags are officially weak and inconsistent in 7.0."
+modality: image
+tasks: [t2i]
+encoder: "AuraFlow's Pile-T5-XL (256 tokens)"
+encoder_family: t5
+caption_style: prose
+languages: [en]
+target_words: [60, 170]
+max_tokens: 256
+negative: "yes"
+negative_default: "low quality, blurry, deformed, bad anatomy, jpeg artifacts"
+quality_tokens: neutral
+quoted_text: none
+weights: false
+structure: "special tags (optional), factual description of the image, stylistic description of the image, additional content tags"
+rules:
+  - "Describe the intended result in normal language first: what is in the picture, factually."
+  - "Then describe the style in a sentence of its own."
+  - "Content tags may follow at the end."
+avoid:
+  - "Counting on score_9 to raise quality - the model card says it does not reliably"
+  - "Readable text and tiny faces or details"
+sources:
+  - {url: "https://huggingface.co/purplesmartai/pony-v7-base", supports: "prompt template, natural language plus tags, weak special tags, limits", confidence: high}
+checked: "2026-09-20"
+confidence: high

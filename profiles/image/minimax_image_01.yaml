@@ -1,0 +1,26 @@
+id: minimax_image_01
+name: "MiniMax image-01 (API)"
+developer: "MiniMax"
+summary: "Hosted image model. Plain natural language, 1500 characters, no negative prompt and no special syntax. Its prompt_optimizer defaults to off."
+modality: image
+tasks: [t2i]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [40, 180]
+max_chars: 1500
+negative: "no"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Subject and action, setting, light, then style descriptors such as the era, genre and finish ('fashion photography of the 90s, documentary, film grain')."
+rules:
+  - "Plain description; style descriptors at the end are fine."
+  - "Stay under 1500 characters."
+avoid:
+  - "Weights or any bracket syntax - none is documented"
+sources:
+  - {url: "https://platform.minimax.io/docs/api-reference/image-generation-i2i", supports: "1500-character limit, prompt_optimizer default false, parameters", confidence: medium}
+checked: "2026-09-20"
+confidence: medium

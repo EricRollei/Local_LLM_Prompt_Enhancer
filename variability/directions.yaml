@@ -1,0 +1,219 @@
+# Direction axes for the Semantic Variation node.
+#
+# An axis is two small sets of example phrases. The direction is the vector from the centre of `from`
+# to the centre of `to` in the embedder's space; with `direction_amount` above 0 every slot leans
+# toward `to` when it moves, below 0 toward `from`. Six to ten concrete, visual phrases per side work
+# best, and the two sides should differ in ONE quality only - otherwise the axis picks up whatever
+# else differs (subject matter, length, style of wording).
+#
+# Add your own axes in variability/directions_user.yaml (same format; same name = yours replaces this one).
+
+ordinary_to_uncanny:
+  description: "everyday and unremarkable -> subtly wrong, out of place, quietly disturbing"
+  from:
+    - a plain kitchen chair
+    - an ordinary office desk
+    - a suburban front door
+    - a cotton bedsheet on a washing line
+    - a bowl of apples on a table
+    - a man waiting at a bus stop
+    - a tidy living room
+    - a glass of water
+  to:
+    - a chair with one leg too many
+    - a desk standing alone in a flooded field
+    - a door set into a cliff face
+    - a bedsheet hanging perfectly still in a gale
+    - a bowl of apples that casts no shadow
+    - a man whose shadow faces the wrong way
+    - a living room with the furniture bolted to the ceiling
+    - a glass of water with a staircase inside it
+
+new_to_decayed:
+  description: "pristine, freshly made -> weathered, corroded, overgrown, falling apart"
+  from:
+    - a freshly painted white wall
+    - polished new brass
+    - a brand new leather shoe
+    - a crisp unread book
+    - a newly built glass office block
+    - fresh cut timber
+    - a spotless enamel bathtub
+    - a gleaming new car
+  to:
+    - a wall with paint peeling in long curls
+    - brass gone green with verdigris
+    - a cracked shoe with the sole hanging off
+    - a water-swollen book furred with mould
+    - an abandoned office block with broken windows and ivy
+    - grey rotten timber crumbling at the ends
+    - a rust-streaked bathtub in a derelict house
+    - a burnt-out car sinking into brambles
+
+domestic_to_industrial:
+  description: "home, handmade, human scale -> factory, machine, infrastructure"
+  from:
+    - a wooden kitchen table
+    - a knitted blanket
+    - a ceramic teapot
+    - a cottage garden
+    - a bedroom with floral wallpaper
+    - a hand-thrown clay bowl
+    - a wicker basket
+    - a fireplace with a wooden mantel
+  to:
+    - a steel workbench bolted to a concrete floor
+    - a conveyor belt
+    - a pressure vessel with riveted seams
+    - a refinery at night
+    - a turbine hall with gantry cranes
+    - a stamped aluminium tray
+    - a wire mesh cage pallet
+    - a blast furnace
+
+small_to_monumental:
+  description: "hand-sized, intimate -> vast, towering, architectural in scale"
+  from:
+    - a thimble
+    - a matchbox
+    - a pebble in the palm of a hand
+    - a teacup
+    - a pocket watch
+    - a single feather
+    - a doll's house chair
+    - a key
+  to:
+    - a cathedral nave
+    - a hydroelectric dam
+    - a cooling tower
+    - a mountain face
+    - a colossal stone statue
+    - an aircraft hangar
+    - a suspension bridge
+    - a container ship seen from the quay
+
+warm_to_cold:
+  description: "warm light, warm materials -> cold light, cold materials"
+  from:
+    - candlelight on oiled wood
+    - late afternoon sun on terracotta
+    - a wool blanket by a fire
+    - copper pans in lamplight
+    - amber glass
+    - sun-warmed sandstone
+    - a tungsten bulb in a paper shade
+    - red velvet
+  to:
+    - fluorescent light on white tiles
+    - moonlight on snow
+    - a steel table under an operating lamp
+    - blue ice
+    - frosted glass
+    - wet slate under an overcast sky
+    - a mercury vapour street lamp in fog
+    - brushed aluminium
+
+soft_to_hard:
+  description: "yielding, fibrous, organic surfaces -> rigid, mineral, machined surfaces"
+  from:
+    - raw wool
+    - risen bread dough
+    - moss
+    - a feather pillow
+    - rabbit fur
+    - wet clay
+    - folded felt
+    - warm wax
+  to:
+    - polished granite
+    - cast iron
+    - plate glass
+    - a steel girder
+    - fired porcelain
+    - basalt
+    - a concrete block
+    - chrome
+
+natural_to_artificial:
+  description: "grown, weathered by nature -> manufactured, synthetic, engineered"
+  from:
+    - a mossy boulder
+    - an oak tree
+    - a river bank
+    - a bird's nest
+    - driftwood
+    - a field of tall grass
+    - a honeycomb
+    - a tide pool
+  to:
+    - a moulded plastic chair
+    - a street light
+    - a concrete drainage channel
+    - a wire shopping basket
+    - an extruded aluminium beam
+    - a sheet of artificial turf
+    - a printed circuit board
+    - a fibreglass swimming pool
+
+calm_to_violent:
+  description: "still, settled -> sudden force, impact, turbulence"
+  from:
+    - a still pond at dawn
+    - a sleeping cat
+    - a folded newspaper on a table
+    - a curtain hanging straight
+    - a parked bicycle
+    - a candle burning steadily
+    - snow lying undisturbed
+    - a woman reading
+  to:
+    - a wave exploding against a sea wall
+    - a dog lunging at the end of a chain
+    - newspapers torn apart by wind
+    - a curtain sucked out through a broken window
+    - a bicycle thrown into the air
+    - a fireball rolling up a wall
+    - an avalanche
+    - a woman screaming into a storm
+
+modern_to_ancient:
+  description: "contemporary objects and places -> antiquity, archaeology, deep time"
+  from:
+    - a smartphone
+    - a glass office tower
+    - a plastic water bottle
+    - an electric scooter
+    - a supermarket aisle
+    - a laptop on a desk
+    - a motorway flyover
+    - an LED sign
+  to:
+    - a bronze hand mirror gone green
+    - a ruined stone temple
+    - a clay amphora
+    - a wooden ox cart
+    - a market among marble columns
+    - a wax writing tablet
+    - a Roman aqueduct
+    - an inscription carved in stone
+
+bright_to_dark:
+  description: "high key, open, sunlit -> low key, enclosed, barely lit"
+  from:
+    - a white room flooded with daylight
+    - a beach at noon
+    - a snowfield under a clear sky
+    - a greenhouse in summer
+    - a sunlit white sheet
+    - an overexposed desert road
+    - a studio with a white seamless backdrop
+    - a meadow in full sun
+  to:
+    - a cellar lit by one bare bulb
+    - a forest at night
+    - a coal mine tunnel
+    - a room lit only by a television
+    - a black velvet curtain
+    - an unlit underpass
+    - a darkroom under a red safelight
+    - a cave mouth seen from inside

@@ -1,0 +1,36 @@
+id: flux2_json
+extends: flux2_dev
+name: "FLUX.2 structured JSON"
+summary: "FLUX.2 accepts a JSON prompt. Useful when several subjects, exact colours and camera settings must stay separated."
+tasks: [t2i]
+caption_style: json
+validator: json
+target_words: [60, 200]
+structure: "One JSON object. Omit keys that have nothing to say rather than filling them with filler."
+output_template: |
+  {
+    "scene": "overall setting in one or two sentences",
+    "subjects": [
+      {"description": "who or what, with attributes", "position": "where in frame", "action": "what it is doing"}
+    ],
+    "style": "medium and aesthetic",
+    "color_palette": ["#RRGGBB", "#RRGGBB"],
+    "lighting": "source, direction, quality",
+    "mood": "one phrase",
+    "background": "what is behind the subjects",
+    "composition": "framing and layout",
+    "camera": {"angle": "...", "lens": "...", "depth_of_field": "..."}
+  }
+rules:
+  - "Keep every subject in its own entry with its own attributes, so attributes cannot leak between subjects."
+  - "Quoted text to be rendered goes inside the description of the object that carries it."
+  - "color_palette holds #RRGGBB codes only; colour names go in the descriptions."
+avoid:
+  - "Keys that are not in the template"
+  - "Filler values such as 'beautiful' or 'high quality'"
+official: []
+tailoring: ""
+sources:
+  - {url: "https://raw.githubusercontent.com/black-forest-labs/skills/master/skills/flux-image-best-practices/rules/json-structured-prompting.md", supports: "official JSON schema and examples", confidence: high}
+checked: "2026-09-20"
+confidence: high

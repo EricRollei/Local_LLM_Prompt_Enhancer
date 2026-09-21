@@ -1,0 +1,39 @@
+id: wan22
+name: "Wan 2.2 (single-frame image use)"
+developer: "Alibaba Wan team"
+summary: "Wan 2.2 video model run for one frame. umT5-XXL, 512 tokens. Leading cinematic tags (light, shot size, composition, tone) followed by descriptive sentences. (Developer corrected: Alibaba, not Tencent.)"
+modality: image
+tasks: [t2i]
+encoder: "umT5-XXL (512 tokens)"
+encoder_family: t5
+caption_style: prose
+languages: [en, zh]
+target_words: [80, 200]
+max_tokens: 512
+negative: "yes"
+negative_default: "low quality, blurry, distorted, poor composition, bad lighting, flat, overexposed, extra fingers, deformed hands, deformed face"
+negative_note: "Ignored in 4-step LightX2V-style workflows that run at CFG 1."
+quality_tokens: neutral
+quoted_text: none
+weights: false
+structure: "Up to four cinematic tags first (time of day, light source, light quality, shot size, angle, composition, colour tone), then subject, setting and detail in sentences. A style, when given, goes first of all."
+rules:
+  - "Pick cinematic tags from Wan's own vocabulary: Daylight, Moonlight, Practical lighting, Firelight, Overcast lighting; Soft lighting, Hard lighting; Top, Side, Under, Edge lighting; Warm, Cool, Mixed colors; Close-up, Medium, Wide, Extreme wide shot; Low angle, High angle, Dutch angle, Aerial, Over-the-shoulder; Center, Balanced, Symmetrical, Left-heavy, Right-heavy composition."
+  - "At most four tags; they are seasoning, not the meal."
+  - "For 2D or illustration styles skip the cinematic lighting tags."
+  - "Add no subjects the user did not give."
+avoid:
+  - "Literary mood sentences ('the scene is full of tension')"
+  - "Asking for readable text"
+legacy:
+  prompt_style: technical_structured
+  supports: [cinematography_terms, lighting_types, composition_rules]
+  technical_terms:
+    lighting: [soft lighting, hard lighting, edge lighting, side lighting, top lighting, practical lighting]
+    composition: [center composition, balanced composition, symmetrical composition, left-heavy composition]
+    quality: [warm colors, cool colors, mixed colors]
+sources:
+  - {url: "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/utils/system_prompt.py", supports: "official rewriter vocabulary and rules", confidence: high}
+  - {url: "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/configs/shared_config.py", supports: "umT5-XXL, 512 tokens", confidence: high}
+checked: "2026-09-20"
+confidence: high

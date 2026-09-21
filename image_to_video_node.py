@@ -17,6 +17,13 @@ from .utils import (
     validate_positive_keywords
 )
 from .qwen3_vl_backend import caption_with_qwen3_vl
+from .wildcard_support import (
+    enforce_verbatim,
+    is_changed_token,
+    normalise_seed,
+    wildcard_optional_inputs,
+)
+from .profile_support import WAN_TARGET, add_required_terms, get_profile, target_report_lines, video_target_inputs
 
 
 class ImageToVideoPromptExpander:
@@ -233,8 +240,18 @@ class ImageToVideoPromptExpander:
                     "default": "img2vid_prompt",
                     "multiline": False
                 })
+            },
+            # New inputs are only ever APPENDED here, so saved workflows keep their widget order.
+            "optional": {
+                **wildcard_optional_inputs(),
+                **video_target_inputs(),      # target_model, duration_seconds
             }
         }
+
+    @classmethod
+    def IS_CHANGED(cls, wildcard_seed: int = -1, **kwargs):
+        """wildcard_seed = -1 means a fresh roll each run, which must defeat ComfyUI's cache."""
+        return is_changed_token(wildcard_seed)
     
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
     RETURN_NAMES = ("positive_prompt", "negative_prompt", "image_description", "status")
@@ -264,7 +281,13 @@ class ImageToVideoPromptExpander:
         positive_keywords: str,
         negative_keywords: str,
         save_to_file: bool,
-        filename_base: str
+        filename_base: str,
+        wildcard_seed: int = -1,
+        wildcard_llm_block: bool = True,
+        wildcard_instructions: str = "",
+        # Absent only in API-format workflows saved before these inputs existed: those keep the Wan 2.2 path.
+        target_model: str = WAN_TARGET,
+        duration_seconds: float = 0.0
     ) -> Tuple[str, str, str, str]:
         """
         Main processing: Analyze image → Combine with motion → Expand
@@ -300,6 +323,15 @@ class ImageToVideoPromptExpander:
                 reference_mode
             )
             
+            # Another target model: the picture description travels as a fact about the start frame, and the
+            # idea is the motion alone, which is how every image-to-video model wants to be prompted.
+            profile_target = target_model != WAN_TARGET and get_profile(target_model) is not None
+            start_frame_caption = ""
+            if profile_target:
+                if image_description and not image_description.startswith("[Image"):
+                    start_frame_caption = image_description
+                combined_input = self._build_motion_idea(motion_description, motion_speed, reference_mode)
+            
             # STEP 3: Gather aesthetic controls
             aesthetic_controls = {}
             if camera_movement not in ["auto", "none"]:
@@ -322,8 +354,15 @@ class ImageToVideoPromptExpander:
                 mode="image-to-video",
                 positive_keywords=pos_kw_list,
                 variation_seed=None,
-                aesthetic_controls=aesthetic_controls
+                aesthetic_controls=aesthetic_controls,
+                wildcard_seed=normalise_seed(wildcard_seed),
+                wildcard_llm_block=wildcard_llm_block,
+                wildcard_instructions=wildcard_instructions,
+                vision_caption=start_frame_caption,
+                target_model=target_model,
+                duration_seconds=duration_seconds
             )
+            on_profile_path = breakdown_dict.get("target_model", WAN_TARGET) != WAN_TARGET
             
             # STEP 5: Call expansion LLM (model_name auto-detected)
             expansion_llm = LLMBackend(
@@ -336,7 +375,7 @@ class ImageToVideoPromptExpander:
             response = expansion_llm.send_prompt(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
-                max_tokens=2000
+                max_tokens=3000 if on_profile_path else 2000
             )
             
             if not response["success"]:
@@ -348,23 +387,38 @@ class ImageToVideoPromptExpander:
                 )
             
             # STEP 6: Parse and validate
-            parsed = self.expander.parse_llm_response(response["response"])
+            parsed = self.expander.parse_llm_response(
+                response["response"],
+                target_model=breakdown_dict.get("target_model", WAN_TARGET),
+                task=breakdown_dict.get("target_task", ""),
+                word_range=breakdown_dict.get("target_words")
+            )
             enhanced_prompt = parsed["prompt"]
             
             if not enhanced_prompt or len(enhanced_prompt) < 20:
                 enhanced_prompt = combined_input
             
-            # Add required keywords
-            if pos_kw_list:
-                keywords_present, missing = validate_positive_keywords(pos_kw_list, enhanced_prompt)
-                if missing:
-                    enhanced_prompt += f" {', '.join(missing)}"
+            if on_profile_path:
+                # Structured formats (MiniMax H3 fields) cannot take text appended at the end
+                enhanced_prompt, term_warnings = add_required_terms(
+                    enhanced_prompt, pos_kw_list, self.expander.last_resolution, breakdown_dict["target_model"])
+                breakdown_dict["target_warnings"] = list(parsed.get("warnings") or []) + term_warnings
+            else:
+                # Add required keywords
+                if pos_kw_list:
+                    keywords_present, missing = validate_positive_keywords(pos_kw_list, enhanced_prompt)
+                    if missing:
+                        enhanced_prompt += f" {', '.join(missing)}"
+                
+                # Verbatim wildcard picks (__=name__) must survive the rewrite word for word
+                enhanced_prompt, _restored = enforce_verbatim(enhanced_prompt, self.expander.last_resolution)
             
             # STEP 7: Generate negative prompt
             negative_prompt = self.expander.generate_negative_prompt(
                 preset=preset,
                 custom_negatives=neg_kw_list,
-                mode="image-to-video"
+                mode="image-to-video",
+                target_model=breakdown_dict.get("target_model", WAN_TARGET)
             )
             
             # STEP 8: Save if requested
@@ -373,8 +427,9 @@ class ImageToVideoPromptExpander:
                     "type": "image-to-video",
                     "preset": preset,
                     "tier": expansion_tier,
-                    "vision_model": vision_model_name if use_vision_model else "none",
-                    "expansion_model": expansion_model_name,
+                    "vision_model": vision_backend if use_vision_model else "none",
+                    "expansion_model": expansion_llm.model_name or "auto-detected",
+                    "target_model": breakdown_dict.get("target_model", WAN_TARGET),
                     "image_description": image_description,
                     "motion_input": motion_description
                 }
@@ -400,7 +455,10 @@ class ImageToVideoPromptExpander:
             else:
                 file_status = "Not saved"
             
-            status = f"✅ Image-to-Video prompt | Vision: {use_vision_model} | {file_status}"
+            target_display = breakdown_dict.get("target_name") or breakdown_dict.get("target_model", WAN_TARGET)
+            status = f"✅ Image-to-Video prompt | {target_display} | Vision: {use_vision_model} | {file_status}"
+            for warning in breakdown_dict.get("target_warnings") or []:
+                status += f"\n⚠️ {warning}"
             
             return (
                 enhanced_prompt,
@@ -627,6 +685,21 @@ Output ONLY the description, no labels or meta-commentary."""
         
         return " | ".join(parts)
     
+    # Reference modes of this node, said in a way that does not assume Wan 2.2
+    MOTION_IDEA_NOTES = {
+        "style_transfer": "Keep the lighting, colour palette and mood of the start image; the pose and action may change freely.",
+        "character_remix": "The character in the start image is the same person throughout; the clothing and setting may change as the motion requires.",
+        "face_only": "Only the subject's face and body identity must be preserved from the start image.",
+    }
+
+    def _build_motion_idea(self, motion_description: str, motion_speed: str, reference_mode: str) -> str:
+        """The idea handed to a profile-built rewriter: the motion, its speed, and the reference mode as one plain sentence."""
+        motion = motion_description
+        if motion_speed not in ["auto", "normal"]:
+            motion = f"{motion_speed}, {motion}"
+        note = self.MOTION_IDEA_NOTES.get(reference_mode, "")
+        return f"{motion}\n\n{note}" if note else motion
+
     def _build_combined_prompt_with_mode(
         self,
         image_description: str,
@@ -687,6 +760,7 @@ Output ONLY the description, no labels or meta-commentary."""
             f"\nExpansion Tier: {breakdown_dict.get('detected_tier', 'N/A')}",
             f"Preset: {breakdown_dict.get('applied_preset', 'N/A')}"
         ]
+        lines.extend(target_report_lines(breakdown_dict))
         
         if aesthetic_controls:
             lines.append("\nAesthetic Controls:")

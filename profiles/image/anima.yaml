@@ -1,0 +1,34 @@
+id: anima
+name: "Anima"
+developer: "CircleStone Labs + Comfy Org"
+summary: "2B anime model on NVIDIA Cosmos-Predict2, read through Qwen3-0.6B. Danbooru tags, natural language, or a mix. Quality and score tags are trained in and help. Not for photorealism."
+modality: image
+tasks: [t2i]
+encoder: "Qwen3-0.6B base + LLM adapter"
+encoder_family: llm
+caption_style: tags_prose
+languages: [en]
+target_words: [40, 140]
+negative: "yes"
+negative_default: "worst quality, low quality, score_1, score_2, score_3, artist name, blurry, jpeg artifacts, chromatic aberration"
+negative_note: "Base and Aesthetic: CFG 4-5. Turbo: CFG 1, negative ignored."
+quality_tokens: required
+prefix: "masterpiece, best quality, score_7, safe"
+quality_token_list: [masterpiece, best quality, good quality, score_9, score_8, score_7, highres, absurdres, newest]
+quoted_text: none
+weights: true
+structure: "[quality / meta / year / safety tags] [1girl / 1boy / 1other] [character] [series] [@artist] [general tags], then at least two sentences of natural language."
+rules:
+  - "Tags are lowercase with spaces, not underscores (score tags keep their underscore)."
+  - "Artists are written with an @ in front: @artist name. Without the @ the artist is not recognised."
+  - "Name the character, then still describe the appearance - essential with several characters."
+  - "Natural-language part: at least two sentences; more description is better."
+  - "Change the safety tag to match the content: safe, sensitive, nsfw, explicit."
+  - "Weights need larger values than SDXL: (chibi:2)."
+avoid:
+  - "Photorealism requests"
+  - "More than a single word of rendered text"
+sources:
+  - {url: "https://huggingface.co/circlestone-labs/Anima", supports: "tag order, quality and score tags, @artist syntax, settings, limits", confidence: high}
+checked: "2026-09-20"
+confidence: high

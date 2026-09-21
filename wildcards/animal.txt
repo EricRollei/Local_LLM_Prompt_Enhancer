@@ -1,0 +1,19 @@
+# Legacy category {animal}. Specific beats generic: an image model renders "a barn owl" far better than "a bird".
+a tabby cat
+a greyhound
+a barn owl
+a draft horse
+a brown hare
+a red fox
+a roe deer
+a grey wolf
+a raven
+a mute swan
+a dairy cow
+a tortoise
+a magpie
+a herring gull
+a black goat
+a carp
+a stag beetle
+a hedgehog

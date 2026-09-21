@@ -1,0 +1,40 @@
+id: gpt_image
+name: "GPT Image 2 / 2.5 (API)"
+developer: "OpenAI"
+summary: "OpenAI's image models (gpt-image-2, gpt-image-2.5-sunburst / -flare): generation and multi-image editing with an optional mask. Any maintainable format works; OpenAI's suggested order is scene, subject, key details, constraints. Exclusions written into the prompt are explicitly endorsed."
+modality: image
+tasks: [t2i, edit]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [60, 300]
+max_chars: 32000
+negative: inline
+negative_note: "No negative field, but unlike most models OpenAI endorses in-prompt exclusions: 'no watermark', 'no extra text', 'no logos'. Put them last, as constraints."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Intended use and background / scene -> subject -> key details (materials, light, colour, medium, framing, gaze) -> constraints and exclusions."
+rules:
+  - "Say what the image is for."
+  - "Literal text in double quotes (or ALL CAPS), with position and typography; for a tricky word spell it letter by letter; add 'no extra text'."
+  - "For photoreal work use the word 'photorealistic' and real levers ('film grain', 'macro detail'); quality is set by the API's quality parameter, not by buzzwords."
+  - "A short closing list of exclusions is fine here: no watermark, no logos, no extra text."
+avoid:
+  - "Several changes at once when iterating - one change per turn"
+task_rules:
+  edit:
+    target_words: [15, 120]
+    structure: "Change only [X] ... Keep everything else the same: [the invariants, listed]."
+    rules:
+      - "List what must not change: identity, geometry, layout, lighting, labels, background, camera angle, framing."
+      - "Several input images are named by index and description: 'Image 1: the product photo. Image 2: the style reference.'"
+      - "With a mask, still describe the whole wanted result; the mask is guidance."
+api_note: "Call the Images API directly: it sends the prompt unmodified. As the image_generation tool in the Responses API the main model rewrites the prompt (revised_prompt), with no documented off switch. Transparency: background=transparent with png or webp."
+sources:
+  - {url: "https://developers.openai.com/api/docs/guides/image-prompting", supports: "prompting steps, editing language, transparency", confidence: high}
+  - {url: "https://developers.openai.com/cookbook/examples/multimodal/image-gen-models-prompting-guide", supports: "order of elements, exclusions, text rules", confidence: high}
+  - {url: "https://developers.openai.com/api/reference/resources/images/methods/generate", supports: "32,000-character limit, models, parameters", confidence: high}
+checked: "2026-09-21"
+confidence: high

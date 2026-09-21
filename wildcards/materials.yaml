@@ -1,0 +1,30 @@
+# Tagged materials, for material substitution and texture variation.
+# __materials/**__   __materials[soft AND organic]__
+# Tags: hard soft organic mineral manmade transparent reflective matte warm cold heavy light fragile
+materials:
+  hard:
+    - {text: polished brass, tags: [hard, manmade, reflective, warm, heavy]}
+    - {text: brushed steel, tags: [hard, manmade, reflective, cold, heavy]}
+    - {text: rusted iron flaking at the edges, tags: [hard, manmade, matte, warm, heavy]}
+    - {text: white Carrara marble, tags: [hard, mineral, reflective, cold, heavy]}
+    - {text: rough-cast concrete, tags: [hard, manmade, matte, cold, heavy]}
+    - {text: clear blown glass, tags: [hard, manmade, transparent, reflective, cold, fragile]}
+    - {text: glazed white porcelain, tags: [hard, manmade, reflective, cold, fragile]}
+    - {text: unglazed terracotta, tags: [hard, mineral, matte, warm, fragile]}
+    - {text: weathered grey oak, tags: [hard, organic, matte, warm]}
+    - {text: carved ivory-coloured bone, tags: [hard, organic, matte, warm, light]}
+    - {text: black basalt, tags: [hard, mineral, matte, cold, heavy]}
+    - {text: clear river ice, tags: [hard, organic, transparent, cold, fragile]}
+  soft:
+    - {text: brown rabbit fur, tags: [soft, organic, matte, warm, light]}
+    - {text: heavy grey felt, tags: [soft, manmade, matte, warm]}
+    - {text: undyed raw wool, tags: [soft, organic, matte, warm, light]}
+    - {text: white cotton bedsheet, tags: [soft, organic, matte, light]}
+    - {text: black patent leather, tags: [soft, organic, reflective, warm]}
+    - {text: beeswax, tags: [soft, organic, matte, warm]}
+    - {text: risen bread dough, tags: [soft, organic, matte, warm]}
+    - {text: wet river clay, tags: [soft, mineral, reflective, cold, heavy]}
+    - {text: folded newsprint, tags: [soft, manmade, matte, light, fragile]}
+    - {text: moss, tags: [soft, organic, matte, cold, light]}
+    - {text: red velvet, tags: [soft, manmade, matte, warm]}
+    - {text: translucent pink rubber, tags: [soft, manmade, transparent, warm]}

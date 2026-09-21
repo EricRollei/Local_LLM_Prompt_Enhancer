@@ -1,0 +1,45 @@
+id: seedance25
+name: "Seedance 2.5 (API)"
+developer: "ByteDance Seed"
+summary: "ByteDance's current video model (dreamina-seedance-2-5): native sound in 11 languages, 4-30 s, up to 50 reference files, and - unlike 2.0 - integer-second timestamps. Written as a structured brief: asset bindings, a one-sentence summary, a shot list or timeline, closing notes."
+modality: video
+tasks: [t2v, i2v, ref2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [80, 420]
+negative: inline
+negative_note: "No negative_prompt field. ByteDance: 'Use positive descriptions whenever possible. Negative constraints are supported for subtitles and audio control' - 'No BGM; generate only environmental sounds and action sounds.', 'keep it subtitle-free'."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: true
+structure: "One-sentence summary (subject + location + event + genre / style + camera movement) -> detailed plot as a shot list OR a timeline -> additional notes (style, quality, constraints). A shot opens with a bracketed camera header: 'Shot 1 (0-3s): [Wide shot, locked-off camera, eye-level] ...'."
+rules:
+  - "Timestamps in whole seconds only, gap-free, inside the clip length: 'Shot 1 (0-3s): ...', '[3s-7s] ...', or 'At the 2-second mark, ...'. Not for rapid actions, and do not over-fill a time range - ByteDance warns it causes extra cuts or dropped beats."
+  - "Sound is labelled plain text with quoted speech: Dialogue (elderly woman): \"Fly safe, my child.\"  Voiceover: \"...\"  Sound effects: roaring wind and a dry cracking sound.  Music described in a sentence."
+  - "Silence is asked for in words: 'No BGM; generate only environmental sounds and action sounds.' or 'No audio.'"
+  - "One language for all dialogue in a clip."
+  - "Show emotion as physical detail and quantify motion (slowly, slightly, quickly)."
+  - "A niche camera term gets an explanation: 'Rack focus: the focus shifts smoothly from the cup to her face.' A transition gets a time and a method."
+avoid:
+  - "Fractions of a second"
+  - "Mixed dialogue languages"
+  - "Asset IDs (asset://...) inside the prompt"
+task_rules:
+  ref2v:
+    rules:
+      - "Open with an 'Asset Bindings:' line that gives every supplied file a role, then the summary."
+      - "References are cited by upload order per type and given a role: 'Asset Bindings: storyboard @Image1, bedroom @Image2, Li Tian @Image3', '@Video1', '@Audio1'. For an edit or extension name the clip directly ('@Video 1') - never write 'reference Video 1', which is read as a reference task."
+  i2v:
+    target_words: [25, 140]
+    rules:
+      - "Motion and camera only; say the image is the first frame and do not re-describe it."
+camera: [extreme wide shot, wide shot, medium shot, medium close-up, close-up, push in, pull out, pan, track, follow, orbit, tilt up, handheld shake, low angle, overhead, first-person view, long take, dolly zoom, aerial, FPV, bullet time, speed ramp, locked-off camera]
+api_note: "duration (4-30, or -1), ratio and generate_audio are API parameters. No vendor rewrite flag is documented (BytePlus ships a separate prompt-optimizer skill instead). ByteDance recommends at most 1,000 English words."
+sources:
+  - {url: "https://docs.byteplus.com/en/docs/ModelArk/2607689", supports: "Seedance 2.5 prompt guide, read rendered: formula, timestamps, negative control, camera language, reference mapping, differences from 2.0", confidence: high}
+  - {url: "https://docs.byteplus.com/en/docs/ModelArk/2607688", supports: "model ids, asset limits, durations, languages", confidence: high}
+checked: "2026-09-21"
+confidence: high

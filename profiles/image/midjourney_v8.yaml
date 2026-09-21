@@ -1,0 +1,39 @@
+id: midjourney_v8
+name: "Midjourney V8 (paste-in prompt)"
+developer: "Midjourney"
+summary: "No public API: this writes the text you paste into the web app or Discord. Midjourney's own advice is the opposite of most models here - short and simple prompts give the best images. Parameters go at the very end."
+modality: image
+tasks: [t2i]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [8, 45]
+negative: inline
+negative_note: "Midjourney's negative is the --no parameter, written at the end of the prompt itself. Single words only: every word after --no is read separately, so '--no modern clothing' means no modern AND no clothing."
+quality_tokens: forbid
+quoted_text: double
+weights: false
+structure: "One to three short descriptive phrases - subject, medium, environment, lighting, colour, mood, composition - then the parameters, last: --ar 3:2 --stylize 100 --raw"
+rules:
+  - "Short. Concrete nouns and specific words ('gigantic' rather than 'big'); numbers or collective nouns instead of vague plurals ('three cats', 'a flock of birds')."
+  - "Something the user explicitly does not want becomes the --no parameter at the very end, single words, comma separated - a user who wants no people and no cars gets: --no people, cars. Only things the user named. Never words in the body."
+  - "Describe what is wanted, never what is not: Midjourney's own example is that 'a party with no cake' tends to produce a cake."
+  - "Text to render goes in double quotes (single quotes do not work), short, with a cue such as 'with the words'."
+  - "Only add parameters the user asked for or clearly implies. Verified for V8: --ar W:H, --stylize 0-1000 (default 100), --chaos 0-100, --raw, --sref <url or code> with --sw 0-1000, --p, --seed, --tile, --hd, --no."
+  - "With --sref, describe content, not instructions."
+avoid:
+  - "Paragraphs"
+  - "'don't', 'without' in the body"
+  - "word::2 multi-prompt weights - Midjourney lists them for V1-V6.1 only"
+  - "--oref and --cref on V8 - the V8 Edit Model (--edit <image urls>) replaces them"
+  - "Quality words (8k, masterpiece); style comes from --stylize, --raw and --sref"
+api_note: "No API. V8.2 is the default since 2026-07-24. The Edit Model (--edit, up to 4 images) takes instruction-style prompts."
+sources:
+  - {url: "https://docs.midjourney.com/hc/en-us/articles/32023408776205-Prompt-Basics", supports: "short prompts, word choice, structure", confidence: high}
+  - {url: "https://docs.midjourney.com/hc/en-us/articles/32859204029709-Parameter-List", supports: "parameters", confidence: high}
+  - {url: "https://docs.midjourney.com/hc/en-us/articles/32173351982093-No", supports: "--no and its word-by-word reading", confidence: high}
+  - {url: "https://docs.midjourney.com/hc/en-us/articles/32658968492557-Multi-Prompts-Weights", supports: ":: is listed for V1-V6.1 only", confidence: high}
+  - {url: "https://docs.midjourney.com/hc/en-us/articles/32502277092109-Text-Generation", supports: "double-quoted text", confidence: high}
+checked: "2026-09-21"
+confidence: high

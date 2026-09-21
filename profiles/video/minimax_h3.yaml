@@ -1,0 +1,127 @@
+id: minimax_h3
+name: "MiniMax H3 (video + audio)"
+developer: "MiniMax"
+summary: "33B open-weights model that generates video and stereo sound together (4-15 s, 24 fps), read through the full Qwen3-VL-32B. The local checkpoints expect MiniMax's structured field format, not free prose; the hosted API rewrites prose into this format for you, the local model does not."
+modality: video
+tasks: [t2v, i2v, flf2v, ref2v]
+encoder: "Qwen3-VL-32B (layer-50 hidden states); <d> is a real special token"
+encoder_family: llm
+caption_style: fields
+validator: h3_fields
+languages: [en]
+target_words: [140, 680]
+words_per_second: [35, 45]      # MiniMax's own examples; the clip length, not a detail tier, sets the length
+negative: "no"
+negative_note: "The released checkpoints are CFG-distilled. There is no negative prompt; exclusions are written into the positive text."
+quality_tokens: forbid
+quoted_text: double
+weights: false
+audio: true
+structure: "Three fields in this order, one blank line between them: integrated_multimodal_description (visuals, action, shots, speakers, dialogue, singing and diegetic audio along the timeline), overall_soundscape (1-4 sentences: ambience, physical action sounds, non-verbal human sounds), non_diegetic_music (1-3 sentences: score only the audience hears - instrumentation, tempo, rhythm, dynamics)."
+output_template: |
+  integrated_multimodal_description: [Shot 1] Live-action, cinematic, a medium-wide shot frames ... The camera pushes in with small amplitude at slow speed toward ... The young woman with a quiet, breathy voice (S1) says: <d>[English] exact words.</d> [Shot 2] At 00:05.000, the camera cuts to ...
+
+  overall_soundscape: Rain falls steadily on the pavement, followed by ...
+
+  non_diegetic_music: Sustained cello notes at a slow tempo with widely spaced piano tones, gradually decreasing in volume.
+rules:
+  - "[Shot 1] opens with the overall style and the initial composition. Style words the model knows: Cinematic, live-action, 2D-animated, 3D CG, claymation, watercolor, vintage film."
+  - "Shot 1 carries no timestamp. Later shots: [Shot 2] At MM:SS.mmm, the camera cuts to ... - strictly increasing and inside the clip length."
+  - "Cut phrases: the camera cuts to / the shot cuts to / the shot transitions to / the shot changes to / the shot switches to. Dissolves, fades and wipes only when the user asks."
+  - "If only distance or a slight angle changes, use camera motion, not a cut."
+  - "Camera motion is a sentence inside the shot - motion type, optional amplitude ('with small amplitude' / 'with large amplitude'), optional speed ('at slow speed' / 'at fast speed'); medium and normal are left unsaid. Never stack camera labels at the end of a sentence, and never use [bracket] commands."
+  - "Every speaker gets a stable id (S1), (S2); joint speech (S1,S2); the same id across shots. Characters who never make a vocal sound get no id."
+  - "At first appearance give identity and voice: age, gender, on screen or off, pitch, timbre, rate, accent."
+  - "Dialogue: The woman with a quiet, breathy voice (S1) says: <d>[English] the exact words.</d> Inside <d> goes only the [Language] tag and the spoken words - verbatim, never translated or reworded."
+  - "Voiceover: '(S1) says in an off-screen voiceover: <d>[English] ...</d> while his lips remain completely closed.'"
+  - "A line that crosses a cut gets <scenetrans> at the join in both parts, with 'continues seamlessly across the cut'. Speech cut off by the end of the clip ends with <cutoff>."
+  - "Singing and music the characters can hear (radio, instruments) belong in the main description, not in non_diegetic_music."
+  - "On-screen text goes in English double quotes in its original script."
+  - "overall_soundscape: one paragraph, no dialogue repeated. N/A only if the user wants total silence."
+  - "non_diegetic_music: instrumentation, tempo, rhythm, dynamic changes. No mood words, no explaining what the music 'conveys'. N/A when there is no score."
+  - "Match the described timeline to the clip length exactly; official examples run about 35-45 words per second of video."
+  - "Write the fields in English; keep dialogue, lyrics and visible text in their original language."
+avoid:
+  - "Plot summary instead of observable timeline"
+  - "Abstract words ('cinematic', 'beautiful') as description - concrete visual and audible detail instead ('Cinematic' is still legal as the style keyword opening Shot 1)"
+  - "Renaming, translating, decorating or reordering the field names"
+  - "Hailuo-style [Push in] bracket commands"
+  - "A timestamp on Shot 1"
+  - "Negative prompt thinking"
+camera:
+  - Zoom In / Zoom Out
+  - Push In / Pull Out
+  - Pan Left / Pan Right
+  - Truck Left / Truck Right
+  - Tilt Up / Tilt Down
+  - Pedestal Up / Pedestal Down
+  - Arc Shot
+  - Tracking Shot
+  - Static Shot
+  - Shake Slightly / Shake Strongly
+  - POV
+  - Roll Clockwise / Roll Counterclockwise
+task_rules:
+  i2v:
+    first_line: "For the target video, at 0.00 seconds into the target video, <Picture 1> (from [Shot 1]) is fully referenced."
+    rules:
+      - "Pattern: first-frame anchor -> action onset -> continuous development -> result or reaction."
+      - "Identity, clothing, colours, props and layout stay consistent with the picture; start from its composition and continue forward."
+  flf2v:
+    rules:
+      - "The very first line, followed by a blank line, is: How the reference pictures align with the target video — Picture 1 (from Shot 1) aligns with the 0.00-second mark of the target video; Picture 2 (from Shot N) aligns with the S.SS-second mark of the target video.  N = index of the final shot, S.SS = clip length with exactly two decimals. No angle or square brackets in this line; the long dash is part of it."
+      - "Pattern: first-frame state -> observable intermediate changes -> progressively narrowing differences -> last-frame state. Do not describe the two stills twice; describe the path between them."
+      - "Prefer a single shot so the model can interpolate continuously."
+  ref2v:
+    validator: h3_ref_fields
+    target_words: [450, 750]
+    structure: "Six sections in this order: subject_definitions, summary, retention_analysis, detailed_description, overall_soundscape, non_diegetic_music."
+    output_template: |
+      subject_definitions:
+      <Subject 1> is the young woman in <Picture 1>, with long dark hair, a blue cardigan, and a thin silver necklace.
+      <Audio 1> is the voice-timbre reference for <Subject 1> (S1).
+
+      summary:
+      [reference generation + audio reference] The target video shows ...
+
+      retention_analysis:
+      <Subject 1> (appears in [Shot 1], [Shot 2]): fully_preserved - face, hair and clothing.
+      <Audio 1>: reference - timbre only, never its words.
+
+      detailed_description:
+      The target video is in a cinematic live-action style with soft window light. [Shot 1] ... <Subject 1> (S1) turns and says, <d>[English] exact words.</d> [Shot 2] At 00:04.000, the camera cuts to ...
+
+      overall_soundscape: ...
+
+      non_diegetic_music: ...
+    rules:
+      - "Labels: <Subject N> for reusable visible content, <Picture N> only when the image itself is a frame anchor, <Video N> for whole-video relations, <Audio N> for audio assets. A label keeps one meaning in every section."
+      - "summary starts with a bracketed task type: keyframe completion, reference generation, video editing, video continuation, audio reuse, audio reference - joined with ' + '."
+      - "retention_analysis markers, fixed English values - visual: fully_preserved, partially_preserved, attribute_transfer, weak_reference; audio: fully_copy, partially_copy, reference, weak_reference. No (Sx) ids in this section."
+      - "In detailed_description the style comes in one or two sentences BEFORE [Shot 1]. For generation tasks it normally runs 350-500 words."
+official:
+  - task: t2v
+    url: "https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/base-en.txt"
+    format: text
+    preamble: "You write prompts for the MiniMax H3 video-and-audio model. Below is MiniMax's own prompt-writing guide. Apply it to the user's idea in T2VA mode (text only, no reference picture): the answer starts directly with the three core fields."
+  - task: i2v
+    url: "https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/base-en.txt"
+    format: text
+    preamble: "You write prompts for the MiniMax H3 video-and-audio model. Below is MiniMax's own prompt-writing guide. Apply it to the user's idea in I2VA mode: one reference picture is the first frame."
+  - task: flf2v
+    url: "https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/base-en.txt"
+    format: text
+    preamble: "You write prompts for the MiniMax H3 video-and-audio model. Below is MiniMax's own prompt-writing guide. Apply it to the user's idea in FL2VA mode: Picture 1 is the first frame and Picture 2 the last."
+  - task: ref2v
+    url: "https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/ref-en.txt"
+    format: text
+    preamble: "You write prompts for the MiniMax H3 Ref2VA checkpoint. Below is MiniMax's own guide for full-reference prompts. Apply it to the user's idea and the references they describe."
+tailoring: |
+  Never rename, translate, decorate (no ** or #) or reorder the field names; they are part of the model's input format.
+  Keep the described timeline inside the clip length given under the facts for this run.
+sources:
+  - {url: "https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/base-en.txt", supports: "all base-mode format rules", confidence: high}
+  - {url: "https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/ref-en.txt", supports: "reference-mode rules", confidence: high}
+  - {url: "https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/README.md", supports: "specs, Qwen3-VL-32B encoder, <d> special token, CFG-distilled, Context-IR not open", confidence: high}
+checked: "2026-09-20"
+confidence: high

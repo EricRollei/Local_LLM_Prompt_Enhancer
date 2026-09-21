@@ -1,0 +1,20 @@
+id: flux2_klein
+extends: flux2_dev
+name: "FLUX.2 [klein] 4B / 9B"
+summary: "Small, fast FLUX.2 read through Qwen3. No built-in prompt upsampling, so the prompt itself must be descriptive: novelist-style prose, heavy on light."
+encoder: "Qwen3 4B / 8B (512 tokens)"
+target_words: [40, 70]
+negative: ignored
+negative_note: "Distilled klein runs without CFG. Base (undistilled) klein has real CFG, but BFL still advises against negative prompts."
+rules:
+  - "Narrative prose, like a novelist describing a photograph: 40-70 words."
+  - "Front-load the subject."
+  - "Be generous with light: source, direction, quality, colour."
+  - "Quote any text that should appear."
+tailoring: |
+  Length: 40-70 words. Klein has no prompt upsampling of its own, so be concretely descriptive, especially about light.
+sources:
+  - {url: "https://raw.githubusercontent.com/black-forest-labs/skills/master/skills/flux-image-best-practices/rules/flux2-models.md", supports: "klein: 40-70 words, no upsampling, up to 4 references", confidence: high}
+  - {url: "https://raw.githubusercontent.com/huggingface/diffusers/main/src/diffusers/pipelines/flux2/pipeline_flux2_klein.py", supports: "Qwen3 encoder, CFG off when distilled", confidence: high}
+checked: "2026-09-20"
+confidence: high

@@ -1,0 +1,47 @@
+id: seedance2
+name: "Seedance 2.0 (API)"
+developer: "ByteDance Seed"
+summary: "Hosted video model with native sound, 4-15 s, up to 15 reference files (9 images, 3 videos, 3 audio). ByteDance calls the right style an engineering instruction, not copywriting: asset bindings, a one-sentence summary, a shot list, global notes. Shot numbers work; timestamps do NOT (use seedance25 for those)."
+modality: video
+tasks: [t2v, i2v, ref2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [80, 320]
+negative: inline
+negative_note: "No negative_prompt field. ByteDance's 'constraint words' go in the prompt: 'keep it subtitle-free', 'do not generate a logo', 'do not generate a watermark'."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: true
+structure: "One-sentence summary -> 'Shot 1: ... Shot 2: ...' in event order -> closing notes (style, quality, constraints). ByteDance's formula: precise subject + action details + scene / environment + lighting and colour tone + camera movement + visual style + image quality + constraints. Inside a shot: camera movement or transition -> subject action and expression -> position change -> audio."
+rules:
+  - "Multi-shot is written 'Shot 1: ... Shot 2: ...'. NEVER put seconds or time ranges in a Seedance 2.0 prompt: ByteDance's guide says timing support is unstable and forcing it 'may lead to abnormal generation results'."
+  - "Sound uses ByteDance's special characters. Dialogue in curly braces: the woman says {We have to leave now}. Sound effects in angle brackets: < a dog barking in the distance >. Music in full-width parentheses: （slow piano in the background）. On-screen subtitles in lenticular brackets: 【Chapter One】."
+  - "One language for all dialogue in a clip. For a less common language name it: says in Japanese {こんにちは}."
+  - "One type of camera movement per shot."
+  - "Show emotion as physical detail (lowered head, shoulders trembling slightly, eyes reddening) and quantify motion (slowly, slightly, quickly); slow continuous small movements work best."
+  - "Close with a style line and the constraints, e.g. 'The character's face remains stable without deformation; movements are natural and smooth. Keep it subtitle-free.'"
+avoid:
+  - "Timestamps and per-shot durations"
+  - "Several camera moves stacked in one shot"
+  - "Mixed dialogue languages"
+  - "Multi-view character sheets as references (fine on 2.5, not on 2.0)"
+  - "Asset IDs (asset://...) inside the prompt"
+task_rules:
+  ref2v:
+    rules:
+      - "Open with an 'Asset Bindings:' line that gives every supplied file a role, then the summary."
+      - "References are cited by upload order per type and given a role: 'Define the woman in the red dress in @Image1 as Subject 1', '@Video1 for the camera movement', 'the timbre in @Audio1'. Most important asset first; ByteDance recommends 4-5 assets, not the maximum."
+  i2v:
+    target_words: [25, 120]
+    rules:
+      - "Motion and camera only: when the image is accurate, say it is the reference and do not re-describe it. ByteDance's example: 'A strawberry sandwich cookie slowly completes one full rotation while the camera moves smoothly around it and keeps the product centered.'"
+camera: [extreme wide shot, wide shot, medium shot, medium close-up, close-up, push in, pull out, pan, track, follow, orbit, tilt up, handheld shake, low angle, overhead, first-person view, long take, dolly zoom, aerial, FPV, bullet time, speed ramp, locked-off camera]
+api_note: "duration (4-15, or -1), ratio and generate_audio are API parameters. No vendor rewrite flag is documented. ByteDance recommends at most 1,000 English words."
+sources:
+  - {url: "https://docs.byteplus.com/en/docs/ModelArk/2222480", supports: "Seedance 2.0 prompt guide, read rendered: formulas, Shot N rule, timing warning, special characters for music / sound / dialogue / subtitles, constraint words", confidence: high}
+  - {url: "https://docs.byteplus.com/en/docs/ModelArk/1520757", supports: "API: recommended length, parameters", confidence: high}
+checked: "2026-09-21"
+confidence: high

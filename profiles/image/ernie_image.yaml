@@ -1,0 +1,29 @@
+id: ernie_image
+name: "ERNIE-Image / Turbo"
+developer: "Baidu"
+summary: "8B single-stream DiT read through Ministral-3 3B. Strongest at dense text, posters, infographics, interfaces, comics. Long structured descriptions, region by region. Turn the model's own prompt enhancer off (use_pe=False) when this node expands the prompt."
+modality: image
+tasks: [t2i]
+encoder: "Ministral-3 3B"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [120, 350]
+negative: "yes"
+negative_default: "low quality, blurry, distorted text, deformed, watermark"
+negative_note: "Base: CFG 4, negative prompt works. Turbo: 8 steps at CFG 1, negative ignored."
+quality_tokens: neutral
+quoted_text: single
+weights: false
+structure: "Overall image type and style, then the layout region by region (top, centre, bottom; left, right), then every text item with its wording, then colours and finish."
+rules:
+  - "Describe layout region by region; for multi-panel work describe each panel in order."
+  - "Give every text item verbatim in single quotes with where it sits - Baidu's own showcase prompts use single quotes."
+  - "Be literal and structured; this model follows dense instructions well."
+avoid:
+  - "Vague layout ('some text at the top')"
+sources:
+  - {url: "https://raw.githubusercontent.com/baidu/ERNIE-Image/main/README.md", supports: "model, prompt enhancer, steps and CFG, showcase prompts with single-quoted text", confidence: high}
+  - {url: "https://raw.githubusercontent.com/huggingface/diffusers/main/src/diffusers/pipelines/ernie_image/pipeline_ernie_image.py", supports: "Mistral3 encoder, use_pe flag, negative prompt", confidence: high}
+checked: "2026-09-20"
+confidence: medium

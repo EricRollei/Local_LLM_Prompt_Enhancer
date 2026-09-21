@@ -1,0 +1,27 @@
+id: ideogram3
+name: "Ideogram 3.0 (API)"
+developer: "Ideogram"
+summary: "Hosted Ideogram 3.0 (V_3_1 / V_3_0): natural-language prose with quoted text, a style_type and a real negative-prompt field. For Ideogram 4.0 use the ideogram4 profile: its native format is JSON."
+modality: image
+tasks: [t2i]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [40, 150]
+negative: "yes"
+negative_default: ""
+negative_note: "A separate comma-separated field. Ideogram's caveat: the main prompt always wins over the negative, so never name in the prompt what the negative excludes."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "What the image is (poster, logo, photo), the subject and scene, the text in quotes with its placement and lettering style, then style and palette."
+rules:
+  - "Text to render goes in double quotes with where it sits and how it is lettered; Ideogram's strength is typography, so be exact about it."
+  - "Leave the overall look to the style_type parameter (AUTO, GENERAL, REALISTIC, DESIGN, FICTION) and do not contradict it in the prose."
+api_note: "Send magic_prompt: \"OFF\" - the default AUTO rewrites the prompt a second time. style_type, style_preset, color_palette, aspect_ratio and negative_prompt are API fields."
+sources:
+  - {url: "https://developer.ideogram.ai/api-reference/api-reference/generate-v3", supports: "parameters, magic_prompt, style_type, negative_prompt", confidence: high}
+  - {url: "https://docs.ideogram.ai/using-ideogram/generation-settings/negative-prompt", supports: "the main prompt is favoured over the negative", confidence: high}
+checked: "2026-09-21"
+confidence: high

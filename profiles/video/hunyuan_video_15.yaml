@@ -1,0 +1,59 @@
+id: hunyuan_video_15
+name: "HunyuanVideo 1.5"
+developer: "Tencent Hunyuan"
+summary: "8.3B open-weights video model, silent, 5-10 s, read through Qwen2.5-VL-7B plus Glyph-ByT5 for on-screen text. Long structured prose for text-to-video; short motion-only prompts for image-to-video."
+modality: video
+tasks: [t2v, i2v]
+encoder: "Qwen2.5-VL-7B (1000 tokens) + Glyph-ByT5 (256) for text"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [220, 350]
+max_tokens: 1000
+negative: "yes"
+negative_default: ""
+negative_note: "Supported, default empty. Distilled checkpoints ignore it."
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: false
+structure: "General to specific: (1) one-sentence summary naming all main subjects, (2) subject detail, (3) chronological action with Initially / Then / Next / As / Finally, (4) environment, (5) a closing block of short declaratives for camera, angle, light, style ('The camera pans right. Low angle.')."
+rules:
+  - "Budget: about 140 words on the main subject (mostly its action), about 70 on the background, at most 140 on composition, light, style, atmosphere, angle and shot type."
+  - "Present tense, declarative, objective. Emotion as physical cue: 'The boy smiles, eyes crinkling slightly'."
+  - "Mention the core style 3-5 times and end with a style sentence ('The entire video is in a cinematic realistic style.'). Default style when none is given: cinematic realistic."
+  - "All action must be completable in 5 seconds."
+  - "Keep the user's exact counts; if the count is vague ('a group'), use three or fewer, in the mid- or foreground with limbs uncropped."
+  - "Turn non-visual ideas into visible ones: birdsong becomes birds in the scene."
+  - "Camera: obey the user. If none was given, write 'The shot is at an eye-level angle with the main subject.' and choose slight motion from: static, push forward, pull back, pan left, pan right, zoom in, zoom out."
+  - "On-screen text goes in double quotes; never spell it letter by letter."
+avoid:
+  - "Sound cues"
+  - "Naming light sources that are not visible in frame"
+  - "Naming composition techniques instead of arranging the elements"
+  - "High-risk items unless asked: sparks, lightning, sweat, complex sports physics, moving typography"
+camera: [The camera pushes forward, The camera pulls back, The camera moves left, The camera moves right, The camera rises, The camera descends, The camera pans left, The camera pans right, The camera tilts up, The camera tilts down, The camera zooms in, The camera zooms out, The camera orbits the subject, The camera follows the subject, The camera rotates 360 degrees, The camera remains static, drone view, first-person view, over-the-shoulder, low angle, high angle, bird's-eye view, macro shot, slow motion, time-lapse]
+task_rules:
+  i2v:
+    target_words: [20, 90]
+    structure: "Subject motion + scene motion + [camera movement]. Length proportional to what the user wrote."
+    replace_rules: true
+    rules:
+      - "Break the motion into a small time sequence with then / next / meanwhile / afterwards."
+      - "Objective subject-adverb-action chains; resolve pronouns into explicit entities; give frame positions for anything entering or leaving."
+      - "Never add a camera move the user did not ask for - not even 'the camera remains static'."
+      - "Never add lighting or shadow description unless asked."
+      - "No new key events: restrained association only."
+official:
+  - task: t2v
+    url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanVideo-1.5/main/hyvideo/utils/rewrite/t2v_prompt.py"
+    format: python_var
+    variable: t2v_rewrite_system_prompt
+    language: zh
+    note: "Tencent's rewriter instructions are in Chinese and produce an English prompt. Their image-to-video rewriter outputs Chinese, so for i2v this profile uses its own built-in rules instead."
+sources:
+  - {url: "https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5/blob/main/assets/HunyuanVideo_1_5_Prompt_Handbook_EN.md", supports: "formulas, text rendering, camera keyword library, sequencing", confidence: high}
+  - {url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanVideo-1.5/main/hyvideo/utils/rewrite/t2v_prompt.py", supports: "official T2V rewriter rules and word budget", confidence: high}
+  - {url: "https://raw.githubusercontent.com/Tencent-Hunyuan/HunyuanVideo-1.5/main/hyvideo/utils/rewrite/i2v_prompt.py", supports: "official I2V rewriter rules", confidence: high}
+checked: "2026-09-20"
+confidence: high

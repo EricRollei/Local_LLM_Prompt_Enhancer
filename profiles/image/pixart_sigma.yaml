@@ -1,0 +1,33 @@
+id: pixart_sigma
+name: "PixArt-Sigma"
+developer: "PixArt-alpha team (Huawei Noah's Ark Lab and others)"
+summary: "DiT read through T5-XXL with a 300-token window. Dense natural-language captions."
+modality: image
+tasks: [t2i]
+encoder: "T5-XXL (300 tokens)"
+encoder_family: t5
+caption_style: prose
+languages: [en]
+target_words: [100, 200]
+max_tokens: 300
+negative: "yes"
+negative_default: "blurry, low quality, dull colors, banding, messy details, inaccurate anatomy, artifacts"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Subject, then setting, palette and light, medium, camera hints."
+rules:
+  - "Layered colour palettes and lighting gradients respond well."
+  - "Name the medium specifically (gouache, airbrush, ink)."
+  - "Describe expression and body language."
+avoid:
+  - "Under-specified backgrounds"
+  - "Generic phrases with no artistic specifics"
+legacy:
+  prompt_style: natural_detailed
+  supports: [style_references, color_theory, lighting_scenarios]
+  length_guidance: "Craft around 200 words blending cinematic staging and painterly vocabulary; the encoder stops at 300 tokens."
+sources:
+  - {url: "https://raw.githubusercontent.com/huggingface/diffusers/main/src/diffusers/pipelines/pixart_alpha/pipeline_pixart_sigma.py", supports: "T5 encoder, 300-token limit", confidence: high}
+checked: "2026-09-20"
+confidence: medium

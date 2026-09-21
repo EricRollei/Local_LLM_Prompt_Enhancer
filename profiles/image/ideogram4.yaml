@@ -1,0 +1,43 @@
+id: ideogram4
+name: "Ideogram 4 (JSON)"
+developer: "Ideogram"
+summary: "Trained only on structured JSON captions: plain text does not work. The dedicated Ideogram Magic Prompt node does fuller repair and bounding-box handling; this profile makes the same format available to the shared rewriter."
+modality: image
+tasks: [t2i]
+encoder: "Qwen3-VL-8B-Instruct"
+encoder_family: llm
+caption_style: json
+validator: ideogram_json
+languages: [en]
+target_words: [80, 400]
+negative: "no"
+quality_tokens: forbid
+quoted_text: single
+hex_colors: true
+structure: "Strict key order: high_level_description, style_description, compositional_deconstruction {background, elements[]}."
+output_template: |
+  {"high_level_description":"one or two sentences, starting with the subject",
+   "style_description":{"aesthetics":"...","lighting":"...","photo":"camera and lens (photos only; otherwise use art_style after medium)","medium":"photograph","color_palette":["#RRGGBB"]},
+   "compositional_deconstruction":{"background":"...",
+     "elements":[{"type":"obj","bbox":[y_min,x_min,y_max,x_max],"desc":"30-60 words"},
+                 {"type":"text","bbox":[y_min,x_min,y_max,x_max],"text":"LITERAL TEXT","desc":"font and placement"}]}}
+rules:
+  - "Exactly one of photo / art_style inside style_description."
+  - "One coherent subject is one element - never split a person into parts."
+  - "Every rendered string gets its own text element with the literal text in the text field."
+  - "bbox is [y_min, x_min, y_max, x_max] on a 0-1000 grid, origin top-left."
+  - "Hex colours are uppercase six-digit #RRGGBB."
+  - "Element desc: 30-60 words, 60 is a hard cap."
+avoid:
+  - "Plain text output"
+  - "Keys outside the schema"
+official:
+  - task: t2i
+    url: "https://raw.githubusercontent.com/ideogram-oss/ideogram4/main/src/ideogram4/magic_prompt_system_prompts/v1.txt"
+    format: sections
+    variable: system
+api_note: "Hosted API (POST /v1/ideogram-v4/generate): send this JSON as json_prompt. text_prompt switches Ideogram's magic prompt on automatically; json_prompt is sent as written. The two are mutually exclusive."
+sources:
+  - {url: "https://raw.githubusercontent.com/ideogram-oss/ideogram4/main/docs/prompting.md", supports: "JSON-only, schema, key order, hex rules", confidence: high}
+checked: "2026-09-20"
+confidence: high

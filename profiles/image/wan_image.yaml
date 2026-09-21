@@ -1,0 +1,7 @@
+id: wan_image
+extends: wan22
+name: "Wan Image"
+summary: "Same prompting as Wan 2.2 single-frame use; kept as a separate entry because saved workflows use this name."
+legacy:
+  prompt_style: technical_cinematic
+checked: "2026-09-20"

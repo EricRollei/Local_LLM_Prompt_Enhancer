@@ -1,0 +1,43 @@
+id: wan3_api
+name: "Wan 3.0 (API)"
+developer: "Alibaba Cloud Model Studio"
+summary: "Alibaba's hosted flagship (wan3.0-video, 2026-08): one endpoint for text, image, first+last frame, reference, edit and extension; 2-30 s with sound. Closed weights - for local Wan use wan22_video. Set prompt_extend=false when this node wrote the prompt."
+modality: video
+tasks: [t2v, i2v, flf2v, ref2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [80, 320]
+max_chars: 20000
+negative: "no"
+negative_note: "The Wan 3.0 API has no negative_prompt (the older Wan 2.x endpoints do). Silence is requested in words: 'No dialogue.' 'No background music.'"
+quality_tokens: neutral
+quoted_text: single
+weights: false
+audio: true
+structure: "Entity (description) + scene (description) + motion (description) + sound (voice / sound effect / background music) + aesthetic control + stylisation. Multi-shot: overall description, then 'Shot 1 [0-3 s] ...', 'Shot 2 [3-6 s] ...'."
+rules:
+  - "Voice: the character's line + emotion + tone + speed + timbre + accent - the character says: '...' in a relaxed tone, at moderate speed, with a clear voice, in American English."
+  - "Sound effect: source material + action + ambient sound. Music: background music or score + style."
+  - "Several speakers: unique consistent labels tied to something visible, a distinct voice each, and explicit time words between lines ('Immediately, ...', 'Then ...')."
+  - "Keep actions simple and short."
+avoid:
+  - "Real people by name, exact readable text, rapid scene changes, long choreography"
+task_rules:
+  ref2v:
+    rules:
+      - "References are cited by order per type: 'Image 1', 'Video 1', 'Audio 1'. Edit words: edit video, remove, replace, change to. Extension words: extend, continue."
+  i2v:
+    target_words: [40, 140]
+    structure: "Motion + camera movement (+ sound)."
+    rules:
+      - "The image already fixes entity, scene and style."
+camera: [camera pushes in, camera pulls out, camera moves left, tracking shot, orbiting shot, drone shot, compound movement, close-up, wide-angle, over-the-shoulder, high angle, aerial shot, long-focus lens, fisheye lens]
+api_note: "prompt_extend defaults to TRUE (Alibaba rewrites the prompt): send false. audio defaults to true. duration 2-30 s or -1. Up to 20 reference materials."
+sources:
+  - {url: "https://www.alibabacloud.com/help/en/model-studio/wan3-video-generation-api-reference", supports: "model ids, 20,000 characters, duration, references, prompt_extend, audio", confidence: medium}
+  - {url: "https://www.alibabacloud.com/help/en/model-studio/text-to-video-prompt", supports: "formulas, sound structures, camera vocabulary", confidence: medium}
+  - {url: "https://www.alibabacloud.com/help/en/model-studio/wan3-video-generation-guide", supports: "reference labels, timestamps, trigger words", confidence: medium}
+checked: "2026-09-21"
+confidence: medium

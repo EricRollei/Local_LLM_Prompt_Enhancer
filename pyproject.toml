@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-erics-prompt-enhancers"
-version = "1.9.8"
+version = "2.0.0"
 description = "A comprehensive suite of AI-powered prompt enhancement nodes for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -32,6 +32,10 @@ keywords = [
     "text-to-video",
     "image-to-video",
     "wan21",
+    "wan22",
+    "minimax-h3",
+    "wildcards",
+    "dynamic-prompts",
     "hunyuan"
 ]
 classifiers = [
@@ -75,7 +79,7 @@ packages = ["video_prompter"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-video_prompter = ["*.json", "*.md"]
+video_prompter = ["*.json", "*.md", "profiles/**/*.yaml", "wildcards/**/*", "variability/*.yaml"]
 
 # ComfyUI Registry Configuration
 # https://docs.comfy.org/registry/overview

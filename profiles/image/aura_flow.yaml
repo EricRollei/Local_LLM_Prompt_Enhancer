@@ -1,0 +1,33 @@
+id: aura_flow
+name: "AuraFlow"
+developer: "fal"
+summary: "Open flow model from fal (not Stability AI - the earlier label was wrong), read through Pile-T5-XL with a 256-token window. Trained on long re-captioned descriptions: write like a caption."
+modality: image
+tasks: [t2i]
+encoder: "Pile-T5-XL (256 tokens)"
+encoder_family: t5
+caption_style: prose
+languages: [en]
+target_words: [90, 170]
+max_tokens: 256
+negative: "yes"
+negative_default: "blurry, low quality, overexposed, underexposed, harsh shadows, artifacts, unnatural skin"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+structure: "Caption-like prose: what the picture shows, where, in what light, in what medium."
+rules:
+  - "Write as a detailed caption of a finished picture."
+  - "Photographic language works: lens, exposure, light quality."
+  - "Give environment, weather and fabric or surface texture."
+avoid:
+  - "Abstract art talk with no visual grounding"
+  - "Contradictory lighting"
+legacy:
+  prompt_style: natural_photo
+  supports: [photography_terms, lighting_details, style_modifiers]
+  length_guidance: "Aim for about 170 words; the encoder stops at 256 tokens."
+sources:
+  - {url: "https://raw.githubusercontent.com/huggingface/diffusers/main/src/diffusers/pipelines/aura_flow/pipeline_aura_flow.py", supports: "encoder class, 256-token limit", confidence: high}
+checked: "2026-09-20"
+confidence: medium

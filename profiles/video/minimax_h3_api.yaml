@@ -1,0 +1,34 @@
+id: minimax_h3_api
+name: "MiniMax H3 / H3 Max (hosted API)"
+developer: "MiniMax"
+summary: "The HOSTED H3 (MiniMax-H3, MiniMax-H3-Max). Unlike the local checkpoints (profile minimax_h3, structured fields), the hosted endpoint takes prose and turns it into the model's format itself. MiniMax's own examples open with the length and ratio and describe cinematography in sentences."
+modality: video
+tasks: [t2v, i2v, flf2v, ref2v]
+encoder: "not disclosed (MiniMax expands the prompt server-side)"
+encoder_family: llm
+caption_style: prose
+languages: [en, zh]
+target_words: [80, 400]
+max_chars: 7000
+negative: "no"
+quality_tokens: neutral
+quoted_text: double
+weights: false
+audio: true
+structure: "Open with length and ratio as MiniMax's examples do ('15s, 16:9.'), then the scene in prose with the cinematography written as sentences, then a line for sound: 'Sound: kitchen ambience plus the creature's soft electronic hums.'"
+rules:
+  - "Cinematography as prose: 'Subtle handheld shake, hesitant close-focus, backlit exposure fluctuation.' A simple bracket tag ([pan], [zoom], [static]) is allowed right after a key description - at most one per beat. The 15-command Director list belongs to Hailuo 2.3, not H3."
+  - "Spoken lines in double quotes with the speaker named."
+task_rules:
+  ref2v:
+    rules:
+      - "References are cited in prose by order: 'Image 1: mood, setting, film grain. Image 2: character.' - 'following the motion in reference video 1'."
+  i2v:
+    target_words: [30, 160]
+api_note: "H3-Max: extra.prompt_expansion_mode is 'balanced' by default - send 'disabled' when this node wrote the prompt. No such flag is documented for H3. No negative prompt, seed or audio switch in the v2 API. Up to 12 reference files."
+sources:
+  - {url: "https://platform.minimax.io/docs/guides/video-prompt", supports: "official example prompts, read rendered", confidence: high}
+  - {url: "https://platform.minimax.io/docs/guides/video-generation", supports: "models, limits, reference phrasing", confidence: high}
+  - {url: "https://platform.minimax.io/docs/api-reference/video-generation-v2-create", supports: "7,000 characters, prompt_expansion_mode", confidence: medium}
+checked: "2026-09-21"
+confidence: medium

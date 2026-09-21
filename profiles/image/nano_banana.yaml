@@ -1,0 +1,43 @@
+id: nano_banana
+name: "Nano Banana 2 / Pro (Gemini image, API)"
+developer: "Google"
+summary: "Gemini's image models (gemini-3.1-flash-image, gemini-3-pro-image): generation and conversational editing with up to 14 reference images. Google's rule: describe the scene, don't list keywords. Imagen is shut down in the Gemini API, so this profile replaces it."
+modality: image
+tasks: [t2i, edit]
+encoder: "Gemini (the language model itself reads the prompt)"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [60, 250]
+negative: "no"
+negative_note: "No negative field. Google calls the alternative semantic negatives: describe the wanted absence positively ('an empty street', not 'no cars')."
+quality_tokens: forbid
+quoted_text: double
+weights: false
+structure: "[Subject] + [action] + [location / context] + [composition] + [style]. A narrative paragraph, opening with a verb that names the job (Create, Generate, Render). With references: [reference images] + [what each is for] + [the new scene]."
+rules:
+  - "State what the image is for when it matters (a product shot for a web shop, a poster for a jazz night)."
+  - "Camera and light vocabulary is understood and encouraged: low angle, 85mm portrait lens, shallow depth of field (f/1.8), three-point softbox setup, golden hour backlighting."
+  - "Be specific about materials: 'navy blue tweed' rather than 'a suit jacket'."
+  - "Text to render goes in double quotes, with the font described ('bold, white, sans-serif') and where it sits."
+  - "Give every reference image a role in words."
+avoid:
+  - "Keyword lists"
+  - "'no X' phrasing"
+  - "Aspect ratio as prose only - it is an API parameter (aspect_ratio)"
+task_rules:
+  edit:
+    target_words: [12, 90]
+    structure: "Using the provided image, change only [element] to [new description]. Keep everything else exactly the same."
+    rules:
+      - "One change per turn; editing is a conversation."
+      - "Say what is preserved: identity, pose, light, background."
+      - "Composites: say which element comes from which image."
+api_note: "No separate rewriter to switch off: the model 'thinks' before rendering. Aspect ratio and size (0.5K-4K) are API parameters. Up to 14 reference images."
+sources:
+  - {url: "https://ai.google.dev/gemini-api/docs/image-generation", supports: "model ids, templates, reference counts, aspect ratios, thinking", confidence: high}
+  - {url: "https://cloud.google.com/blog/products/ai-machine-learning/ultimate-prompting-guide-for-nano-banana", supports: "formulas, text rules, best practices", confidence: high}
+  - {url: "https://developers.googleblog.com/how-to-prompt-gemini-2-5-flash-image-generation-for-the-best-results/", supports: "'Describe the scene, don't just list keywords', editing templates, semantic negatives", confidence: high}
+  - {url: "https://ai.google.dev/gemini-api/docs/imagen", supports: "Imagen shutdown notice", confidence: high}
+checked: "2026-09-21"
+confidence: high

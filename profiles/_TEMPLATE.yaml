@@ -1,0 +1,41 @@
+# Platform profile template. Copy to profiles_user/<your_id>.yaml and edit.
+# Files starting with "_" are not loaded. Field reference: core/profiles/schema.py
+# A profile in profiles_user/ with the same id as a shipped one replaces it.
+
+id: my_model                       # dropdown value. Never rename once workflows use it.
+name: "My Model"
+developer: "Who makes it"
+summary: "One line: what it is and how it likes to be prompted."
+modality: image                    # image | edit | video
+tasks: [t2i]                       # t2i, edit, t2v, i2v, flf2v, ref2v
+encoder: "T5-XXL"
+encoder_family: t5                 # clip | t5 | llm
+caption_style: prose               # prose | tags | tags_prose | instruction | json | fields | bracket_prose
+languages: [en]
+target_words: [60, 150]
+max_tokens: 512                    # text encoder hard limit, 0 = unknown
+negative: "yes"                    # "yes" | "no" | ignored | inline   (quote yes/no: bare yes/no is a YAML boolean)
+                                   # inline = no separate field, but the vendor endorses exclusions written into the prompt
+negative_default: "blurry, low quality"
+quality_tokens: neutral            # forbid | neutral | help | required
+quoted_text: double                # double | single | none
+weights: false
+hex_colors: false
+structure: "Subject + action + setting + light + style"
+rules:
+  - "Imperative sentences the LLM must follow."
+avoid:
+  - "Things the LLM must not do."
+# words_per_second: [35, 45]      # video: when the clip length is known it sets the length instead of target_words
+# suffix: "masterpiece, best quality"   # like prefix, for models trained with quality tags at the END
+# api_note: "Hosted model: what to set in the API call, e.g. how to switch the vendor's own prompt rewriting off."
+# extends: other_profile_id        # inherit everything, override what differs
+# official:                        # vendor-published rewriter prompt, fetched once and cached
+#   - task: t2i
+#     url: "https://raw.githubusercontent.com/..."
+#     format: text                 # text | python_var | sections
+#     variable: ""                 # python_var: NAME or function.NAME ; sections: section name
+sources:
+  - {url: "https://...", supports: "what this page proves", confidence: high}
+checked: "2026-09-20"
+confidence: medium

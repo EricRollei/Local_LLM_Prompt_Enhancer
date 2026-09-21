@@ -1,0 +1,38 @@
+id: runway_gen45
+name: "Runway Gen-4.5 / Gen-4 Turbo (API)"
+developer: "Runway"
+summary: "Hosted, silent, 2-10 s, 1,000-character limit. Simple direct prompts in positive phrasing only. Image-to-video prompts describe motion and nothing else. Gen-4.5 follows sequenced instructions well."
+modality: video
+tasks: [t2v, i2v]
+encoder: "not disclosed"
+encoder_family: llm
+caption_style: prose
+languages: [en]
+target_words: [20, 110]
+max_chars: 1000
+negative: "no"
+quality_tokens: neutral
+quoted_text: none
+weights: false
+audio: false
+structure: "[Camera] shot of [subject] [action] in [environment]. [Supporting descriptions]. A sequence is plain language ('X happens, then Y happens') or timestamps ([00:01] X happens)."
+rules:
+  - "Positive phrasing only: 'Locked camera. The camera remains still.' instead of 'no camera movement'."
+  - "Simple and direct; concrete observable things, not abstract ideas; one subject and one chain of action."
+  - "No conversational or command language ('please make', 'can you')."
+  - "To stop unwanted cuts add: Continuous, seamless shot."
+task_rules:
+  i2v:
+    target_words: [12, 50]
+    structure: "The camera [motion] as the subject [action]. [Additional descriptions]."
+    rules:
+      - "Motion only: subject, environment, camera, timing, direction and speed. Refer to 'the subject', 'she', 'the woman'."
+      - "Add visual description only for new elements or transformations; never contradict motion the image implies."
+camera: [locked, static, handheld, dolly, pan, tilt, tracking, orbit, crane, zoom, POV]
+api_note: "promptText is 1-1,000 characters, counted in UTF-16 units. No audio, no negative prompt, no vendor rewrite flag. Act-Two takes no text prompt at all."
+sources:
+  - {url: "https://docs.dev.runwayml.com/api/", supports: "API read rendered: promptText 1..1000, model ids", confidence: high}
+  - {url: "https://academy.runwayml.com/guides/prompting-guide", supports: "formulas, positive phrasing, sequencing", confidence: medium}
+  - {url: "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5", supports: "durations, motion-focused image-to-video", confidence: medium}
+checked: "2026-09-21"
+confidence: high
