@@ -13,6 +13,7 @@ import re
 from typing import Any, Callable, List, Optional, Tuple
 
 from .core.strategies.surreal import SurrealEngine, SurrealResult, SurrealSettings, SurrealSources, parse_critic
+from .core.strategies.surreal.scene import parse_scene_inventory, scene_messages
 from .wildcard_support import get_wildcard_engine
 
 ARCHIVE_POOL = 200
@@ -71,19 +72,34 @@ def idea_distance(idea: str, embedder_choice: str, clip: Any = None) -> Tuple[Op
         return None, [f"embedder unavailable ({error}); distance from the idea is not scored"]
 
 
-def surreal_brief(idea: str, settings: SurrealSettings, seed: Optional[int] = None, *, llm: Any = None, max_tokens: int = 1500,
+def surreal_brief(idea: str, settings: SurrealSettings, seed: Optional[int] = None, *, llm: Any = None, max_tokens: int = 2200,
                   embedder: str = "none", clip: Any = None, use_archive: bool = True) -> SurrealResult:
     """
-    One idea -> premise, instruction block, why. With `llm` (an object with send_prompt) the LLM is the critic;
-    if that call or its answer fails, the code critic's choice is used and the report says so. Never raises.
+    One idea -> ordinary-scene inventory -> premise -> structured render plan -> instruction block. With `llm`
+    (an object with send_prompt), the first call inventories the unchanged scene and the second is the critic.
+    Either stage can fail independently; the code critic remains the fallback. Never raises.
     """
     try:
         if seed is None:
             seed = random.SystemRandom().randrange(0, 0x7FFFFFFF)
         engine = get_surreal_engine(seed, use_archive)
         distance, notes = idea_distance(idea, embedder, clip)
-        plan = engine.plan(idea, settings, seed, distance=distance)
+        inventory = None
+        inventory_problems: List[str] = []
+        if llm is not None:
+            system, user = scene_messages(idea)
+            try:
+                response = llm.send_prompt(system, user, max_tokens=min(max_tokens, 1400))
+                if response.get("success"):
+                    inventory, inventory_problems = parse_scene_inventory(response.get("response", ""))
+                else:
+                    inventory_problems = [str(response.get("error") or "the scene inventory LLM call failed")]
+            except Exception as error:
+                inventory_problems = [f"scene inventory LLM backend error: {error}"]
+        plan = engine.plan(idea, settings, seed, distance=distance, inventory=inventory)
         plan.notes.extend(notes)
+        if inventory_problems:
+            plan.notes.append("ordinary scene inventory not used: " + "; ".join(inventory_problems))
         verdict, problems = None, None
         if llm is not None and plan.candidates:
             system, user = engine.critic_messages(plan)
@@ -102,13 +118,19 @@ def surreal_brief(idea: str, settings: SurrealSettings, seed: Optional[int] = No
         return SurrealResult(text=idea or "", instructions="", why=f"Surreal engine error: {error}. The idea was passed through unchanged.", ok=False)
 
 
+def preset_plan(idea: str, seed: Optional[int], medium: str) -> Tuple[str, str, str]:
+    """For legacy preset surfaces: (compiled transformed idea, instruction block, one-line note)."""
+    result = surreal_brief(idea, SurrealSettings(medium=medium), seed, llm=None, use_archive=True)
+    if not result.ok or not result.instructions:
+        return idea, "", "surreal engine produced nothing; the preset's style words were not replaced"
+    operation = ", ".join(result.operations)
+    return result.text, result.instructions, f"surreal engine: {operation}"
+
+
 def preset_block(idea: str, seed: Optional[int], medium: str) -> Tuple[str, str]:
     """
     For the existing `surreal` preset / genre values of the older nodes: (instruction block, one-line note).
     Code critic only - those nodes make one LLM call and that call carries out the premise. ('', note) on failure.
     """
-    result = surreal_brief(idea, SurrealSettings(medium=medium), seed, llm=None, use_archive=True)
-    if not result.ok or not result.instructions:
-        return "", "surreal engine produced nothing; the preset's style words were not replaced"
-    operation = ", ".join(result.operations)
-    return result.instructions, f"surreal engine: {operation}"
+    _text, block, note = preset_plan(idea, seed, medium)
+    return block, note

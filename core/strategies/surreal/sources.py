@@ -55,6 +55,8 @@ LISTS = {
     "idioms": "surreal/idioms",
     "processes": "surreal/processes",
     "temporal": "surreal/temporal",
+    "autonomy": "surreal/autonomy",
+    "reversals": "surreal/reversals",
     "hour": "surreal/found_strange/hour",
     "emptiness": "surreal/found_strange/emptiness",
     "stillness": "surreal/found_strange/stillness",

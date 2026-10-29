@@ -18,8 +18,13 @@ import random
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Sequence
 
-from .sources import Item, SurrealSources, bare, mentioned
-from .vocabulary import OPERATION_WEIGHTS, SUBJECT_TOKEN
+from .sources import Item, SurrealSources, bare, head_noun, mentioned
+from .vocabulary import OPERATION_WEIGHTS, OPERATIONS, SUBJECT_TOKEN
+
+
+def _cap(text: str) -> str:
+    """Capitalise the first letter only (str.capitalize would lower-case the rest, names included)."""
+    return text[:1].upper() + text[1:] if text else text
 
 
 @dataclass
@@ -33,6 +38,23 @@ class Candidate:
     score: float = 1.0
     personal: bool = False        # uses the user's own iconography
     register_hint: str = ""       # a mode may insist on a register (process estrangement is photographic)
+    law_hint: str = ""            # a law MORE specific than the operation's own; usually blank, and then
+                                  # OPERATIONS[operation].law is used instead
+    # What the IMAGE MODEL is given (lint.py). `premise` is the idea in the critic's terms and may describe a substitution
+    # ("where the teacup should be"); `render` describes only the result the camera sees. Blank = the premise is already
+    # written that way.
+    render: str = ""
+    edit: str = ""                # one imperative edit applied to an ORDINARY picture (two-stage); blank = not stageable
+    suppress: List[str] = field(default_factory=list)   # things the anomaly replaced: never named in the prompt
+    target: str = ""              # entity whose object, material, scale or behaviour changes
+    replacement: str = ""         # replacement object/material/behaviour, when the operation has one
+    preserve: List[str] = field(default_factory=list)   # properties that must survive the transformation
+    evidence: List[str] = field(default_factory=list)   # positive visible facts proving the anomaly is present
+    forbidden: List[str] = field(default_factory=list)  # likely ordinary readings the compiler must not permit
+    scale_reference: str = ""     # known-size entity used to make a scale violation measurable
+
+    def rendered(self) -> str:
+        return self.render or self.premise
 
     def line(self) -> str:
         body = self.premise or self.procedure
@@ -48,6 +70,7 @@ class Context:
     medium: str = "image"                     # image | video
     strangeness: str = "balanced"
     distance: Optional[Callable[[str], float]] = None   # 0..1, how far a phrase is from the idea (embedding); None = unknown
+    staging: str = "one_stage"                          # two_stage = only operations that can be staged as one edit
 
     def pick(self, items: Sequence, count: int = 1) -> List:
         pool = list(items)
@@ -110,6 +133,18 @@ def substitution(context: Context, targets: Sequence[Item]) -> List[Candidate]:
                 "affinity_search", "displacement",
                 premise=(f"Where the {bare(target.text)} should be there is {partner.text} instead, the same size, in the same "
                          f"position, and everything around it treats it as the {bare(target.text)}."),
+                # The result only. The replaced object is named once, as a location, and listed in `suppress` so the
+                # rewriter describes its spot by what surrounds it and never names it.
+                render=(f"{_cap(partner.text)} occupies the central object position beside the main subject, at the replaced "
+                        f"object's scale, in full view and sharply lit, casting its own shadow."),
+                edit=(f"Replace the {bare(target.text)} with {partner.text}, at the same size and in the same position, matching "
+                      f"the scene's light and shadows. Keep everything else unchanged."),
+                suppress=[bare(target.text), head_noun(target.text)],
+                target=bare(target.text),
+                replacement=partner.text,
+                preserve=["position", "scale", "surrounding light", "all unrelated scene details"],
+                evidence=[f"{partner.text} is in full view", f"{partner.text} casts its own shadow on the surrounding scene"],
+                forbidden=[f"{partner.text} beside the {bare(target.text)}", f"both {partner.text} and the {bare(target.text)} visible"],
                 affinity=clause, ingredients=[target.text, partner.text], personal=partner.personal,
                 score=1.0 + 0.5 * len(target.form & partner.form) + context.far(partner.text) + (1.0 if partner.personal else 0.0),
             ))
@@ -127,6 +162,13 @@ def hybridization(context: Context, targets: Sequence[Item]) -> List[Candidate]:
                 "affinity_search", "hybridization",
                 premise=(f"{target.text.capitalize()} and {partner.text} are a single object: it begins as the {bare(target.text)} "
                          f"and, where their shapes coincide, continues as the {bare(partner.text)}, with no join to be found."),
+                edit=(f"Turn the {bare(target.text)} into a single object that continues seamlessly as {partner.text} where their "
+                      f"shapes meet, in the same light and position. Keep everything else unchanged."),
+                target=bare(target.text),
+                replacement=partner.text,
+                preserve=["recognisable form of both objects", "position", "light"],
+                evidence=["both original forms remain recognisable", "the transition is continuous with no visible seam"],
+                forbidden=["two separate objects touching", "a collage seam between the forms"],
                 affinity=clause, ingredients=[target.text, partner.text], personal=partner.personal or target.personal,
                 score=1.0 + 0.5 * len(target.form & partner.form) + context.far(partner.text),
             ))
@@ -149,10 +191,22 @@ def material_substitution(context: Context, targets: Sequence[Item]) -> List[Can
             contrast = target is not None and (hard_target == is_soft)
             subject = f"The {bare(target.text)}" if target is not None else SUBJECT_TOKEN
             touch = "soft" if is_soft else "hard"
+            noun = bare(target.text) if target is not None else "main subject"
             candidates.append(Candidate(
                 "affinity_search", "material_substitution",
                 premise=(f"{subject} is made entirely of {material.text}: every detail of its form is exact and only the "
                          f"substance is wrong."),
+                # One fused noun phrase plus surface evidence: "made entirely of X, only the substance is wrong" is an
+                # abstraction; the texture on every surface is what the model can draw.
+                render=(f"{subject}, made of {material.text}: {material.text} covers every surface of it up close, every edge "
+                        f"and detail of its shape intact, and it sits under its own weight as {material.text} would."),
+                edit=(f"Make the {noun} out of {material.text}, keeping its exact shape, size and position, with the "
+                      f"{material.text} texture clearly visible. Keep everything else unchanged."),
+                target=noun,
+                replacement=material.text,
+                preserve=["exact shape", "size", "position", "edges and defining details"],
+                evidence=[f"{material.text} covers every surface", f"the object bears the weight and surface behaviour of {material.text}"],
+                forbidden=[f"{material.text} placed beside the {noun}", "a surface filter with no physical material behaviour"],
                 affinity=(f"a thing meant to be {'hard' if is_soft else 'soft'} to the touch, made {touch}" if contrast or target is None
                           else "right form, wrong substance"),
                 ingredients=[target.text if target else SUBJECT_TOKEN, material.text],
@@ -187,6 +241,8 @@ def inversion(context: Context, targets: Sequence[Item]) -> List[Candidate]:
                 "affinity_search", "inversion",
                 premise=(f"Inside the {bare(container.text)} is {vast}: not a picture of it but the thing itself, at full scale, "
                          f"seen through the opening, its own light falling out onto the surroundings."),
+                edit=(f"Fill the inside of the {bare(container.text)} with {vast}, seen through its opening at full depth, its "
+                      f"light spilling onto the surroundings. Keep everything else unchanged."),
                 affinity="what holds the small now holds the vast", ingredients=[container.text, vast],
                 personal=container.personal, score=1.5 + (0.5 if container in targets else 0.0),
             ))
@@ -205,10 +261,17 @@ def scale_violation(context: Context, targets: Sequence[Item]) -> List[Candidate
         small = target is not None and target.scale in ("furniture", "large")
         direction = "small" if small or (target is None and context.rng.random() < 0.4) else "large"
         subject = f"The {bare(target.text)}" if target is not None else SUBJECT_TOKEN
+        noun = bare(target.text) if target is not None else "main subject"
         for phrase in context.pick(SCALE_PHRASES[direction], 1):
             candidates.append(Candidate(
                 "affinity_search", "scale_violation",
                 premise=f"{subject} is {phrase}; everything else in the scene is its ordinary size, and the light and perspective are consistent.",
+                edit=f"Make the {noun} {phrase}, keeping everything else at its normal size and unchanged.",
+                target=noun,
+                preserve=["identity", "material", "position", "all other objects at ordinary scale"],
+                evidence=["the wrongly sized subject touches or occludes its ordinary surroundings", "known-size objects make the scale measurable"],
+                forbidden=["everything enlarged together", "an ordinary-sized subject described only as enormous"],
+                scale_reference="the ordinary surroundings",
                 affinity="one thing at the wrong size, everything else correct",
                 ingredients=[target.text if target else SUBJECT_TOKEN, phrase], score=1.2 + (0.5 if target is not None else 0.0),
             ))
@@ -216,18 +279,29 @@ def scale_violation(context: Context, targets: Sequence[Item]) -> List[Candidate
 
 
 # Placements are relative to THE SUBJECT, never to furniture the scene may not have (a bus stop has no chair).
+# "in place of whatever it was holding" is gone: it is a substitution sentence (lint.py), and it rendered as a man
+# simply holding a stone.
 PLACEMENTS = ["on the ground at THE SUBJECT's feet", "held in THE SUBJECT's arms the way one holds a child", "exactly where THE SUBJECT is looking",
               "beside THE SUBJECT at the height of its head, resting on nothing visible", "in the exact centre of the scene, in THE SUBJECT's way",
-              "in THE SUBJECT's hands, in place of whatever it was holding"]
+              "held up in both of THE SUBJECT's hands, at chest height, filling the space between them"]
 
 
 def displacement(context: Context, targets: Sequence[Item]) -> List[Candidate]:
     candidates = []
     for thing in context.pick_objects(context.sources.objects(), 3):
         placement = context.pick(PLACEMENTS)[0]
+        # "Nobody pays it any attention" is an attitude with no pixels (lint.py); the instruction block already keeps the
+        # people ordinary. The thing is made large in the frame instead, so it reads at a glance.
         candidates.append(Candidate(
             "affinity_search", "displacement",
             premise=f"{thing.text.capitalize()} is {placement}; it has no business being here, it is perfectly ordinary in itself, and nobody pays it any attention.",
+            render=f"{_cap(thing.text)} is {placement}, large in the frame, in full view and sharply lit, casting its own shadow.",
+            edit=(f"Add {thing.text} {placement.replace(SUBJECT_TOKEN, 'the main subject')}, at a true scale and matching the "
+                  f"scene's light and shadows. Keep everything else unchanged."),
+            replacement=thing.text,
+            preserve=["true scale", "scene light", "scene shadows", "all existing objects"],
+            evidence=["the out-of-place object is large in the frame", "it casts its own shadow"],
+            forbidden=["the object reduced to a background detail", "the object shown as a picture or reflection"],
             affinity="", ingredients=[thing.text, placement], personal=thing.personal,
             score=0.8 + context.far(thing.text) + (1.0 if thing.personal else 0.0),
         ))
@@ -235,9 +309,10 @@ def displacement(context: Context, targets: Sequence[Item]) -> List[Candidate]:
 
 
 # ---- operations that come from a list and act on THE SUBJECT ---------------------------------------
-def _from_list(context: Context, list_name: str, operation: str, affinity: str, count: int = 2, score: float = 1.2) -> List[Candidate]:
+def _from_list(context: Context, list_name: str, operation: str, affinity: str, count: int = 2, score: float = 1.2,
+               law_hint: str = "") -> List[Candidate]:
     return [Candidate("affinity_search", operation, premise=item.text[0].upper() + item.text[1:] + ".", affinity=affinity,
-                      ingredients=[item.text], score=score)
+                      ingredients=[item.text], score=score, law_hint=law_hint)
             for item in context.pick(context.sources.items(list_name), count)]
 
 
@@ -267,10 +342,14 @@ def multiplication(context: Context, targets: Sequence[Item]) -> List[Candidate]
     number = context.pick(["three", "five", "seven", "twelve", "several dozen"])[0]
     target = targets[0] if targets else None
     subject = f"The {bare(target.text)}" if target is not None else SUBJECT_TOKEN
+    noun = bare(target.text) if target is not None else "main subject"
     return [Candidate("affinity_search", "multiplication",
                       premise=(f"{subject} appears {number} times in the scene, identical in every detail including pose and wear, "
                                f"evenly spaced, each casting its own shadow."),
-                      affinity="one thing too many times, identical", ingredients=[number], score=1.1)]
+                      edit=(f"Repeat the {noun} {number} times across the scene, every copy identical in pose and wear, evenly "
+                            f"spaced, each with its own shadow. Keep everything else unchanged."),
+                      affinity="one thing too many times, identical", ingredients=[number], score=1.1,
+                      )]
 
 
 LIVING_ACTS = ["breathes slowly, its sides rising and falling", "has turned to face THE SUBJECT", "sleeps curled on the floor like an animal",
@@ -290,6 +369,8 @@ def animation_petrification(context: Context, targets: Sequence[Item]) -> List[C
     candidates.append(Candidate("affinity_search", "animation_petrification",
                                 premise=(f"{SUBJECT_TOKEN} is a statue of {material}, caught mid-gesture with every fold and hair carved; "
                                          f"the scene around it is living and ordinary."),
+                                edit=(f"Turn the main subject into a statue of {material} in exactly the same pose, every fold "
+                                      f"and hair carved, tool marks visible. Keep everything else unchanged."),
                                 affinity="the living becomes object", ingredients=[material], score=1.2))
     return candidates
 
@@ -308,6 +389,73 @@ def metaphysical_space(context: Context, targets: Sequence[Item]) -> List[Candid
                       register_hint="metaphysical")]
 
 
+# ---- the three operations taken from the transformation atlas ---------------------------------------
+def autonomy(context: Context, targets: Sequence[Item]) -> List[Candidate]:
+    """A shadow, reflection or garment acts on its own. Distinct from animation: the THING is not alive, its
+    double is. The law writes itself, which is why this one is allowed as a second operation."""
+    return _from_list(context, "autonomy", "autonomy", "the double acts, the thing does not", score=1.4)
+
+
+def causal_reversal(context: Context, targets: Sequence[Item]) -> List[Candidate]:
+    """The effect is present and its cause is absent or later. Reads in a still as evidence without an event."""
+    return _from_list(context, "reversals", "causal_reversal", "the consequence is here and the cause is not", score=1.4)
+
+
+SPECIMEN_MOUNTS = [
+    "pinned in a shallow glazed case on a bed of cotton wool, with a printed label and a catalogue number",
+    "mounted on a brass stand under a glass dome, with an engraved plate at its base",
+    "laid on a white tray beside a paper scale bar and a folded index card, lit flat from above",
+    "bolted to a low plinth in a bare gallery, with a wall label at hip height",
+    "pressed flat between two sheets of glass in a herbarium folder, annotated in ink",
+]
+DISCIPLINES = ["botanical", "zoological", "mineralogical", "anatomical", "archaeological", "entomological", "ornithological"]
+
+
+def taxonomy_error(context: Context, targets: Sequence[Item]) -> List[Candidate]:
+    """The thing is unaltered; only its classification is wrong. Nothing impossible is depicted in the object -
+    the impossibility is in the institution that catalogued it."""
+    candidates = []
+    target = targets[0] if targets else None
+    subject = f"The {bare(target.text)}" if target is not None else SUBJECT_TOKEN
+    for mount, discipline in zip(context.pick(SPECIMEN_MOUNTS, 2), context.pick(DISCIPLINES, 2)):
+        candidates.append(Candidate(
+            "affinity_search", "taxonomy_error",
+            premise=(f"{subject} is {mount}, catalogued as a {discipline} specimen and given a two-part Latin name. "
+                     f"{subject} itself is entirely unaltered, and the display is meticulous and long established."),
+            affinity="an institution has classified it, and the classification is from the wrong kingdom",
+            ingredients=[mount, discipline], personal=bool(target is not None and target.personal), score=1.3,
+        ))
+    return candidates
+
+
+def behavior_transfer(context: Context, targets: Sequence[Item]) -> List[Candidate]:
+    """Keep the subject's identity and substance, but give it the physical behaviour of a distant material.
+
+    The LLM critic resolves the borrowed behaviour because the useful source depends on the actual subject:
+    ocean/fabric, shadow/paper, stone/wet cloth. The structured compiler then requires evidence of both the
+    preserved identity and the borrowed behaviour.
+    """
+    target = targets[0] if targets else None
+    subject = f"the {bare(target.text)}" if target is not None else SUBJECT_TOKEN
+    noun = bare(target.text) if target is not None else "main subject"
+    return [Candidate(
+        "affinity_search", "behavior_transfer",
+        procedure=(
+            f"Keep {subject} visibly and materially itself. Choose ONE distant familiar material whose physical behaviour has "
+            f"a true formal affinity with it - a shared surface, fold, flow, tension, edge or repeated shape. Give {subject} that "
+            "behaviour without turning it into the borrowed material. State the finished visible result, then give at least two "
+            "pieces of physical proof: one proving the original identity remains and one proving the borrowed behaviour."
+        ),
+        affinity="the identity stays; only a physically legible behaviour crosses between distant materials",
+        ingredients=[target.text if target else SUBJECT_TOKEN],
+        target=noun,
+        preserve=["identity", "material", "connection to the surrounding scene"],
+        evidence=["surface evidence proves the original material remains", "geometry and contact prove the borrowed behaviour"],
+        forbidden=["a literal prop made from the borrowed material", "a small ordinary action instead of a changed physical law"],
+        score=1.5 + (0.5 if target is not None else 0.0),
+    )]
+
+
 OPERATION_GENERATORS: Dict[str, Callable[[Context, Sequence[Item]], List[Candidate]]] = {
     "displacement": lambda context, targets: substitution(context, targets) or displacement(context, targets),
     "scale_violation": scale_violation,
@@ -321,10 +469,15 @@ OPERATION_GENERATORS: Dict[str, Callable[[Context, Sequence[Item]], List[Candida
     "literalized_language": literalized_language,
     "multiplication": multiplication,
     "temporal": temporal,
+    "autonomy": autonomy,
+    "causal_reversal": causal_reversal,
+    "taxonomy_error": taxonomy_error,
+    "behavior_transfer": behavior_transfer,
 }
 # Atmosphere-level operations: the only ones allowed as a SECOND operation, because they can read as part of
 # the same event as an object-level one (a stone bird in flight / over a day sky above a night street).
-SECOND_OPERATIONS = ("physics_negation", "metaphysical_space", "absence", "temporal")
+# Autonomy qualifies: a shadow behaving on its own is an ECHO of an object-level anomaly, not a rival to it.
+SECOND_OPERATIONS = ("physics_negation", "metaphysical_space", "absence", "temporal", "autonomy")
 
 
 # ---- the eight modes ---------------------------------------------------------------------------------
@@ -334,6 +487,8 @@ def affinity_search(context: Context, operation: str = "auto") -> List[Candidate
         return OPERATION_GENERATORS[operation](context, targets)
     weights = OPERATION_WEIGHTS.get(context.strangeness, OPERATION_WEIGHTS["balanced"])
     names = [name for name in OPERATION_GENERATORS if weights.get(name, 0) > 0]
+    if context.staging == "two_stage":
+        names = [name for name in names if name in OPERATIONS and OPERATIONS[name].two_stage]
     chosen: List[str] = []
     pool = list(names)
     while pool and len(chosen) < 5:
@@ -418,7 +573,7 @@ def working_machine(context: Context, operation: str = "auto") -> List[Candidate
     return [Candidate(
         "working_machine", "working_machine",
         premise=(f"{SUBJECT_TOKEN} operates {mechanism}. It is fed with {feedstock} and it produces {product}. Every linkage between "
-                 f"what goes in and what comes out is visible, and each step looks as if it would work."),
+                 f"what goes in and what comes out is visible, and each step is a plausible mechanical linkage."),
         affinity="a causal chain that convinces before it is noticed to be impossible",
         ingredients=[mechanism, feedstock, product], score=1.4,
     )]
@@ -447,19 +602,49 @@ def archive_composite(context: Context, operation: str = "auto") -> List[Candida
     )]
 
 
+FOUND_STRANGE_GROUPS = ("emptiness", "stillness", "light", "trace")
+# For a still image, light and trace put something in the frame a viewer can point at; stillness is posture,
+# which a text-to-image model renders weakly and which reads as an ordinary photograph. Video can carry
+# stillness, because holding a pose over time is itself visible.
+FOUND_STRANGE_IMAGE_GROUPS = ("light", "trace", "light", "trace", "emptiness", "stillness")
+
+
 def found_strange(context: Context, operation: str = "auto") -> List[Candidate]:
-    groups = context.pick(["emptiness", "stillness", "light", "trace"], 2)
-    hour = context.pick(context.sources.items("hour"), 1)
-    parts = [item.text for name in groups for item in context.pick(context.sources.items(name), 1)]
-    if not hour or not parts:
+    """ONE hour and ONE condition. The old version joined the hour to two conditions drawn independently,
+    which averaged four and a half unrelated facts per premise - our own generator making the prompt soup
+    the method exists to avoid - and paired a lit condition with a daylight hour in a third of draws. The
+    critic, handed two facts that cannot both be true, would invent the relation joining them.
+
+    Two hours x three groups gives the critic six genuinely different candidates instead of two near-copies."""
+    hours = context.sources.items("hour")
+    if not hours:
         return []
-    facts = [hour[0].text] + parts
-    return [Candidate(
-        "found_strange", "found_strange",
-        premise="Nothing impossible happens. " + " ".join(fact[0].upper() + fact[1:] + "." for fact in facts),
-        affinity="the strange is found, not made; the story is withheld", ingredients=facts, score=1.4,
-        register_hint="staged photography",
-    )]
+    candidates: List[Candidate] = []
+    for hour in context.pick(hours, 2):
+        lit = "dark" in hour.tags          # artificial light only reads at a dark hour
+        pool = FOUND_STRANGE_IMAGE_GROUPS if context.medium == "image" else FOUND_STRANGE_GROUPS
+        seen_groups: List[str] = []
+        for group in context.pick(pool, 4):
+            if group in seen_groups:
+                continue
+            seen_groups.append(group)
+            if len(seen_groups) > 3:
+                break
+            pool = [item for item in context.sources.items(group) if lit or "needs_dark" not in item.tags]
+            picked = context.pick(pool, 1)
+            if not picked:
+                continue
+            fact = picked[0].text
+            candidates.append(Candidate(
+                "found_strange", "found_strange",
+                # No closing "everything else is ordinary" sentence: the instruction block already says so,
+                # and a sentence of instruction inside the premise is a sentence the rewriter can transcribe.
+                premise=f"Nothing impossible happens. It is {hour.text}. {fact[0].upper() + fact[1:]}.",
+                affinity="the strange is found, not made; the story is withheld",
+                ingredients=[hour.text, fact], score=1.4 + (0.2 if group in ("light", "trace") else 0.0),
+                register_hint="staged photography",
+            ))
+    return candidates
 
 
 def process_estrangement(context: Context, operation: str = "auto") -> List[Candidate]:

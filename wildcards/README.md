@@ -18,6 +18,10 @@ Folders are searched in this order, and when a name exists in more than one, the
 
 So a pack's `animal.txt` replaces the shipped `animal.txt`; it is not mixed into it.
 
+Inside a pack folder, `_nsfw/` holds lists only nodes with `allow_nsfw` on can use, `_generated/` holds lists
+the tools write, and any other top-level `_folder` is ignored. A bare `__name__` that exists in several packs
+uses one pack (and says which); write `__**/name__` to pool them. See docs/WILDCARD_GUIDE.md.
+
 A pack written for a folder called `look` still resolves (`__look/styles__`) when it was unzipped
 as `theLookWildcards_v10`, as long as the real folder name contains the expected one and only one
 such folder exists.
@@ -41,3 +45,17 @@ have, and syntax from other tools.
 
 The entries are deliberately specific and physical ("a barn owl", "soft north-window light from the
 left") because image models render concrete nouns and real lighting far better than adjectives.
+
+## vp/ - the Wildcard Composer's own lists
+
+`vp/<section>.yaml` holds lists written for this package (same dual licence as the code) for the
+Wildcard Composer's buttons, named `__vp/<section>/<list>__` (for example `__vp/format/image_type__`,
+`__vp/lighting/studio_setup__`). Each button in `builders/prompt.yaml` offers its `vp/` list first,
+then the matching lists from your own packs. Entries are written to slot into typed text; each
+file's header says how (Era reads after "in", Holding after "holding"). Where it helps, entries
+carry tags (`__vp/format/image_type[photo]__` = photographic types only).
+Each list's own header line (a comment just above it) gives its entry form. Lists without a button
+of their own (`vp/subject/age_described`: "in their early thirties") are reachable by name and
+from the section's More lists. Tagged lists: image_type (medium family), era and era_aesthetic
+(period), age, fashion_style, group (count), atmosphere, photographer (genre), typography
+(sans / serif / script / hand / display / mono).

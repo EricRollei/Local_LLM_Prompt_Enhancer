@@ -6,12 +6,35 @@ After restarting ComfyUI, all nodes appear under:
 
 **Add Node → Eric Prompt Enhancers**
 
-You'll find 5 nodes:
+You'll find **18 nodes**, grouped below (see README.md → "The Nodes" for full descriptions):
+
+**LLM expanders & enhancers**
 1. Video Prompt Expander
 2. Video Prompt Expander (Advanced)
 3. Image-to-Video Prompt Expander
 4. Image-to-Image Prompt Expander
-5. Text-to-Image Prompt Enhancer ⭐ NEW
+5. Text-to-Image Prompt Enhancer
+6. Alice T2V Prompt Refiner
+
+**Platform output**
+7. Platform Prompt Rewriter
+8. Ideogram 4 Magic Prompt
+
+**Wildcards & variation**
+9. Wildcard Processor
+10. Semantic Variation
+11. Concept Survival Check
+12. Surreal Premise
+
+**Prompt builders**
+13. Wildcard Prompt Composer
+14. Wildcard Character Composer
+
+**Prompt database**
+15. Save Prompt to DB
+16. Search Prompt DB
+17. Import Prompts to DB
+18. Browse / Random Prompt DB
 
 ---
 

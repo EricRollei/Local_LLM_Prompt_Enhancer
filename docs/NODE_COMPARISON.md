@@ -1,343 +1,184 @@
 # Node Comparison Guide - Which Node Should I Use?
 
+All 18 nodes live under **Add Node → Eric Prompt Enhancers**. This guide groups them by job and
+helps you pick. For full per-node descriptions see README.md → "The Nodes".
+
 ## Quick Decision Tree
 
 ```
-Do you have an IMAGE or just TEXT?
+What do you want to do?
 
-├─ TEXT → Text-to-Video nodes
+├─ Expand a short idea into a full prompt (with an LLM)
 │   │
-│   ├─ Want SIMPLE presets?
-│   │   └─ Use: AI Video Prompt Expander (Standard)
+│   ├─ For VIDEO, from TEXT
+│   │   ├─ Simple, preset-driven      → Video Prompt Expander
+│   │   └─ Precise camera/lighting     → Video Prompt Expander (Advanced)
 │   │
-│   └─ Want DETAILED controls?
-│       └─ Use: AI Video Prompt Expander (Advanced)
+│   ├─ For VIDEO, from an IMAGE        → Image-to-Video Prompt Expander
+│   │
+│   ├─ For an IMAGE, from an IMAGE     → Image-to-Image Prompt Expander
+│   │
+│   ├─ For an IMAGE, from TEXT         → Text-to-Image Prompt Enhancer
+│   │
+│   └─ For Alice text-to-video         → Alice T2V Prompt Refiner
 │
-└─ IMAGE → Image-based nodes
-    │
-    ├─ Want to ANIMATE it (video)?
-    │   └─ Use: Image-to-Video Prompt Expander
-    │
-    └─ Want to TRANSFORM it (image)?
-        └─ Use: Image-to-Image Prompt Expander
+├─ Take a FINISHED prompt and format it for a specific model
+│   ├─ Any of 60+ platform profiles    → Platform Prompt Rewriter
+│   └─ Ideogram 4 (structured JSON)     → Ideogram 4 Magic Prompt
+│
+├─ Work with WILDCARDS / add variation
+│   ├─ Resolve wildcard syntax          → Wildcard Processor
+│   ├─ Nudge picks to neighbours        → Semantic Variation
+│   ├─ Did the key idea survive?        → Concept Survival Check
+│   └─ One surreal anomaly              → Surreal Premise
+│
+├─ BUILD a prompt with buttons (no typed syntax)
+│   ├─ Whole prompt, section by section → Wildcard Prompt Composer
+│   └─ A reusable character             → Wildcard Character Composer
+│
+└─ Keep a LIBRARY of prompts
+    ├─ Save one                          → Save Prompt to DB
+    ├─ Find one                          → Search Prompt DB
+    ├─ Bulk-import many                  → Import Prompts to DB
+    └─ Fetch one / random                → Browse / Random Prompt DB
 ```
-
-## Complete Node Comparison
-
-| Feature | Standard | Advanced | Image-to-Video | Image-to-Image |
-|---------|----------|----------|----------------|----------------|
-| **Input** | Text only | Text only | Image + Motion | Image + Changes |
-| **Output** | Video prompts | Video prompts | Video prompts | Image prompts |
-| **Presets** | ✅ | ✅ | ✅ | ❌ (Platform-based) |
-| **Wildcards** | ✅ | ✅ | ✅ | ✅ |
-| **Random Mode** | ✅ | ✅ (respects controls) | ✅ | ❌ |
-| **Aesthetic Controls** | Basic | Full | Medium | Full (image-focused) |
-| **Vision Model** | ❌ | ❌ | ✅ | ✅ |
-| **Platform Awareness** | ❌ | ❌ | ❌ | ✅ (6 platforms) |
-| **Best For** | Quick video prompts | Precise video control | Animating images | Transforming images |
-
-## Detailed Comparison
-
-### 1. AI Video Prompt Expander (Standard)
-
-**When to use:**
-- ✅ Quick video prompt generation
-- ✅ Preset-based workflows
-- ✅ Don't need fine control
-- ✅ Text-to-video generation
-
-**Example:**
-```
-Input: "A {animal} in a {location}"
-Preset: cinematic
-Tier: enhanced
-Output: Detailed video prompt with cinematic style
-```
-
-**Pros:**
-- Simple, fast
-- Good presets
-- Wildcard support
-- Random mode
-
-**Cons:**
-- Less control
-- No vision model
-- No platform optimization
 
 ---
 
-### 2. AI Video Prompt Expander (Advanced)
+## 1. LLM expanders & enhancers
 
-**When to use:**
-- ✅ Need precise aesthetic control
-- ✅ Specific camera/lighting requirements
-- ✅ Professional video workflows
-- ✅ Text-to-video with details
+These turn a short idea (and optionally a reference image) into a full prompt with a local LLM.
 
-**Example:**
-```
-Input: "detective in office"
-Shot Size: medium close-up
-Camera Angle: low angle
-Lighting: edge lighting
-Preset: noir
-Output: Precise video prompt with all specifications
-```
+| Node | Input | Output | Vision | Platform-aware |
+|------|-------|--------|--------|----------------|
+| **Video Prompt Expander** | Text | Video prompt | ❌ | video `target_model` |
+| **Video Prompt Expander (Advanced)** | Text (+ optional image) | Video prompt | ✅ (optional) | video `target_model` |
+| **Image-to-Video Prompt Expander** | Image + motion | Video prompt | ✅ | video `target_model` |
+| **Image-to-Image Prompt Expander** | Image + changes | Image prompt | ✅ | ✅ 6 platforms |
+| **Text-to-Image Prompt Enhancer** | Text (+ 1-2 ref images) | Image prompt | ✅ (optional) | ✅ 8 platforms |
+| **Alice T2V Prompt Refiner** | Text and/or images | Alice T2V prompt | ✅ (optional) | Alice |
 
-**Pros:**
-- Full control
-- All Wan 2.2 options
-- Respects dropdowns in random mode
-- Wildcard support
+### Video Prompt Expander
+Simple, fast video prompts. Style presets, five `expansion_tier` levels (auto/basic/enhanced/advanced/
+cinematic), up to 3 variations. **Use when** you want a quick video prompt from a short idea.
 
-**Cons:**
-- More complex
-- No vision model
-- No platform optimization
+### Video Prompt Expander (Advanced)
+Granular video control: operation modes (`expand_from_idea`, `refine_existing`, `modify_style`,
+`add_details`), Concise/Moderate/Detailed/Exhaustive detail, 50+ camera/lighting/visual dropdowns, and an
+optional reference image (Qwen3-VL). **Use when** you need specific cinematography or want to refine an
+existing prompt.
 
----
+### Image-to-Video Prompt Expander
+A vision model describes your image, then motion and camera are added. **Use when** you're animating an
+existing image.
 
-### 3. Image-to-Video Prompt Expander
+### Image-to-Image Prompt Expander
+Platform-aware image-to-image prompts (6 platforms: flux, sd_xl, wan22, hunyuan_image, qwen_image,
+qwen_image_edit) with vision analysis of the source. **Use when** you're transforming or editing an image.
 
-**When to use:**
-- ✅ Animating existing images
-- ✅ Image-to-video workflows
-- ✅ Want AI to describe image
-- ✅ Focus on motion/camera
+### Text-to-Image Prompt Enhancer
+Multi-platform image prompts (8 platforms incl. Flux, SDXL, Pony, Illustrious, Chroma, Qwen Image/Edit, Wan
+Image), 22 genre styles, optional reference images, emphasis `(keyword:1.5)` and alternation `{a|b|c}`.
+**Use when** you're generating a still image from text.
 
-**Example:**
-```
-Image: portrait.jpg
-Motion: "slowly turns and smiles"
-Camera: push in
-Output: Video prompt preserving image + adding motion
-```
-
-**Pros:**
-- Vision model describes image
-- Focus on motion
-- Camera controls
-- Preset support
-
-**Cons:**
-- Needs vision model
-- Video-only (not for img2img)
-- No platform optimization
+### Alice T2V Prompt Refiner
+Refines rough text and/or reference images into structured Alice text-to-video prompts. **Use when** you're
+targeting Alice.
 
 ---
 
-### 4. Image-to-Image Prompt Expander (NEW!)
+## 2. Platform output
 
-**When to use:**
-- ✅ Transforming/editing images
-- ✅ Image-to-image workflows
-- ✅ Platform-specific needs (Flux, SDXL, etc.)
-- ✅ Style transfer, lighting changes
+Format an already-written prompt for a specific model.
 
-**Example:**
-```
-Image: photo.jpg
-Change: "make it oil painting"
-Platform: flux
-Art Style: oil painting
-Output: Flux-optimized prompt for artistic transformation
-```
+### Platform Prompt Rewriter
+Rewrites a finished prompt for any of 60+ platform profiles, in that model's exact format (including
+structured ones: MiniMax H3 fields, FLUX.2 / Ideogram JSON, edit instructions), and keeps it inside the
+text encoder's token limit so trigger words aren't dropped. **Use when** you already have a prompt and want
+it tuned for a particular model. Outputs: prompt, negative_prompt, report, system_prompt.
 
-**Pros:**
-- Platform-aware (6 platforms!)
-- Vision model
-- Art/style controls
-- Optimized per model
-
-**Cons:**
-- Needs vision model
-- Image-only (not for video)
-- No presets (uses platforms)
+### Ideogram 4 Magic Prompt
+Builds an Ideogram 4 "magic prompt" (structured JSON + high-level line) with a recommended canvas size.
+**Use when** you're generating with Ideogram 4.
 
 ---
 
-## Use Case Examples
+## 3. Wildcards & variation
 
-### Use Case 1: Quick Video from Text
+### Wildcard Processor
+Resolves wildcard syntax (`__name__`, `{a|b|c}`, weights, ranges, variables, `__objects[metal AND handheld]__`)
+read from `models/wildcards`. **Use when** you want wildcard expansion without an LLM.
 
-**Goal:** Fast video prompt
-**Node:** AI Video Prompt Expander (Standard)
-```
-Input: "robot in neon city"
-Preset: cinematic
-Tier: enhanced
-```
+### Semantic Variation
+Moves each random wildcard pick to a semantic neighbour, along named direction axes. **Use when** you want
+controlled variety across runs.
 
-### Use Case 2: Precise Video Control
+### Concept Survival Check
+Measures whether the key concepts (a surreal anomaly, exact LoRA triggers, ...) survived the LLM rewrite.
+**Use when** you need to confirm something important wasn't paraphrased away. Outputs: report, all_survived,
+missing, carried_by_json.
 
-**Goal:** Specific cinematography
-**Node:** AI Video Prompt Expander (Advanced)
-```
-Input: "spaceship flying"
-Shot: wide shot
-Camera: tracking shot
-Lighting: rim lighting
-Lens: wide-angle
-```
-
-### Use Case 3: Animate Portrait
-
-**Goal:** Make image move
-**Node:** Image-to-Video Prompt Expander
-```
-Image: portrait.jpg
-Motion: "turns head and smiles"
-Camera: dolly in
-For: Hunyuan Video, CogVideoX
-```
-
-### Use Case 4: Flux Style Transfer
-
-**Goal:** Photo to painting
-**Node:** Image-to-Image Prompt Expander
-```
-Image: photo.jpg
-Change: "impressionist painting"
-Platform: flux
-Art Style: oil painting
-For: FLUX.1-dev
-```
-
-### Use Case 5: SDXL Enhancement
-
-**Goal:** Enhance with SDXL
-**Node:** Image-to-Image Prompt Expander
-```
-Image: low_res.jpg
-Change: "enhance quality, add details"
-Platform: sd_xl
-Detail: highly detailed
-For: SDXL
-```
-
-### Use Case 6: Qwen Quick Edit
-
-**Goal:** Fast specific edit
-**Node:** Image-to-Image Prompt Expander
-```
-Image: portrait.jpg
-Change: "change background to beach"
-Platform: qwen_image_edit
-For: Qwen Edit Model
-```
-
-## Feature Availability
-
-### Wildcards
-✅ All nodes support wildcards!
-```
-"A {animal:cat|dog|fox} {action:running|flying}"
-```
-
-### Random Mode
-✅ Standard: Full random
-✅ Advanced: Respects dropdowns
-✅ Img2Vid: Available
-❌ Img2Img: Uses platforms instead
-
-### Vision Model
-❌ Standard: No
-❌ Advanced: No
-✅ Img2Vid: Yes
-✅ Img2Img: Yes
-
-### Platform Optimization
-❌ Standard: No
-❌ Advanced: No (Wan 2.2 focus)
-❌ Img2Vid: No (video focus)
-✅ Img2Img: Yes! (6 platforms)
-
-## Workflow Recommendations
-
-### Video Generation Workflow
-
-**Option 1: Simple**
-```
-[Standard Node] → [Video Gen Model]
-```
-
-**Option 2: Advanced**
-```
-[Advanced Node] → [Video Gen Model]
-```
-
-**Option 3: From Image**
-```
-[Load Image] → [Img2Vid Node] → [Video Gen Model]
-```
-
-### Image Generation Workflow
-
-**From Image:**
-```
-[Load Image] → [Img2Img Node] → [Image Gen Model]
-```
-
-**Platform-Specific:**
-```
-For Flux: [Img2Img] (platform: flux) → [Flux Model]
-For SDXL: [Img2Img] (platform: sd_xl) → [SDXL Model]
-For Qwen: [Img2Img] (platform: qwen_image) → [Qwen Model]
-```
-
-## Common Questions
-
-### Q: Which node for best video prompts?
-**A:** 
-- Quick: Standard
-- Precise: Advanced
-- From image: Img2Vid
-
-### Q: Which node for Flux img2img?
-**A:** Image-to-Image with platform: flux
-
-### Q: Can I use vision model with video nodes?
-**A:** Only Img2Vid and Img2Img have vision support
-
-### Q: Which supports wildcards?
-**A:** All 4 nodes!
-
-### Q: Which respects my aesthetic dropdowns in random mode?
-**A:** Advanced node (video)
-
-### Q: Which optimizes for my image model?
-**A:** Image-to-Image (6 platforms!)
-
-## Summary
-
-**Choose based on:**
-
-| Your Task | Use This Node |
-|-----------|---------------|
-| Text → Video prompt (quick) | Standard |
-| Text → Video prompt (precise) | Advanced |
-| Image → Video prompt | Image-to-Video |
-| Image → Image prompt (Flux) | Image-to-Image (flux) |
-| Image → Image prompt (SDXL) | Image-to-Image (sd_xl) |
-| Image → Image prompt (Qwen) | Image-to-Image (qwen) |
-| Image → Quick edit | Image-to-Image (qwen_edit) |
-
-**All nodes support:**
-- ✅ Wildcards
-- ✅ LM Studio / Ollama
-- ✅ Multiple variations
-- ✅ File saving
-- ✅ Keyword injection
-
-**Special features:**
-- Vision model: Img2Vid, Img2Img only
-- Platform optimization: Img2Img only
-- Full aesthetic control: Advanced, Img2Img
-- Random mode: Standard, Advanced, Img2Vid
+### Surreal Premise
+Turns an ordinary scene into one anomaly stated as plain physical fact, with an instruction block that
+protects it through the rewrite. Its `llm_instructions` plug into any enhancer's `wildcard_instructions`.
+**Use when** you want a grounded surreal premise. See SURREAL_GUIDE.md.
 
 ---
 
-**Pick the right tool for your workflow!**
+## 4. Prompt builders (click, don't type)
 
-All nodes work together - use Standard for quick video prompts, Img2Img for Flux transformations, etc.
+### Wildcard Prompt Composer
+Builds a whole prompt section by section with clickable pills instead of typed wildcard syntax, in the
+chosen platform's section order. Lock a section to hold it while re-rolling, drag to reorder, save as a
+template. **Use when** you want to assemble a prompt visually. See PROMPT_BUILDER_GUIDE.md.
+
+### Wildcard Character Composer
+The same node limited to the Subject section, for a character you reuse across prompts or branches.
+
+---
+
+## 5. Prompt database
+
+| Node | Does |
+|------|------|
+| **Save Prompt to DB** | Saves a prompt (+ optional negative) to the local SQLite DB; passes the prompt through unchanged |
+| **Search Prompt DB** | Finds the top match by keyword, category, platform, rating, tags or favourites |
+| **Import Prompts to DB** | Bulk-imports prompts from `.txt` / `.csv` / other files |
+| **Browse / Random Prompt DB** | Fetches a prompt by ID, or a random/filtered one by seed |
+
+**Use when** you want to build and reuse a personal library of prompts.
+
+---
+
+## Feature availability (expanders)
+
+| | Standard | Advanced | Img2Vid | Img2Img | Txt2Img |
+|---|---|---|---|---|---|
+| **Presets** | ✅ | ✅ | ✅ | ❌ (platforms) | ❌ (genres) |
+| **Wildcards** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Vision model** | ❌ | optional | ✅ | ✅ | optional |
+| **Platform optimization** | video target | video target | video target | ✅ 6 | ✅ 8 |
+| **Random mode** | ✅ | ✅ (respects controls) | ✅ | ❌ | ✅ |
+
+---
+
+## Common questions
+
+**Q: Quick video prompt?** Video Prompt Expander. **Precise?** Advanced. **From an image?** Image-to-Video.
+
+**Q: I already have a prompt — how do I format it for my model?** Platform Prompt Rewriter (60+ profiles).
+
+**Q: Which nodes support wildcards?** All the expanders, plus the dedicated Wildcard Processor and the
+Composer builders.
+
+**Q: Which use a vision model?** Image-to-Video and Image-to-Image always; Advanced and Text-to-Image
+optionally.
+
+**Q: How do I build a prompt without typing wildcard syntax?** Wildcard Prompt Composer (whole prompt) or
+Wildcard Character Composer (one character).
+
+**Q: Where do I keep prompts I like?** The four Prompt Database nodes.
+
+---
+
+**Pick the right tool for your workflow — the nodes are designed to chain together.**

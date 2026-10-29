@@ -102,15 +102,22 @@ def run_word_range(profile: Profile, task: str, facts: "RunFacts") -> tuple:
     return profile.words_for_run(task, facts.duration_seconds, facts.length_words)
 
 
+def _token_limit_line(profile: Profile) -> str:
+    """The budget the LLM is told: the encoder limit minus headroom for template tokens and for
+    LoRA trigger words appended after the rewrite (token_budget.budget_for). 2026-10-08."""
+    from .token_budget import budget_for
+    limit, target = budget_for(profile)
+    return (f"Hard limit: {target} tokens (about {int(target * 0.72)} English words). The model's text "
+            f"encoder reads {limit} tokens and silently cuts off the rest; the remaining room is reserved "
+            f"for LoRA trigger words added after your answer. Put the most important content first.")
+
+
 def _length_block(profile: Profile, task: str, facts: Optional["RunFacts"] = None) -> str:
     low, high = run_word_range(profile, task, facts) if facts is not None else profile.words_for(task)
     unit = "tags" if profile.caption_style == "tags" else "words"
     lines = [f"Aim for {low}-{high} {unit}. Shorter than {low} is too thin; longer than {high} wastes the model's attention."]
     if profile.max_tokens:
-        lines.append(
-            f"Hard limit: {profile.max_tokens} tokens (about {int(profile.max_tokens * 0.72)} English words). "
-            f"Text beyond it is cut off, so the most important content comes first."
-        )
+        lines.append(_token_limit_line(profile))
     if profile.max_chars:
         lines.append(f"Hard limit: {profile.max_chars} characters including spaces.")
     return "\n".join(lines)
@@ -146,8 +153,12 @@ def _text_block(profile: Profile) -> str:
     if profile.quoted_text == "none":
         return "This model renders text poorly: avoid asking for readable text; if the user insists, keep it to one short word."
     quote = '"double quotes"' if profile.quoted_text == "double" else "'single quotes'"
+    # The first sentence matters: small models read a section about text as an invitation to add some, and put
+    # signs and plaques into pictures that asked for none ("Next Bus: 12 minutes", seen live 2026-09-21).
     return (
-        f"Text that must appear in the picture goes in {quote}, exactly as the user wrote it - never translated, "
+        "Put text in the picture ONLY when the user's idea asks for it; otherwise write none - no signs, labels, "
+        "plaques or captions of your own. "
+        f"Text the user does ask for goes in {quote}, exactly as the user wrote it - never translated, "
         f"corrected or paraphrased - with where it sits and what it looks like (surface, font style, colour, size)."
     )
 
@@ -345,7 +356,7 @@ def build_official_system(profile: Profile, task: str, facts: RunFacts, official
         additions.append(f"LENGTH FOR THIS RUN\nAim for {low}-{high} words.")
     limit_lines = []
     if profile.max_tokens:
-        limit_lines.append(f"Hard limit of the model's text encoder: {profile.max_tokens} tokens (about {int(profile.max_tokens * 0.72)} English words).")
+        limit_lines.append(_token_limit_line(profile))
     if profile.max_chars:
         limit_lines.append(f"Hard limit: {profile.max_chars} characters.")
     if limit_lines:

@@ -48,6 +48,8 @@ tmp/
 
 # Local notes
 notes_local/
+# Standing instructions for AI assistants (personal working style, kept local)
+CLAUDE.md
 
 # Variability engine: phrase vector caches and repulsion memory; cached vendor rewriter prompts
 cache/
@@ -61,3 +63,12 @@ prompt_database.db
 
 # Ideogram's published magic-prompt text: fetched on first use, not redistributed with this package
 ideogram_prompts/v1_official.txt
+# Your own builder definitions (builders_user/ overrides builders/ by id)
+builders_user/
+dev/_builder_keys.json
+# Wildcard catalog and your curation of the shipped lists
+wildcards/_catalog.sqlite*
+wildcards/_catalog_user.yaml
+
+# Wildcard review tool: runtime-generated undo/apply manifests (kept locally, not shipped)
+tools/wildcard_review/manifests/

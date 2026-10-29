@@ -1,0 +1,105 @@
+# Wildcard Composer lists: Light & atmosphere.
+# Written for this package (dual licence, see LICENSE). Names: __vp/lighting/<list>__.
+# Entries read as phrases on their own: "..., backlit by the low sun, ..." ; "..., Rembrandt lighting, ...".
+vp:
+  lighting:
+    light_direction:
+      - backlit
+      - backlit with a bright rim around the hair
+      - rim light outlining the silhouette
+      - side light from the left
+      - side light from the right
+      - hard side light raking across the face
+      - top light from directly overhead
+      - light from below the face
+      - three-quarter front light
+      - flat frontal light
+      - split light, half the face in shadow
+      - kicker light from behind one shoulder
+      - light falling through a window at a low angle
+      - pools of light from overhead fixtures
+      - light spilling from an open doorway
+      - dappled light through leaves
+      - light bouncing up from the ground
+      - silhouetted against a bright background
+      - lit from a single source off-frame
+      - cross light from two sides
+      - light striking only the eyes
+      - light fading into darkness at the edges
+    studio_setup:
+      - Rembrandt lighting
+      - butterfly lighting
+      - loop lighting
+      - split lighting
+      - clamshell lighting
+      - broad lighting
+      - short lighting
+      - high-key lighting
+      - low-key lighting
+      - chiaroscuro lighting
+      - three-point lighting
+      - a single softbox from the side
+      - a large octabox overhead
+      - a beauty dish straight on
+      - a ring light
+      - a bare strobe with hard shadows
+      - a strip light rim on both sides
+      - a gridded spotlight
+      - a gobo pattern of window shadows
+      - coloured gels, magenta and cyan
+      - practical lamps in the frame
+      - bounce light from a white wall
+      - a single bare bulb
+      - light painting with a torch
+    colour_temperature:
+      - warm tungsten light
+      - warm candle-coloured light
+      - golden late-afternoon warmth
+      - neutral daylight
+      - cool overcast daylight
+      - cool blue-hour light
+      - cold moonlight
+      - greenish fluorescent light
+      - orange sodium streetlight
+      - mixed warm interior and cool exterior light
+      - warm key light with a cool fill
+      - teal shadows and warm highlights
+      - icy white LED light
+      - red darkroom safelight
+      - deep blue night light
+      - amber firelight
+    # Atmosphere & effects: reads as its own phrase: "..., {morning fog}".
+    atmosphere:
+      - {text: morning fog, tags: [weather]}
+      - {text: thick fog, tags: [weather]}
+      - {text: low mist over the ground, tags: [weather]}
+      - {text: heat haze, tags: [weather]}
+      - {text: rain streaks, tags: [weather]}
+      - {text: drizzle, tags: [weather]}
+      - {text: falling snow, tags: [weather]}
+      - {text: blowing snow, tags: [weather]}
+      - {text: sea spray, tags: [weather]}
+      - {text: a sandstorm haze, tags: [weather]}
+      - {text: dust motes in the air, tags: [particles]}
+      - {text: floating pollen, tags: [particles]}
+      - {text: drifting ash, tags: [particles]}
+      - {text: sparks flying, tags: [particles]}
+      - {text: embers rising, tags: [particles]}
+      - {text: fireflies, tags: [particles]}
+      - {text: falling cherry blossoms, tags: [particles]}
+      - {text: falling autumn leaves, tags: [particles]}
+      - {text: confetti in the air, tags: [particles]}
+      - {text: bubbles floating, tags: [particles]}
+      - {text: smoke curling, tags: [smoke]}
+      - {text: thick smoke, tags: [smoke]}
+      - {text: steam rising, tags: [smoke]}
+      - {text: incense smoke, tags: [smoke]}
+      - {text: volumetric light rays, tags: [light]}
+      - {text: god rays through the trees, tags: [light]}
+      - {text: lens flare, tags: [light]}
+      - {text: light leaks, tags: [light]}
+      - {text: a rainbow, tags: [light]}
+      - {text: aurora overhead, tags: [light]}
+      - {text: puddle reflections, tags: [wet]}
+      - {text: wet streets glistening, tags: [wet]}
+      - {text: condensation on glass, tags: [wet]}

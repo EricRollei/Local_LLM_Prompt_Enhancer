@@ -26,6 +26,10 @@ from .wildcard_support import (
     normalise_seed,
     report_lines,
     resolve_wildcards,
+    filter_notes_of,
+    lead_with_filter_notes,
+    screen_output,
+    wildcard_nsfw_input,
     wildcard_optional_inputs,
 )
 
@@ -84,6 +88,7 @@ class IdeogramMagicPrompt:
                                          "tooltip": "How a connected reference image guides the caption (needs a vision-capable backend)."}),
                 # New inputs are only ever APPENDED below this line, so saved workflows keep their widget order.
                 **wildcard_optional_inputs(),
+                **wildcard_nsfw_input(),
             },
         }
 
@@ -95,11 +100,13 @@ class IdeogramMagicPrompt:
     def run(self, idea, backend, endpoint, model, temperature, aspect_ratio,
             megapixels, keep_bboxes, use_tailoring, max_tokens,
             application="(custom)", reference_image=None, reference_influence="full",
-            wildcard_seed=-1, wildcard_llm_block=True, wildcard_instructions=""):
+            wildcard_seed=-1, wildcard_llm_block=True, wildcard_instructions="", nsfw="off",
+            violence_filter="off"):
 
         # Resolve wildcards in the idea (core/wildcards). The parser leaves JSON braces alone.
         wildcard_resolution = resolve_wildcards(idea or "", seed=normalise_seed(wildcard_seed), legacy=True,
-                                                upstream_instructions=wildcard_instructions)
+                                                upstream_instructions=wildcard_instructions, nsfw=nsfw,
+                                                violence_filter=violence_filter)
         idea = wildcard_resolution.text
 
         if not (idea or "").strip() and reference_image is None:
@@ -130,7 +137,12 @@ class IdeogramMagicPrompt:
         if wildcard_report:
             report = f"{report}\n{wildcard_report}"
         print(f"[Ideogram Magic] {report}")
-        return (r["prompt_json"], r["high_level"], r["width"], r["height"], report)
+        caption, caption_note = screen_output(r["prompt_json"], "Ideogram Magic caption")
+        summary, summary_note = screen_output(r["high_level"], "Ideogram Magic summary")
+        report = lead_with_filter_notes(report, filter_notes_of(wildcard_resolution, caption_note, summary_note))
+        if caption_note or summary_note:
+            return ("", "", r["width"], r["height"], report)
+        return (caption, summary, r["width"], r["height"], report)
 
     def _caption_reference(self, image, influence, backend, endpoint, model, temperature):
         try:

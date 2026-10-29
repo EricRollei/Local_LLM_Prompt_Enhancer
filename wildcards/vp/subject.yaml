@@ -1,0 +1,386 @@
+# Wildcard Composer lists: Subject.
+# Written for this package (dual licence, see LICENSE). Names: __vp/subject/<list>__.
+vp:
+  subject:
+    gaze:
+      - looking straight into the camera
+      - looking over the shoulder at the camera
+      - gazing past the camera
+      - looking down
+      - looking up at the sky
+      - eyes closed
+      - eyes half-closed
+      - glancing sideways
+      - staring into the distance
+      - looking at something out of frame
+      - looking at their hands
+      - looking at a reflection
+      - eyes lowered, shy
+      - a direct, challenging stare
+      - peering through fingers
+      - looking back over the shoulder, walking away
+      - squinting into the light
+      - eyes wide with surprise
+      - gazing at another person
+      - lost in thought, unfocused eyes
+      - looking up from a book
+      - watching the viewer from the corner of the eye
+      - eyes following a bird
+      - looking down at the floor
+      - a thousand-yard stare
+      - gazing up in awe
+      - looking through a window
+      - watching the horizon
+      - eyes shut against the wind
+      - blinking into the sunlight
+      - winking at the camera
+      - looking at the viewer through a mirror
+      - peeking over sunglasses
+      - eyes narrowed with suspicion
+      - a soft, dreamy gaze
+      - a sidelong glance
+      - looking back at a companion
+      - tearful eyes looking away
+      - eyes locked on a target
+      - watching the rain
+    # Age: reads before the noun: "a {middle-aged} baker".
+    age:
+      - {text: young, tags: [adult]}
+      - {text: college-aged, tags: [adult]}
+      - {text: twenty-something, tags: [adult]}
+      - {text: young adult, tags: [adult]}
+      - {text: thirty-something, tags: [adult]}
+      - {text: forty-something, tags: [adult]}
+      - {text: middle-aged, tags: [adult]}
+      - {text: fifty-something, tags: [adult]}
+      - {text: greying, tags: [older]}
+      - {text: silver-haired, tags: [older]}
+      - {text: sixty-something, tags: [older]}
+      - {text: retired, tags: [older]}
+      - {text: elderly, tags: [older]}
+      - {text: old, tags: [older]}
+      - {text: very old, tags: [older]}
+      - {text: ageless, tags: [any]}
+      - {text: weathered, older, tags: [older]}
+    # Age, descriptive: reads after the subject: "a baker {in her early thirties}".
+    age_described:
+      - in their early twenties
+      - in their mid-twenties
+      - in their late twenties
+      - in their early thirties
+      - in their mid-thirties
+      - in their late thirties
+      - in their early forties
+      - in their late forties
+      - in their fifties
+      - in their early sixties
+      - in their seventies
+      - in their eighties
+      - with the first grey at the temples
+      - with laugh lines around the eyes
+      - with a lined, weathered face
+      - with a youthful face and old eyes
+    # Hair texture: reads before "hair": "{loose wavy} hair".
+    hair_texture:
+      - pin-straight
+      - sleek straight
+      - loose wavy
+      - beach-wavy
+      - soft curly
+      - tight curly
+      - springy coily
+      - kinky coily
+      - corkscrew-curled
+      - frizzy
+      - fine wispy
+      - thick coarse
+      - glossy
+      - silky
+      - voluminous
+      - flyaway
+      - wind-tangled
+      - wet-look
+      - sun-bleached, salty
+      - crimped
+      - finger-waved
+      - tousled
+      - slicked-back
+      - matte textured
+      - freshly blow-dried
+    # Freckles & marks: reads after "with": "with {a light dusting of freckles}".
+    freckles:
+      - a light dusting of freckles
+      - freckles across the nose and cheeks
+      - dense sun freckles
+      - freckled shoulders
+      - a beauty mark above the lip
+      - a mole on the cheek
+      - a small birthmark on the temple
+      - a faint scar through one eyebrow
+      - a thin scar on the chin
+      - an old scar across the cheek
+      - vitiligo patches
+      - rosy wind-chapped cheeks
+      - sunburnt nose
+      - a smudge of paint on the cheek
+      - a smear of engine grease on the jaw
+      - a few dimples
+      - deep dimples when smiling
+      - a gap-toothed smile
+      - a cleft chin
+      - crow's feet
+    # Fashion style: reads before "style" or "outfit": "in a {cottagecore} outfit".
+    fashion_style:
+      - {text: streetwear, tags: [modern]}
+      - {text: techwear, tags: [modern]}
+      - {text: athleisure, tags: [modern]}
+      - {text: normcore, tags: [modern]}
+      - {text: minimalist, tags: [modern]}
+      - {text: quiet luxury, tags: [modern]}
+      - {text: gorpcore outdoor, tags: [modern]}
+      - {text: Scandinavian minimal, tags: [modern]}
+      - {text: Japanese workwear, tags: [modern]}
+      - {text: Harajuku, tags: [subculture]}
+      - {text: punk, tags: [subculture]}
+      - {text: post-punk, tags: [subculture]}
+      - {text: goth, tags: [subculture]}
+      - {text: emo, tags: [subculture]}
+      - {text: grunge, tags: [subculture]}
+      - {text: skater, tags: [subculture]}
+      - {text: mod, tags: [subculture]}
+      - {text: rockabilly, tags: [subculture]}
+      - {text: hip-hop 90s, tags: [subculture]}
+      - {text: rave, tags: [subculture]}
+      - {text: cyberpunk, tags: [genre]}
+      - {text: steampunk, tags: [genre]}
+      - {text: dieselpunk, tags: [genre]}
+      - {text: solarpunk, tags: [genre]}
+      - {text: dark academia, tags: [aesthetic]}
+      - {text: light academia, tags: [aesthetic]}
+      - {text: cottagecore, tags: [aesthetic]}
+      - {text: fairycore, tags: [aesthetic]}
+      - {text: boho, tags: [aesthetic]}
+      - {text: hippie, tags: [aesthetic]}
+      - {text: preppy, tags: [classic]}
+      - {text: old money, tags: [classic]}
+      - {text: ivy league, tags: [classic]}
+      - {text: tailored classic, tags: [classic]}
+      - {text: French chic, tags: [classic]}
+      - {text: Italian sprezzatura, tags: [classic]}
+      - {text: country western, tags: [regional]}
+      - {text: military surplus, tags: [utility]}
+      - {text: utilitarian workwear, tags: [utility]}
+      - {text: safari, tags: [utility]}
+      - {text: nautical, tags: [classic]}
+      - {text: avant-garde, tags: [designer]}
+      - {text: deconstructed, tags: [designer]}
+      - {text: maximalist, tags: [designer]}
+      - {text: haute couture, tags: [designer]}
+      - {text: androgynous, tags: [designer]}
+      - {text: Y2K, tags: [retro]}
+      - {text: 1970s disco, tags: [retro]}
+      - {text: 1950s rockabilly, tags: [retro]}
+      - {text: 1920s flapper, tags: [retro]}
+      - {text: Victorian, tags: [historical]}
+      - {text: Edwardian, tags: [historical]}
+      - {text: Regency, tags: [historical]}
+      - {text: mori girl, tags: [subculture]}
+      - {text: lolita, tags: [subculture]}
+      - {text: visual kei, tags: [subculture]}
+      - {text: kawaii, tags: [aesthetic]}
+      - {text: vaporwave, tags: [aesthetic]}
+      - {text: coastal grandmother, tags: [aesthetic]}
+      - {text: bohemian artist, tags: [aesthetic]}
+    # Coat & markings: reads after the animal: "a horse {with a dappled grey coat}".
+    animal_coat:
+      - with a glossy black coat
+      - with a dappled grey coat
+      - with a chestnut coat
+      - with a palomino coat
+      - with a piebald coat
+      - with a brindle coat
+      - with a merle coat
+      - with a tuxedo pattern
+      - with calico patches
+      - with tabby stripes
+      - with a tortoiseshell coat
+      - with a ginger coat
+      - with a pure white coat
+      - with a cream coat
+      - with a blue-grey coat
+      - with leopard spots
+      - with tiger stripes
+      - with zebra stripes
+      - with a spotted coat
+      - with a white blaze on the face
+      - with white socks
+      - with a ringed tail
+      - with a mask-like face marking
+      - with iridescent feathers
+      - with speckled plumage
+      - with barred feathers
+      - with scales like polished jade
+      - with a shaggy winter coat
+      - with a sleek summer coat
+      - with a matted, muddy coat
+      - with a greying muzzle
+    # Condition: reads before the object: "a {rusted} bicycle".
+    object_condition:
+      - brand-new
+      - factory-fresh
+      - mint-condition
+      - polished
+      - freshly painted
+      - well-loved
+      - worn
+      - weathered
+      - sun-faded
+      - rusted
+      - patinated
+      - tarnished
+      - scratched
+      - dented
+      - chipped
+      - cracked
+      - shattered
+      - broken
+      - taped-together
+      - patched
+      - mended
+      - hand-repaired
+      - hand-painted
+      - dusty
+      - cobwebbed
+      - moss-covered
+      - overgrown
+      - waterlogged
+      - charred
+      - burnt
+      - abandoned
+      - antique
+      - restored
+      - customised
+      - graffiti-covered
+    # Plating: reads after the dish: "ramen {in a handmade ceramic bowl}".
+    plating:
+      - on a slate board
+      - on a rustic wooden board
+      - on a white porcelain plate
+      - on a chipped enamel plate
+      - in a handmade ceramic bowl
+      - in a bento box
+      - in a cast-iron skillet
+      - in a copper pot
+      - on a banana leaf
+      - wrapped in newspaper
+      - in a paper takeaway box
+      - on a tiered cake stand
+      - on a marble countertop
+      - on a mid-century melamine tray
+      - family style on a long table
+      - as a fine-dining tasting plate
+      - with sauce swooshes and microgreens
+      - stacked high
+      - scattered on parchment paper
+      - on a picnic blanket
+      - in a glass jar
+      - on a lazy Susan
+      - on a street-food cart counter
+      - in a steamer basket
+      - on skewers over coals
+      - under a glass cloche
+      - on a silver platter
+      - on a vintage floral plate
+      - in a clay tagine
+      - on a tin camping plate
+    # Group / count: replaces the subject or reads before it: "{three friends} on a rooftop".
+    group:
+      - {text: a couple, tags: ["2"]}
+      - {text: two friends, tags: ["2"]}
+      - {text: a mother and daughter, tags: ["2", family]}
+      - {text: a father and son, tags: ["2", family]}
+      - {text: two siblings, tags: ["2", family]}
+      - {text: an elderly couple, tags: ["2"]}
+      - {text: three friends, tags: ["3"]}
+      - {text: a trio of musicians, tags: ["3"]}
+      - {text: three generations of a family, tags: ["3", family]}
+      - {text: a family of four, tags: ["4", family]}
+      - {text: four friends, tags: ["4"]}
+      - {text: a small band, tags: [small]}
+      - {text: a small group of hikers, tags: [small]}
+      - {text: a group of coworkers, tags: [small]}
+      - {text: a sports team, tags: [large]}
+      - {text: a choir, tags: [large]}
+      - {text: a school of dancers, tags: [large]}
+      - {text: a wedding party, tags: [large, family]}
+      - {text: a large family gathering, tags: [large, family]}
+      - {text: a queue of commuters, tags: [large]}
+      - {text: a crowd, tags: [crowd]}
+      - {text: a bustling crowd, tags: [crowd]}
+      - {text: a sea of faces, tags: [crowd]}
+      - {text: a festival crowd, tags: [crowd]}
+      - {text: a marching procession, tags: [crowd]}
+      - {text: a lone figure in a crowd, tags: [crowd]}
+      - {text: a pair of strangers, tags: ["2"]}
+      - {text: a busker and a small audience, tags: [small]}
+      - {text: a circle of people around a fire, tags: [small]}
+      - {text: a line of soldiers, tags: [large]}
+    # Product: the object itself, with its article: "{a pair of wireless headphones} on a marble plinth". Tags: category.
+    product:
+      - {text: a wristwatch, tags: [fashion]}
+      - {text: a pair of sneakers, tags: [fashion]}
+      - {text: a leather handbag, tags: [fashion]}
+      - {text: a pair of sunglasses, tags: [fashion]}
+      - {text: a silk scarf, tags: [fashion]}
+      - {text: a leather wallet, tags: [fashion]}
+      - {text: a backpack, tags: [fashion]}
+      - {text: a perfume bottle, tags: [beauty]}
+      - {text: a lipstick, tags: [beauty]}
+      - {text: a skincare serum bottle, tags: [beauty]}
+      - {text: a jar of face cream, tags: [beauty]}
+      - {text: a nail polish bottle, tags: [beauty]}
+      - {text: an eyeshadow palette, tags: [beauty]}
+      - {text: a pair of wireless headphones, tags: [tech]}
+      - {text: a smartphone, tags: [tech]}
+      - {text: a laptop, tags: [tech]}
+      - {text: a smartwatch, tags: [tech]}
+      - {text: a mechanical keyboard, tags: [tech]}
+      - {text: a film camera, tags: [tech]}
+      - {text: a portable speaker, tags: [tech]}
+      - {text: a game controller, tags: [tech]}
+      - {text: a coffee maker, tags: [kitchen]}
+      - {text: a chef's knife, tags: [kitchen]}
+      - {text: a ceramic mug, tags: [kitchen]}
+      - {text: a cast-iron pan, tags: [kitchen]}
+      - {text: a glass teapot, tags: [kitchen]}
+      - {text: a stand mixer, tags: [kitchen]}
+      - {text: a bottle of wine, tags: [drink]}
+      - {text: a can of soda, tags: [drink]}
+      - {text: a bottle of craft beer, tags: [drink]}
+      - {text: a bag of coffee beans, tags: [drink]}
+      - {text: a whisky bottle, tags: [drink]}
+      - {text: a box of chocolates, tags: [food]}
+      - {text: a jar of honey, tags: [food]}
+      - {text: a table lamp, tags: [home]}
+      - {text: a scented candle, tags: [home]}
+      - {text: a ceramic vase, tags: [home]}
+      - {text: an armchair, tags: [home]}
+      - {text: a wall clock, tags: [home]}
+      - {text: a throw pillow, tags: [home]}
+      - {text: a fountain pen, tags: [stationery]}
+      - {text: a leather notebook, tags: [stationery]}
+      - {text: a gold ring, tags: [jewellery]}
+      - {text: a pearl necklace, tags: [jewellery]}
+      - {text: a pair of earrings, tags: [jewellery]}
+      - {text: a skateboard, tags: [sport]}
+      - {text: a road bicycle, tags: [sport]}
+      - {text: a tennis racket, tags: [sport]}
+      - {text: a yoga mat, tags: [sport]}
+      - {text: a cordless drill, tags: [tools]}
+      - {text: a hand plane, tags: [tools]}
+      - {text: a wooden toy train, tags: [toys]}
+      - {text: a teddy bear, tags: [toys]}
+      - {text: a board game box, tags: [toys]}
+      - {text: a potted houseplant, tags: [garden]}
+      - {text: a camping lantern, tags: [outdoor]}
+      - {text: a tent, tags: [outdoor]}

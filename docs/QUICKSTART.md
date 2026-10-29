@@ -27,12 +27,12 @@ Use this if you want the image-to-video or image-to-image nodes to caption image
 4. Set `vision_model_name` to the repo or local path (append `@4bit`/`@8bit` if desired)
 5. Use the `vision_endpoint` field for optional overrides like `quant=4bit;attn=sdpa`
 
-## Step 2: Verify Installation
+## Step 2: Verify Your LLM Backend
 
-1. Open terminal in the video_prompter directory
-2. Run: `python test_setup.py`
-3. Choose your LLM backend and test connection
-4. You should see "✅ ALL TESTS COMPLETED"
+1. Confirm your server responds in a browser:
+   - LM Studio: http://localhost:1234/v1
+   - Ollama: http://localhost:11434
+2. Make sure a model is loaded (LM Studio) or pulled (Ollama) and the server is running.
 
 ## Step 3: Restart ComfyUI
 
@@ -43,7 +43,7 @@ Use this if you want the image-to-video or image-to-image nodes to caption image
 ## Step 4: Add Node to Workflow
 
 1. Right-click in ComfyUI → Add Node
-2. Navigate to: **video → prompting → AI Video Prompt Expander**
+2. Navigate to: **Eric Prompt Enhancers → Video Prompt Expander**
 3. The node will appear with all inputs ready
 
 ## Step 5: Basic Usage
@@ -187,17 +187,15 @@ Once you have basic expansion working:
 - **Full Documentation**: See README.md
 - **Configuration Guide**: See CONFIGURATION.md
 - **Presets Reference**: See presets.py
-- **Test Your Setup**: Run test_setup.py
 
 ## Getting Help
 
 If something isn't working:
 
-1. Run `python test_setup.py` - it will identify issues
-2. Check the **status** output - it shows errors clearly
-3. Review your LLM backend connection
-4. Check ComfyUI console for error messages
-5. Verify model is loaded and endpoint is correct
+1. Check the **status** output - it shows errors clearly
+2. Review your LLM backend connection
+3. Check ComfyUI console for error messages
+4. Verify model is loaded and endpoint is correct
 
 ## Success!
 

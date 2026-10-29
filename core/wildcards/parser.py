@@ -7,6 +7,7 @@ Grammar (Dynamic Prompts compatible, so existing wildcard packs work, plus exten
     __name(season=winter)__                                 parameterized wildcard
     __name[metal AND NOT large]__   __[metal AND small]__   tag query (scoped / global)
     __db:surreal portrait__   __llm:an object that ...__    provider slots
+    __name!{a|b}__                                          exclusion: any entry except a and b
     {a|b|c}   {a|{b|c}}                                     variants, nested
     {3::common|1::rare}                                     weights
     {2$$a|b|c}   {1-3$$ and $$a|b|c}   {2$$__flavours__}    multi-select, separator
@@ -74,6 +75,7 @@ _WILDCARD = re.compile(
     r"([A-Za-z0-9*][A-Za-z0-9_\-/*. ]*?)?"   # name (optional when a tag query follows)
     r"(?:\(([^()\n]*)\))?"                   # (key=value, key=value)
     r"(?:\[([^\[\]\n]+)\])?"                 # [tag expression]
+    r"(?:!\{([^{}\n]*)\})?"                   # !{entry|entry}  exclusions
     r"__"
 )
 _CONDITIONAL_OPEN = re.compile(r"\[if\s+", re.IGNORECASE)
@@ -316,6 +318,7 @@ class Parser:
             tag_expression=tag_expression.strip() if tag_expression else None,
             sampler=sampler,
             binding=binding,
+            exclude=[part.strip() for part in (match.group(4) or "").split("|") if part.strip()],
         )
 
     # -- ${variable} ------------------------------------------------------------

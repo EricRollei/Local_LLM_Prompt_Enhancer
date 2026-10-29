@@ -33,6 +33,10 @@ from .wildcard_support import (
     normalise_seed,
     report_lines,
     resolve_wildcards,
+    filter_notes_of,
+    lead_with_filter_notes,
+    screen_output,
+    wildcard_nsfw_input,
     wildcard_optional_inputs,
 )
 
@@ -441,6 +445,7 @@ class AlicePromptRefiner:
                 }),
                 # New inputs are only ever APPENDED below this line, so saved workflows keep their widget order.
                 **wildcard_optional_inputs(),
+                **wildcard_nsfw_input(),
             },
         }
 
@@ -471,6 +476,8 @@ class AlicePromptRefiner:
         wildcard_seed: int = -1,
         wildcard_llm_block: bool = True,
         wildcard_instructions: str = "",
+        nsfw: str = "off",
+        violence_filter: str = "off",
     ) -> Tuple[str, str, str]:
 
         image_description = ""
@@ -481,7 +488,8 @@ class AlicePromptRefiner:
             # ----------------------------------------------------------
             wildcard_resolution = resolve_wildcards(
                 text_prompt or "", seed=normalise_seed(wildcard_seed), legacy=True,
-                upstream_instructions=wildcard_instructions,
+                upstream_instructions=wildcard_instructions, nsfw=nsfw,
+                violence_filter=violence_filter,
             )
             text_prompt = wildcard_resolution.text
 
@@ -619,6 +627,7 @@ class AlicePromptRefiner:
 
             # Verbatim wildcard picks (__=name__) must survive the rewrite word for word
             refined_prompt, _restored = enforce_verbatim(refined_prompt, wildcard_resolution)
+            refined_prompt, block_note = screen_output(refined_prompt, "Alice Prompter output")
 
             word_count = len(refined_prompt.split())
             print(
@@ -633,6 +642,7 @@ class AlicePromptRefiner:
             wildcard_report = report_lines(wildcard_resolution)
             if wildcard_report:
                 status = f"{status}\n{wildcard_report}"
+            status = lead_with_filter_notes(status, filter_notes_of(wildcard_resolution, block_note))
             return (refined_prompt, image_description, status)
 
         except Exception as exc:

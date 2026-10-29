@@ -24,7 +24,8 @@ import re
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from .boolean_expr import BooleanExpressionError, compile_expression, evaluate
-from .library import Entry, WildcardLibrary
+from .library import (NSFW_EXPLICIT, NSFW_LEVELS, VIOLENCE_LEVELS, Entry, WildcardLibrary, nsfw_level,
+                      violence_blocked, violence_level)
 from .parser import parse
 from .record import Resolution, Slot
 from .syntax_tree import (
@@ -144,8 +145,15 @@ class Resolver:
         providers: Optional[Dict[str, ProviderCallable]] = None,
         variables: Optional[Dict[str, str]] = None,
         pick_hook: Optional[PickHook] = None,
+        nsfw="off",
+        violence: int = 0,
     ):
         self.library = library
+        self.nsfw = nsfw_level(nsfw)                 # 0 off .. 3 explicit (library.NSFW_LEVELS)
+        self._nsfw_emptied = False                   # set by _entries_for when the level left nothing
+        self.violence = violence_level(violence)     # 0 off .. 3 (library.VIOLENCE_LEVELS)
+        self._violence_emptied = False               # set by _entries_for when the filter left nothing
+        self._context_keys: List[str] = []      # keys of the lists whose entries are being resolved (innermost last)
         self.pick_hook = pick_hook
         self.rng = random.Random(seed) if seed is not None else random.Random()
         self.chooser = _Chooser(self.rng, mode, index, cycle_index)
@@ -255,7 +263,12 @@ class Resolver:
         origins: List[str] = []
         for entry_index in indices:
             entry = entries[entry_index]
-            values.append(self._resolve(self._parse_entry(entry.text), scope, slot.depth + 1, slot.index, in_output).strip())
+            # References inside this entry resolve in the entry's own pack first (library same-pack rule).
+            self._context_keys.append(entry.key)
+            try:
+                values.append(self._resolve(self._parse_entry(entry.text), scope, slot.depth + 1, slot.index, in_output).strip())
+            finally:
+                self._context_keys.pop()
             if entry.origin and entry.origin not in origins:
                 origins.append(entry.origin)
         slot.origin = "; ".join(origins)
@@ -271,7 +284,7 @@ class Resolver:
             # Legacy {category}: a bare name that matches a wildcard file.
             if self.legacy and only_body.is_plain_text():
                 name = only_body.plain_text().strip()
-                if name and self.library.has(name):
+                if name and self.library.has(name, nsfw=self.nsfw, context=self._context()):
                     legacy_node = Wildcard(source=node.source, name=name, sampler=node.sampler, binding=node.binding)
                     return self._resolve_wildcard(legacy_node, scope, depth, parent, in_output, kind="legacy")
             # Not a choice at all: keep the braces, still resolve anything inside them.
@@ -317,10 +330,31 @@ class Resolver:
         return slot.value
 
     # -- __wildcard__ -----------------------------------------------------------
+    def _context(self) -> str:
+        return self._context_keys[-1] if self._context_keys else ""
+
     def _entries_for(self, node: Wildcard) -> List[Entry]:
         if node.tag_expression:
-            return self.library.query_tags(node.tag_expression, scope=node.name)
-        return self.library.lookup(node.name)
+            entries = self.library.query_tags(node.tag_expression, scope=node.name,
+                                              nsfw=self.nsfw, context=self._context())
+        else:
+            entries = self.library.lookup(node.name, nsfw=self.nsfw, context=self._context())
+        if not entries and self.nsfw < NSFW_EXPLICIT and not node.tag_expression \
+                and self.library.lookup(node.name, nsfw=NSFW_EXPLICIT, context=self._context()):
+            self._nsfw_emptied = True               # the list exists; everything in it is rated above this run
+        if self.violence and entries:
+            kept = [entry for entry in entries if not violence_blocked(entry.text, entry.key, self.violence)]
+            if not kept:
+                self._violence_emptied = True
+            entries = kept
+        if node.exclude and entries:
+            banned = {item.casefold() for item in node.exclude}
+            kept = [entry for entry in entries if entry.text.strip().casefold() not in banned]
+            if not kept:
+                self._warn(f"{node.source} excludes every entry; exclusions ignored")
+                return entries
+            return kept
+        return entries
 
     @staticmethod
     def _scope_with_params(scope: Dict[str, _VariableValue], node: Wildcard) -> Dict[str, _VariableValue]:
@@ -333,7 +367,21 @@ class Resolver:
 
     def _resolve_wildcard(self, node: Wildcard, scope: Dict[str, _VariableValue], depth: int,
                           parent: Optional[int], in_output: bool, kind: Optional[str] = None) -> str:
+        self._violence_emptied = False
+        self._nsfw_emptied = False
         entries = self._entries_for(node)
+        if not entries and self._nsfw_emptied:
+            # The list, or every entry in it, is rated above the run's level ("__lingerie__" at off): dropped
+            # from the prompt rather than left as text.
+            self._warn(f"nsfw filter ({NSFW_LEVELS[self.nsfw]}): {node.source} dropped - "
+                       f"its list or every entry in it is rated above {NSFW_LEVELS[self.nsfw]}")
+            return ""
+        if not entries and self._violence_emptied:
+            # Every entry is in the blocked tier: the reference itself names that content ("__weapons__"), so
+            # it is dropped from the prompt rather than left as text.
+            self._warn(f"violence filter ({VIOLENCE_LEVELS[self.violence]}): {node.source} dropped - "
+                       f"every entry is in the blocked tier")
+            return ""
         if not entries:
             if node.tag_expression:
                 self._warn(f"no entries match {node.source}; left as text")

@@ -75,12 +75,13 @@ class Variant(Node):
 
 @dataclass
 class Wildcard(Node):
-    """__name__, __dir/name__, __colors*__, __name(k=v)__, __name[tag AND tag]__, __[tag]__."""
+    """__name__, __dir/name__, __colors*__, __name(k=v)__, __name[tag AND tag]__, __[tag]__, __name!{a|b}__."""
     name: str = ""                      # "" when the reference is a pure tag query
     params: Dict[str, str] = field(default_factory=dict)
     tag_expression: Optional[str] = None
     sampler: str = SAMPLER_DEFAULT
     binding: str = BINDING_CONCEPT
+    exclude: List[str] = field(default_factory=list)   # __name!{a|b}__: never pick these entries
 
 
 @dataclass

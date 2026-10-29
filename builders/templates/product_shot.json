@@ -1,0 +1,33 @@
+{
+ "v": 1,
+ "name": "Product Shot",
+ "builder": "prompt",
+ "platform": "",
+ "saved": "",
+ "composer": {
+  "v": 1,
+  "parts": {
+   "format": [{"t": "text", "v": "a"}, {"t": "tok", "id": 1}, {"t": "text", "v": ""}],
+   "subject": [{"t": "text", "v": "a"}, {"t": "tok", "id": 2}, {"t": "text", "v": ""}, {"t": "tok", "id": 3}, {"t": "text", "v": ""}],
+   "setting": [{"t": "text", "v": "on"}, {"t": "tok", "id": 4}, {"t": "text", "v": ""}],
+   "lighting": [{"t": "text", "v": ""}, {"t": "tok", "id": 5}, {"t": "text", "v": ""}],
+   "composition": [{"t": "text", "v": ""}, {"t": "tok", "id": 6}, {"t": "text", "v": ""}],
+   "camera": [{"t": "text", "v": ""}, {"t": "tok", "id": 7}, {"t": "text", "v": ""}],
+   "style": [{"t": "text", "v": ""}, {"t": "tok", "id": 8}, {"t": "text", "v": ""}]
+  },
+  "tokens": {
+   "1": {"slot": "", "key": "vp/format/photo_genre", "label": "Photo genre", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "2": {"slot": "", "key": "vp/subject/object_condition", "label": "Condition", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "3": {"slot": "", "key": "vp/subject/product", "label": "Product", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "4": {"slot": "", "key": "vp/setting/studio_backdrop", "label": "Studio backdrop", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "5": {"slot": "", "key": "vp/lighting/studio_setup", "label": "Studio lighting", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "6": {"slot": "", "key": "vp/composition/framing", "label": "Framing", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "7": {"slot": "", "key": "vp/camera/aperture", "label": "Aperture", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "8": {"slot": "", "key": "vp/style/colour_grade", "label": "Colour grade", "mode": "random", "picks": [], "count": 1, "keep": "meaning"}
+  },
+  "next": 9,
+  "locks": {},
+  "fill": {},
+  "kinds": {"subject": "object"}
+ }
+}

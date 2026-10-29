@@ -1,0 +1,1072 @@
+# Recurring motifs of the surrealists, from museum, foundation and scholarly sources (researched 2026-09-21).
+#
+# Every entry appears in at least TWO named works by that artist (listed under `works`), and is written as the
+# concrete thing that is shown - never as what it "means". Provenance stays with each entry: `works`, `source`.
+#
+# Tags: the objects.yaml / spaces.yaml vocabulary (form, material, scale, domain, era, place kind), plus:
+#   object | figure | place | device          what the entry is (device = a pictorial or process device)
+#   high_confidence | medium_confidence | low_confidence
+#       high = a museum/foundation/catalogue page was read and confirms it; medium = Wikipedia or scholarly text;
+#       low = blog-level source, or one listed work is from general art-historical knowledge
+#   overused    a motif that has become a cliche of imitation surrealism (melting watches, the apple over the face)
+#   mature      nudity (Delvaux, Fini, some Magritte and Uelsmann) and all of Bellmer's dolls
+#   <artist>    the artist's own name as a tag, e.g. magritte
+#
+# Usable as ordinary wildcards:  __surreal/motifs/magritte__   __surreal/motifs/**[object AND NOT overused]__
+#                                __surreal/motifs/**[place AND NOT mature]__   __[de_chirico AND device]__
+#
+# These are the SURREALISTS' vocabularies. Your own recurring motifs go in iconography.yaml (copy it to
+# ComfyUI/models/wildcards/), which the surreal engine draws from first. A private vocabulary is the point:
+# lifting a famous motif as it is produces pastiche.
+#
+# Not covered yet, worth a second pass: Magritte's bilboquets (carved balusters) and Delvaux's gas lamps and
+# candles (sources found but not tied to two works), Tanguy's scattered discs, Brauner's Conglomeros.
+
+surreal:
+  motifs:
+    magritte:
+    - text: identical men in dark overcoats and black bowler hats, standing or floating, faces blank
+      tags: [fabric, clothing, midcentury, figure, medium_confidence, magritte, overused]
+      works: [Golconda (1953), The Son of Man (1964), The Mysteries of the Horizon (1955), The Menaced Assassin (1927)]
+      source: https://en.wikipedia.org/wiki/Golconda_(Magritte)
+    - text: a green apple hanging in the air directly in front of a man's face, eyes just visible above it
+      tags: [organic, handheld, round, object, medium_confidence, magritte, overused]
+      works: [The Son of Man (1964), The Great War (1964)]
+      source: https://en.wikipedia.org/wiki/The_Son_of_Man
+    - text: a face blocked by one object floating in front of it (an apple, a bunch of violets, a white bird)
+      tags: [device, medium_confidence, magritte, overused]
+      works: [The Son of Man (1964), The Great War on Facades (1964), Man in the Bowler Hat (1964)]
+      source: https://en.wikipedia.org/wiki/The_Son_of_Man
+    - text: two heads wrapped completely in white cloth, kissing through the fabric
+      tags: [fabric, soft, figure, high_confidence, magritte, overused]
+      works: [The Lovers (1928), The Lovers II (1928)]
+      source: https://www.moma.org/collection/works/79933
+    - text: a canvas on an easel set in front of a window or view, painted with exactly the part of the landscape it hides
+      tags: [device, high_confidence, magritte]
+      works: [The Human Condition (1933), The Human Condition (1935), The Fair Captive (1947), Euclidean Walks (1955), The Call of the Peaks (1942)]
+      source: https://www.nga.gov/artworks/70170-la-condition-humaine
+    - text: a broken window pane, its fallen glass shards still carrying pieces of the view seen through it
+      tags: [device, medium_confidence, magritte]
+      works: [The Key of the Fields (1936), Evening Falls (1964), The Domain of Arnheim (1949)]
+      source: https://en.wikipedia.org/wiki/The_Human_Condition_(Magritte)
+    - text: a dark night street of houses and trees with one lit street lamp, under a bright blue daytime sky with white clouds
+      tags: [exterior, domestic, dim, artificial, device, high_confidence, magritte, overused]
+      works: [The Empire of Light II (1950), Empire of Light (1953-54), The Empire of Light VIII (1954), 'The Empire of Light (1954, Brussels)']
+      source: https://en.wikipedia.org/wiki/The_Empire_of_Light
+    - text: a pale blue sky with puffy white cumulus clouds filling a shape where it does not belong (an eye's iris, a bird's outline, the walls
+        of a room)
+      tags: [device, high_confidence, magritte, overused]
+      works: [The False Mirror (1929), Personal Values (1952), The Return (1940), The Large Family (1963)]
+      source: https://www.moma.org/collection/works/78938
+    - text: a bird-shaped cutout filled with daytime sky, flying against a dark night sky or over a dark sea
+      tags: [flat, object, low_confidence, magritte]
+      works: [The Return (1940), The Large Family (1963)]
+      source: https://news.masterworksfineart.com/2020/08/03/magritte-and-birds
+    - text: a bird's nest holding three eggs on a stone ledge or wall
+      tags: [organic, handheld, round, fragile, object, low_confidence, magritte]
+      works: [The Return (1940), Spring (Le Printemps), The Domain of Arnheim (1962)]
+      source: https://news.masterworksfineart.com/2020/08/03/magritte-and-birds
+    - text: a snowy mountain peak whose rock ridge takes the shape of an eagle's head and spread wings, under a crescent moon
+      tags: [natural, exterior, vast, empty, dim, place, low_confidence, magritte]
+      works: [The Domain of Arnheim (1938), The Domain of Arnheim (1949), The Domain of Arnheim (1962)]
+      source: https://www.thehistoryofart.org/rene-magritte/domain-of-arnheim/
+    - text: one ordinary thing blown up until it fills a whole room (a green apple, a red rose, a comb against the ceiling)
+      tags: [device, high_confidence, magritte]
+      works: [The Listening Room (1952), The Tomb of the Wrestlers (1960), Personal Values (1952)]
+      source: https://www.sfmoma.org/artwork/98.562/
+    - text: a bedroom with sky-painted walls where a comb, match, shaving brush, bar of soap and wine glass tower over the bed and wardrobe
+      tags: [domestic, interior, room, lived-in, daylight, place, high_confidence, magritte]
+      works: [Personal Values (1952), The Listening Room (1952)]
+      source: https://www.sfmoma.org/artwork/98.562/
+    - text: a plain tobacco pipe painted in profile, with a handwritten caption underneath
+      tags: [wood, handheld, long, hollow, antique, object, medium_confidence, magritte, overused]
+      works: [The Treachery of Images (1929), The Two Mysteries (1966), 'This Is Not a Pipe: The Air and the Song']
+      source: https://en.wikipedia.org/wiki/The_Treachery_of_Images
+    - text: separate painted objects in a grid of framed panels, each labelled with a school-copybook word that does not name it
+      tags: [device, medium_confidence, magritte]
+      works: [The Key of Dreams (1930), The Interpretation of Dreams (1935), The Palace of Curtains III (1928-29)]
+      source: https://www.moma.org/collection/works/80137
+    - text: round iron sleigh bells (grelots) with a slot, hanging in the sky over a landscape or growing on bushes like flowers
+      tags: [metal, handheld, round, hollow, music, antique, reflective, object, high_confidence, magritte]
+      works: [The Voice of Space (1928), The Voice of Space (1931), The Flowers of the Abyss (1928)]
+      source: https://www.guggenheim-venice.it/en/art/works/voice-of-space/
+    - text: a pair of laced leather boots that turn into bare human toes, standing on dirt in front of a wooden fence
+      tags: [leather, organic, handheld, paired, clothing, worn, object, high_confidence, magritte]
+      works: ['The Red Model (1935, Moderna Museet)', 'The Red Model (1935, Centre Pompidou)', The Red Model III (1937)]
+      source: https://www.boijmans.nl/en/collection/artworks/4296/le-modele-rouge-iii
+    - text: a wire birdcage holding something other than a bird (a giant egg, or set in place of a man's chest)
+      tags: [metal, tabletop, hollow, container, fragile, object, medium_confidence, magritte]
+      works: [Elective Affinities (1932), The Therapist (1937)]
+      source: https://en.wikipedia.org/wiki/Elective_Affinities_(painting)
+    - text: a huge grey boulder hanging in the air over the sea or a landscape, sometimes with a stone castle on top
+      tags: [stone, large, round, heavy, object, medium_confidence, magritte, overused]
+      works: [The Castle of the Pyrenees (1959), The Battle of the Argonne (1959)]
+      source: https://en.wikipedia.org/wiki/The_Castle_of_the_Pyrenees
+    - text: people, furniture and fruit turned entirely to grey stone inside a room
+      tags: [device, low_confidence, magritte]
+      works: [Memory of a Voyage (1955), The Song of the Violet (1951)]
+      source: https://www.moma.org/collection/works/80065
+    - text: a thin waxing crescent moon in a dusk sky, placed in front of a tree or over a man's head
+      tags: [lighting, object, medium_confidence, magritte]
+      works: [The Mysteries of the Horizon (1955), 16th September (1956)]
+      source: https://en.wikipedia.org/wiki/16th_September_(painting)
+    - text: heavy stage curtains drawn back at the edge of a window, painting or view
+      tags: [fabric, soft, device, low_confidence, magritte]
+      works: [The Palace of Curtains III (1928-29), The Call of the Peaks (1942), The Human Condition (1933)]
+      source: https://en.wikipedia.org/wiki/The_Human_Condition_(Magritte)
+    - text: a man in an overcoat seen from behind, looking out at a flat sea horizon or a low wall above the sea
+      tags: [clothing, figure, low_confidence, magritte, overused]
+      works: [The Musings of a Solitary Walker (1926), Not to Be Reproduced (1937), The Mysteries of the Horizon (1955)]
+      source: https://en.wikipedia.org/wiki/The_Mysteries_of_the_Horizon
+    - text: a woman's face made from her naked torso, breasts for eyes and pubic hair for mouth, framed by her hair
+      tags: [organic, figure, medium_confidence, magritte, mature]
+      works: [The Rape (1934), The Rape (1945)]
+      source: https://en.wikipedia.org/wiki/Ren%C3%A9_Magritte
+    - text: a brass tuba on fire, burning with a steady flame
+      tags: [metal, large, hollow, coiled, music, reflective, object, low_confidence, magritte]
+      works: [The Fair Captive (1947), The Discovery of Fire (1934-35)]
+      source: https://en.wikipedia.org/wiki/The_Human_Condition_(Magritte)
+    de_chirico:
+    - text: an empty Italian piazza bordered by white arcades that recede steeply into depth
+      tags: [institutional, exterior, vast, empty, daylight, place, high_confidence, de_chirico, overused]
+      works: [The Enigma of an Autumn Afternoon (1910), Ariadne (1913), The Soothsayer's Recompense (1913), Mystery and Melancholy of a Street
+          (1914), The Philosopher's Conquest (1914)]
+      source: https://www.artic.edu/artworks/30839/the-philosopher-s-conquest
+    - text: long black shadows of late afternoon cutting across a bright yellow-ochre ground
+      tags: [exterior, daylight, device, high_confidence, de_chirico, overused]
+      works: [Mystery and Melancholy of a Street (1914), Gare Montparnasse (The Melancholy of Departure) (1914), The Red Tower (1913), The Soothsayer's
+          Recompense (1913)]
+      source: https://www.guggenheim-venice.it/en/art/works/the-red-tower/
+    - text: buildings drawn with two or more vanishing points that do not agree, and a floor that tilts steeply up toward the viewer
+      tags: [device, medium_confidence, de_chirico]
+      works: [Mystery and Melancholy of a Street (1914), Gare Montparnasse (The Melancholy of Departure) (1914), The Disquieting Muses (1916-18)]
+      source: https://en.wikipedia.org/wiki/Mystery_and_Melancholy_of_a_Street
+    - text: a small steam locomotive with a white puff of smoke crossing the far horizon behind a brick wall
+      tags: [metal, wheeled, travel, antique, mechanical, object, high_confidence, de_chirico]
+      works: [Gare Montparnasse (The Melancholy of Departure) (1914), The Song of Love (1914), The Philosopher's Conquest (1914), The Soothsayer's
+          Recompense (1913), Ariadne (1913)]
+      source: https://www.moma.org/collection/works/80419
+    - text: the sail or mast of a sailing ship just showing above a wall at the back of the square
+      tags: [wood, fabric, large, nautical, travel, antique, object, high_confidence, de_chirico]
+      works: [The Enigma of an Autumn Afternoon (1910), Ariadne (1913), The Philosopher's Conquest (1914)]
+      source: https://www.metmuseum.org/art/collection/search/486740
+    - text: a reclining marble statue of a sleeping woman (Ariadne) lying on a stone slab in the middle of the square
+      tags: [stone, large, heavy, antique, object, high_confidence, de_chirico]
+      works: [Melanconia (1912), Ariadne (1913), The Soothsayer's Recompense (1913), The Silent Statue (1913), Ariadne's Afternoon (1913)]
+      source: https://www.metmuseum.org/art/collection/search/486740
+    - text: a monument on a plinth in the square, often seen from behind or only as a long shadow on the ground
+      tags: [stone, large, heavy, antique, object, high_confidence, de_chirico]
+      works: [The Enigma of an Autumn Afternoon (1910), The Red Tower (1913), Mystery and Melancholy of a Street (1914)]
+      source: https://www.guggenheim-venice.it/en/art/works/the-red-tower/
+    - text: a white plaster head or torso copied from a classical statue, placed at an odd angle beside unrelated objects
+      tags: [ceramic, stone, tabletop, heavy, antique, object, medium_confidence, de_chirico, overused]
+      works: [The Uncertainty of the Poet (1913), The Song of Love (1914), The Disquieting Muses (1916-18)]
+      source: https://www.moma.org/collection/works/80419
+    - text: a bunch of yellow bananas lying on the ground of the square
+      tags: [organic, handheld, long, object, medium_confidence, de_chirico]
+      works: [The Uncertainty of the Poet (1913), Gare Montparnasse (The Melancholy of Departure) (1914), The Transformed Dream (1913)]
+      source: https://en.wikipedia.org/wiki/Gare_Montparnasse_(The_Melancholy_of_Departure)
+    - text: a large pink rubber surgeon's glove pinned flat to a wall or board
+      tags: [rubber, handheld, soft, medical, clothing, object, medium_confidence, de_chirico]
+      works: [The Song of Love (1914), The Enigma of Fatality (1914)]
+      source: https://www.moma.org/collection/works/80419
+    - text: a round station clock face on a building, hands near two o'clock
+      tags: [metal, glass, round, flat, timekeeping, antique, object, high_confidence, de_chirico]
+      works: [The Enigma of the Hour (1911), The Soothsayer's Recompense (1913), The Philosopher's Conquest (1914), Gare Montparnasse (The Melancholy
+          of Departure) (1914)]
+      source: https://www.artic.edu/artworks/30839/the-philosopher-s-conquest
+    - text: a tall round tower built in stacked colonnaded tiers, rising above the square
+      tags: [stone, large, round, rigid, antique, object, high_confidence, de_chirico]
+      works: [The Red Tower (1913), The Nostalgia of the Infinite (1911-13), The Great Tower (1913), The Philosopher's Conquest (1914)]
+      source: https://www.guggenheim-venice.it/en/art/works/the-red-tower/
+    - text: a red brick factory chimney standing behind the buildings
+      tags: [stone, large, long, hollow, antique, object, medium_confidence, de_chirico]
+      works: [The Philosopher's Conquest (1914), The Disquieting Muses (1916-18), Metaphysical Interior with Large Factory (1916)]
+      source: https://www.artic.edu/artworks/30839/the-philosopher-s-conquest
+    - text: two tiny figures far off in the square, casting long shadows
+      tags: [figure, medium_confidence, de_chirico]
+      works: [The Nostalgia of the Infinite (1911-13), The Enigma of a Day (1914), Ariadne (1913)]
+      source: https://en.wikipedia.org/wiki/Metaphysical_painting
+    - text: an empty covered railway wagon or furniture van standing in shadow, its doors open or shut
+      tags: [wood, metal, large, wheeled, hollow, container, travel, antique, object, medium_confidence, de_chirico]
+      works: [Mystery and Melancholy of a Street (1914), The Anguish of Departure (1914)]
+      source: https://en.wikipedia.org/wiki/Mystery_and_Melancholy_of_a_Street
+    - text: a faceless tailor's mannequin with a smooth egg-shaped head marked by stitched seams, standing like a statue
+      tags: [fabric, wood, large, soft, clothing, figure, medium_confidence, de_chirico, overused]
+      works: [The Double Dream of Spring (1915), The Seer (1915), The Disquieting Muses (1916-18), The Great Metaphysician (1917), Hector and
+          Andromache (1917)]
+      source: https://fondazionedechirico.org/wp-content/uploads/2019/07/3.-n.-11-13-Metaphysical-Art-E.Coen_2014_ENG.pdf
+    - text: a cramped room stacked with wooden frames, boards and drafting instruments, holding a small painting of a factory or landscape
+      tags: [interior, room, dim, device, medium_confidence, de_chirico]
+      works: [Metaphysical Interior with Large Factory (1916), Metaphysical Interior with Biscuits (1916), Great Metaphysical Interior (1917)]
+      source: https://en.wikipedia.org/wiki/Metaphysical_Interior_with_Large_Factory
+    - text: small Ferrarese biscuits and pastries pinned onto a board inside a room
+      tags: [organic, tiny, flat, kitchen, object, medium_confidence, de_chirico]
+      works: [Metaphysical Interior with Biscuits (1916), Metaphysical Interior (with Biscuits from Ferrara) (1916)]
+      source: https://en.wikipedia.org/wiki/Metaphysical_Interior_with_Biscuits
+    - text: wooden set squares, T-squares and rulers leaning against frames
+      tags: [wood, tabletop, flat, sharp, rigid, office, workshop, writing, object, low_confidence, de_chirico]
+      works: [Metaphysical Interior with Large Factory (1916), Great Metaphysical Interior (1917)]
+      source: https://en.wikipedia.org/wiki/Metaphysical_Interior_with_Large_Factory
+    - text: a sky shading from bright green at the horizon to deep blue-green above the rooftops
+      tags: [exterior, dim, device, low_confidence, de_chirico]
+      works: [Mystery and Melancholy of a Street (1914), Gare Montparnasse (The Melancholy of Departure) (1914), The Red Tower (1913)]
+      source: https://en.wikipedia.org/wiki/Mystery_and_Melancholy_of_a_Street
+    - text: large green artichokes set in the foreground of a square
+      tags: [organic, tabletop, round, object, low_confidence, de_chirico]
+      works: [The Philosopher's Conquest (1914), 'Still Life: Turin in Spring (1914)']
+      source: https://www.artic.edu/artworks/30839/the-philosopher-s-conquest
+    delvaux:
+    - text: pale nude or half-nude women with large wide-open eyes, standing still as if sleepwalking in a street or square
+      tags: [figure, medium_confidence, delvaux, mature]
+      works: [Phases of the Moon (1939), The Street of the Trams (1938-39), The Anxious City (1941), Sleeping Venus (1944)]
+      source: https://www.theartstory.org/artist/delvaux-paul/
+    - text: a nude woman asleep on a chaise longue or bench, out in the open or in a waiting room
+      tags: [furniture, figure, medium_confidence, delvaux, mature]
+      works: [Sleeping Venus (1932), Sleeping Venus (1943), Sleeping Venus (1944), Night Train (1947)]
+      source: https://en.wikipedia.org/wiki/Sleeping_Venus_(Delvaux)
+    - text: a standing articulated human skeleton, sometimes gesturing like a person or set on a cross
+      tags: [bone, large, fragile, figure, medium_confidence, delvaux]
+      works: [The Call of the Night (1938), Sleeping Venus (1944), Crucifixion (1952)]
+      source: https://en.wikipedia.org/wiki/Paul_Delvaux
+    - text: a bearded scholar in a dark suit and bow tie peering at a fossil or through a magnifying lens, ignoring the nude women around him
+      tags: [clothing, lab, figure, high_confidence, delvaux, mature]
+      works: [Phases of the Moon (1939), The Awakening of the Forest (1939), Phases of the Moon II (1941), Homage to Jules Verne (1971)]
+      source: https://www.boijmans.nl/en/collection/artworks/101584/les-phases-de-la-lune-iii
+    - text: men in dark suits and bowler hats standing among naked figures in the street
+      tags: [fabric, clothing, midcentury, figure, medium_confidence, delvaux, mature]
+      works: [The Joy of Life (1937), The Anxious City (1941), The Awakening of the Forest (1939)]
+      source: https://www.theartstory.org/artist/delvaux-paul/
+    - text: a little girl in a lace or red dress seen from behind, watching trains at a small station
+      tags: [clothing, figure, low_confidence, delvaux]
+      works: [Solitude (1956), The Forest Station (1960), The Three Lamps (1964), The Tunnel (1978)]
+      source: https://brussels-star.com/2020/05/23/paul-delvaux-lhomme-qui-aimait-les-trains-a-trainworld-jusquau-30-juin/
+    - text: a small country railway station at night, platforms, iron awnings and lamps, lit wagons standing on tracks parallel to the picture
+      tags: [transit, exterior, threshold, hall, empty, artificial, place, medium_confidence, delvaux]
+      works: [Night Train (1947), Solitude (1956), Evening Train (1957), The Forest Station (1960), The Last Wagon (1975)]
+      source: https://alexanderadamsart.wordpress.com/2021/01/31/paul-delvaux-the-man-who-loved-trains/
+    - text: an empty station waiting room with a big clock, an arrivals-and-departures board and a train pulling in outside
+      tags: [transit, interior, hall, empty, artificial, place, low_confidence, delvaux]
+      works: [Night Train (1947), Evening Office (1971)]
+      source: https://en.wikipedia.org/wiki/Night_Train_(painting)
+    - text: an old Brussels tram with trolley pole running down a street of ordinary houses
+      tags: [metal, wood, large, wheeled, travel, antique, electrical, object, medium_confidence, delvaux]
+      works: [The Street of the Trams (1938-39), Our Old Brussels Trams (1978)]
+      source: https://en.wikipedia.org/wiki/Paul_Delvaux
+    - text: an old glass-chimney oil lamp burning with a small yellow flame, set on the ground or held by a woman
+      tags: [glass, metal, tabletop, lighting, antique, fragile, object, medium_confidence, delvaux]
+      works: [The Lamps (1937), The Temple (1949), The Three Lamps (1964)]
+      source: https://en.wikipedia.org/wiki/The_Temple_(painting)
+    - text: Greek and Roman temples, porticoes and colonnades at night, lit from inside or by the moon
+      tags: [sacred, exterior, vast, empty, dim, place, medium_confidence, delvaux]
+      works: [Sleeping Venus (1944), The Caryatids (1946), The Temple (1949), The Acropolis (1966), Homage to Jules Verne (1971)]
+      source: https://en.wikipedia.org/wiki/The_Temple_(painting)
+    - text: a full or crescent moon in a deep inky-blue sky above an empty town square
+      tags: [exterior, dim, device, high_confidence, delvaux]
+      works: [The Awakening of the Forest (1939), Phases of the Moon III (1942), The Anxious City (1941), A Siren in Full Moonlight (1949), The
+          Temple (1949)]
+      source: https://www.boijmans.nl/en/collection/artworks/101584/les-phases-de-la-lune-iii
+    - text: long streets, corridors and squares drawn in strict one-point perspective, with figures placed along the lines like stage extras
+      tags: [device, medium_confidence, delvaux]
+      works: [Woman with a Rose (1936), A Siren in Full Moonlight (1949), Phases of the Moon III (1942)]
+      source: https://brooklynrail.org/2013/06/artseen/paul-delvaux/
+    - text: a woman looking at her own reflection in a wall mirror
+      tags: [glass, furniture, flat, reflective, object, medium_confidence, delvaux]
+      works: [Night Train (1947), The Sabbath (1962)]
+      source: https://en.wikipedia.org/wiki/Night_Train_(painting)
+    - text: nude women whose hair is replaced by leafy branches, or who are half covered in leaves
+      tags: [organic, figure, medium_confidence, delvaux, mature]
+      works: [The Call of the Night (1938), The Awakening of the Forest (1939), The Sabbath (1962)]
+      source: https://www.nationalgalleries.org/art-and-artists/20881
+    - text: a calm sea or lake lit by moonlight, seen beyond the square or through the station
+      tags: [natural, exterior, vast, empty, dim, place, medium_confidence, delvaux]
+      works: [The Anxious City (1941), The Temple (1949), The Shadows (1965), Homage to Jules Verne (1971)]
+      source: https://en.wikipedia.org/wiki/The_Temple_(painting)
+    - text: a mermaid with a scaled tail sitting in a town square or on a street of houses
+      tags: [figure, low_confidence, delvaux]
+      works: [The Village of the Mermaids (1942), A Siren in Full Moonlight (1949)]
+      source: https://www.theartstory.org/artist/delvaux-paul/
+    tanguy:
+    - text: an endless flat grey or pale plain that fades smoothly into the sky with no visible horizon line
+      tags: [natural, exterior, vast, empty, dim, device, high_confidence, tanguy, overused]
+      works: [Old Horizon (1928), The Sun in Its Jewel Case (1937), Indefinite Divisibility (1942), Many Have Lived (Plusieurs ont vecu)]
+      source: https://www.guggenheim-venice.it/en/art/works/the-sun-in-its-jewel-case/
+    - text: hard black cast shadows beside each object, falling at sharp angles across the plain
+      tags: [device, high_confidence, tanguy, overused]
+      works: ['Mama, Papa Is Wounded! (1927)', The Sun in Its Jewel Case (1937), Indefinite Divisibility (1942)]
+      source: https://buffaloakg.org/artworks/rca19452-divisibilit%C3%A9-ind%C3%A9finie-indefinite-divisibility
+    - text: smooth rounded bone-like and pebble-like forms standing alone on the ground, painted with precise shading
+      tags: [bone, stone, tabletop, round, soft, object, high_confidence, tanguy, overused]
+      works: [The Sun in Its Jewel Case (1937), Many Have Lived (Plusieurs ont vecu), The Invisibles (1951)]
+      source: https://www.guggenheim-venice.it/en/art/works/the-sun-in-its-jewel-case/
+    - text: soft blobs and objects floating just above the ground, each with its own shadow below
+      tags: [soft, round, object, high_confidence, tanguy]
+      works: ['Mama, Papa Is Wounded! (1927)', Death Watching His Family (1927), Indifferent Walnut Tree (Noyer indifferent) (1929)]
+      source: https://www.museothyssen.org/en/collection/artists/tanguy-yves/death-watching-his-family
+    - text: very thin straight lines like spider thread strung between forms in a geometric web
+      tags: [long, fragile, object, medium_confidence, tanguy]
+      works: ['Mama, Papa Is Wounded! (1927)', Indifferent Walnut Tree (Noyer indifferent) (1929), Promontory Palace (1931)]
+      source: https://archive.org/stream/yvestan00tang/yvestan00tang_djvu.txt
+    - text: a tall wavering column of smoke or vapor rising straight up from the ground
+      tags: [long, soft, object, medium_confidence, tanguy]
+      works: [The Storm (Black Landscape) (1926), 'Mama, Papa Is Wounded! (1927)']
+      source: https://en.wikipedia.org/wiki/Mama,_Papa_is_Wounded!
+    - text: rough standing stones and slabs like Breton dolmens and menhirs on a beach or plain
+      tags: [stone, large, heavy, antique, object, high_confidence, tanguy]
+      works: [Death Watching His Family (1927), The Sun in Its Jewel Case (1937)]
+      source: https://www.guggenheim-venice.it/en/art/works/the-sun-in-its-jewel-case/
+    - text: a tall tower of forms stacked and balanced on top of each other, rising from the plain
+      tags: [large, long, rigid, object, medium_confidence, tanguy]
+      works: [Tower of the West (1931), 'Through Birds, Through Fire, but Not Through Glass (1943)', Towers of the Sea (1944), Rose of the Four
+          Winds (1950)]
+      source: https://www.theartstory.org/artist/tanguy-yves/
+    - text: clusters of sharp grey metallic barbs, spikes and blades pointing into the sky
+      tags: [metal, large, sharp, rigid, reflective, object, medium_confidence, tanguy]
+      works: [Fear (1949), From Pale Hands to Weary Skies (1950), Rose of the Four Winds (1950)]
+      source: https://archive.org/stream/yvestan00tang/yvestan00tang_djvu.txt
+    - text: ground covered with rubble, pebbles and small bones all the way to the horizon
+      tags: [natural, exterior, vast, abandoned, dim, place, high_confidence, tanguy]
+      works: [Rose of the Four Winds (1950), Imaginary Numbers (1954), Multiplication of the Arcs (1954)]
+      source: https://www.museothyssen.org/en/collection/artists/tanguy-yves/imaginary-numbers
+    - text: a packed maze of hardened stone-grey forms crowding the whole ground under a stormy sky
+      tags: [device, high_confidence, tanguy]
+      works: [Imaginary Numbers (1954), Multiplication of the Arcs (1954)]
+      source: https://www.museothyssen.org/en/collection/artists/tanguy-yves/imaginary-numbers
+    - text: a shallow sea floor or beach under murky water-colored light, with objects resting on it
+      tags: [natural, exterior, vast, empty, dim, place, high_confidence, tanguy]
+      works: [Death Watching His Family (1927), Old Horizon (1928)]
+      source: https://www.museothyssen.org/en/collection/artists/tanguy-yves/death-watching-his-family
+    - text: rock formations shaped like forts or castles with holes for windows, ridged walls and watchtowers
+      tags: [natural, exterior, vast, abandoned, place, high_confidence, tanguy]
+      works: [Promontory Palace (1931), The Palace of the Windowed Rocks (1942)]
+      source: https://www.guggenheim-venice.it/en/art/works/promontory-palace/
+    - text: a sky that looks thick and solid, so the scene seems underground or underwater
+      tags: [dim, device, medium_confidence, tanguy]
+      works: [Promontory Palace (1931), Old Horizon (1928)]
+      source: https://www.guggenheim-venice.it/en/art/works/promontory-palace/
+    - text: a long line of small forms with flying pennants and trailing colored fabric moving out of a bank of mist
+      tags: [device, medium_confidence, tanguy]
+      works: [The Ribbon of Extremes (1932), I Am Waiting for You (1934)]
+      source: https://archive.org/stream/yvestan00tang/yvestan00tang_djvu.txt
+    - text: a dark cloud or cloud-like mass floating low over the plain
+      tags: [soft, object, low_confidence, tanguy]
+      works: ['Mama, Papa Is Wounded! (1927)', Outside (1929)]
+      source: https://en.wikipedia.org/wiki/Mama,_Papa_is_Wounded!
+    dali:
+    - text: soft, limp pocket watches draped over a branch, a ledge and a sleeping form, sagging like warm cheese
+      tags: [metal, handheld, round, soft, timekeeping, object, high_confidence, dali, overused]
+      works: [The Persistence of Memory (1931), The Sense of Speed (1931), Singularities (c. 1935)]
+      source: https://www.salvador-dali.org/wp-content/uploads/2025/05/dossierenglish_160163606439.pdf
+    - text: wooden crutches propping up soft, sagging forms such as a huge head or a stretched limb
+      tags: [wood, long, rigid, medical, object, high_confidence, dali, overused]
+      works: [The Spectre of Sex-Appeal (c. 1934), Sleep (1937), The Burning Giraffe (1937)]
+      source: https://www.salvador-dali.org/wp-content/uploads/2025/05/dossierenglish_160163606439.pdf
+    - text: a chest of drawers opening out of a human body or a classical statue, the drawers pulled half open
+      tags: [wood, furniture, container, object, high_confidence, dali, overused]
+      works: [Singularities (c. 1935), Venus de Milo with Drawers (1936), The Burning Giraffe (1937)]
+      source: https://www.artic.edu/artworks/185184/venus-de-milo-with-drawers
+    - text: black ants swarming over a gold watch or across a face
+      tags: [organic, tiny, object, high_confidence, dali]
+      works: [The Persistence of Memory (1931), Retrospective Bust of a Woman (1933)]
+      source: https://www.moma.org/collection/works/79018
+    - text: elephants on impossibly long, thin, many-jointed legs, carrying obelisks on their backs
+      tags: [organic, large, long, fragile, figure, high_confidence, dali, overused]
+      works: [Dream Caused by the Flight of a Bee around a Pomegranate a Second before Awakening (1944), The Temptation of St. Anthony (1946),
+        The Elephants (1948)]
+      source: https://www.museothyssen.org/en/collection/artists/dali-salvador/dream-caused-flight-bee-around-pomegranate-second-waking
+    - text: a telephone handset lying alone or hanging from a branch, its cord cut
+      tags: [handheld, electrical, object, high_confidence, dali]
+      works: [Imperial Violets (1938), Mountain Lake (1938), Lobster Telephone (1938), The Enigma of Hitler (1939)]
+      source: https://www.museoreinasofia.es/en/collections/artwork/enigma-hitler/
+    - text: a red plaster lobster laid across a telephone, or lobsters worn as costume
+      tags: [organic, handheld, object, medium_confidence, dali, overused]
+      works: [Lobster Telephone (1938), Dream of Venus (1939)]
+      source: https://en.wikipedia.org/wiki/Lobster_Telephone
+    - text: a long loaf of bread balanced on a head or placed on the ground as an object
+      tags: [organic, tabletop, long, kitchen, object, high_confidence, dali]
+      works: [Retrospective Bust of a Woman (1933), Singularities (c. 1935)]
+      source: https://www.moma.org/collection/works/81329
+    - text: a grand piano or cello gone soft and limp like cloth, lifted by a corner or carried like a hide
+      tags: [wood, furniture, soft, music, object, high_confidence, dali]
+      works: [Singularities (c. 1935), A Chemist Lifting with Extreme Precaution the Cuticle of a Grand Piano (1936), Three Young Surrealist Women
+          Holding in Their Arms the Skins of an Orchestra (1936)]
+      source: https://www.artic.edu/articles/1022/double-visions-and-disappearing-acts-six-works-by-salvador-dali
+    - text: a woman's head replaced by a mass of flowers or branches
+      tags: [organic, figure, high_confidence, dali]
+      works: [Singularities (c. 1935), Three Young Surrealist Women Holding in Their Arms the Skins of an Orchestra (1936)]
+      source: https://www.artic.edu/articles/1022/double-visions-and-disappearing-acts-six-works-by-salvador-dali
+    - text: a burning giraffe, flames running along its back, standing far off on an empty plain
+      tags: [organic, large, figure, high_confidence, dali]
+      works: [The Burning Giraffe (1937), Inventions of the Monsters (1937)]
+      source: https://en.wikipedia.org/wiki/The_Burning_Giraffe
+    - text: a small girl skipping rope, a tiny dark silhouette in a deserted town square, echoed by a hanging bell
+      tags: [figure, high_confidence, dali]
+      works: [Nostalgic Echo (1935), Suburbs of a Paranoiac-Critical Town (1935), Landscape with a Girl Skipping Rope (1936), Average Pagan Landscape
+          (1937)]
+      source: https://www.boijmans.nl/en/collection/artworks/4230/landscape-with-a-girl-skipping-rope
+    - text: a small boy in a sailor suit holding a hoop, standing beside a governess or a giant form
+      tags: [clothing, toy, figure, high_confidence, dali]
+      works: [The Spectre of Sex-Appeal (c. 1934), Enigmatic Elements in a Landscape (1934), Average Pagan Landscape (1937)]
+      source: https://www.salvador-dali.org/wp-content/uploads/2025/05/dossierenglish_160163606439.pdf
+    - text: a figure completely hidden under a white sheet or drapery, standing in an open landscape
+      tags: [fabric, soft, figure, high_confidence, dali]
+      works: [Eclipse and Vegetable Osmosis (1934), Enigmatic Elements in a Landscape (1934), Figure and Drapery in a Landscape (1935)]
+      source: https://www.salvador-dali.org/wp-content/uploads/2025/05/dossierenglish_160163606439.pdf
+    - text: tall, dark cypress trees standing singly on a bare plain
+      tags: [organic, large, long, object, high_confidence, dali]
+      works: [The Sense of Speed (1931), Eclipse and Vegetable Osmosis (1934), Enigmatic Elements in a Landscape (1934), Figure and Drapery in
+          a Landscape (1935)]
+      source: https://www.salvador-dali.org/wp-content/uploads/2025/05/dossierenglish_160163606439.pdf
+    - text: a single woman's shoe used as an object, sometimes repeated or with a clock set into it
+      tags: [leather, handheld, clothing, object, high_confidence, dali]
+      works: [The Sense of Speed (1931), Object Functioning Symbolically (1931)]
+      source: https://www.salvador-dali.org/wp-content/uploads/2025/05/dossierenglish_160163606439.pdf
+    - text: a cracked egg held upright, with a flower growing out of it or a figure coming out of it
+      tags: [organic, handheld, round, fragile, object, medium_confidence, dali]
+      works: [Metamorphosis of Narcissus (1937), Poetry of America (1943)]
+      source: https://en.wikipedia.org/wiki/Metamorphosis_of_Narcissus
+    - text: the praying peasant couple from Millet's Angelus, copied as small figures, as an inkwell, or in their poses
+      tags: [ceramic, figure, high_confidence, dali]
+      works: [Retrospective Bust of a Woman (1933), A Couple with Their Heads Full of Clouds (1936)]
+      source: https://www.moma.org/collection/works/81329
+    - text: 'furniture made from a woman''s face: a sofa of red lips, curtains of hair, a fireplace nose'
+      tags: [fabric, furniture, soft, object, high_confidence, dali, overused]
+      works: [Mae West's Face Which May Be Used as a Surrealist Apartment (1934-35), Mae West Lips Sofa (1937-38)]
+      source: https://www.ngv.vic.gov.au/essay/salvador-dali-mae-wests-lips/
+    - text: a huge, soft, fleshy head or face with closed eyes, lying on the ground or held up by props
+      tags: [organic, large, soft, figure, medium_confidence, dali]
+      works: [The Great Masturbator (1929), The Persistence of Memory (1931), Sleep (1937)]
+      source: https://en.wikipedia.org/wiki/The_Persistence_of_Memory
+    - text: eroded, wind-carved coastal rocks of Cap de Creus, shaped like heads or creatures
+      tags: [natural, exterior, vast, empty, daylight, place, high_confidence, dali]
+      works: [The Persistence of Memory (1931), The Spectre of Sex-Appeal (c. 1934), Average Pagan Landscape (1937)]
+      source: https://www.salvador-dali.org/wp-content/uploads/2025/05/dossierenglish_160163606439.pdf
+    - text: a flat, empty plain running to a low horizon under clear light, with tiny distant figures and long raking shadows
+      tags: [natural, exterior, vast, empty, daylight, device, high_confidence, dali, overused]
+      works: [The Sense of Speed (1931), Phantom Cart (1933), Eclipse and Vegetable Osmosis (1934), Figure and Drapery in a Landscape (1935)]
+      source: https://www.salvador-dali.org/wp-content/uploads/2025/05/dossierenglish_160163606439.pdf
+    - text: a double image in which one group of shapes reads as two things at once (swans reflected as elephants, figures forming a face, a face
+        that is also a fruit dish)
+      tags: [device, high_confidence, dali]
+      works: [Phantom Cart (1933), Swans Reflecting Elephants (1937), Metamorphosis of Narcissus (1937), Apparition of Face and Fruit Dish on
+          a Beach (1938), Slave Market with the Disappearing Bust of Voltaire (1940)]
+      source: https://www.artic.edu/articles/1022/double-visions-and-disappearing-acts-six-works-by-salvador-dali
+    ernst:
+    - text: frottage, pencil rubbings of floorboards, leaves, thread and wire mesh turned into creatures, forests and landscapes
+      tags: [wood, paper, organic, flat, device, high_confidence, ernst]
+      works: ['Histoire naturelle (c. 1925, published 1926)', 'The Fugitive, from Histoire naturelle (c. 1925)', 'Little Tables around the Earth,
+          from Histoire naturelle (c. 1925)']
+      source: https://www.moma.org/collection/works/10056
+    - text: grattage, paint scraped over objects placed under the canvas, leaving ridged, grainy imprints of wood and metal
+      tags: [wood, metal, device, medium_confidence, ernst]
+      works: [Forest and Dove (1927), The Wood (1927), The Entire City (1935-36)]
+      source: https://en.wikipedia.org/wiki/Forest_and_Dove
+    - text: decalcomania, thin paint pressed and lifted off the canvas, leaving spongy, coral-like and mossy textures that read as rock, fungus
+        or ruins
+      tags: [organic, stone, device, high_confidence, ernst]
+      works: [Attirement of the Bride (1940), Europe after the Rain II (1940-42), The Eye of Silence (1943-44)]
+      source: https://www.kemperartmuseum.wustl.edu/research/artwork-essays/ernst-max-loeil-du-silence-the-eye-of-silence-1943-44
+    - text: a dense forest of stiff, petrified trees standing like a wall of planks at night
+      tags: [natural, exterior, vast, dim, place, medium_confidence, ernst]
+      works: [The Great Forest (1927), Forest and Dove (1927), The Wood (1927), Petrified Forest (1927)]
+      source: https://en.wikipedia.org/wiki/The_Wood_(Max_Ernst)
+    - text: a flat ring or hollow disc hanging in the sky over a forest, in place of the sun or moon
+      tags: [round, flat, hollow, object, medium_confidence, ernst]
+      works: [Forest and Sun (1926), 'The Wheel of Light, from Histoire naturelle (c. 1925)', The Great Forest (1927)]
+      source: https://epochemagazine.org/74/max-ernst-and-the-schizoanalysis-of-nature/
+    - text: a small bird trapped inside a forest or behind a barrier
+      tags: [organic, tiny, figure, medium_confidence, ernst]
+      works: [Oedipus Rex (1922), Forest and Dove (1927)]
+      source: https://epochemagazine.org/74/max-ernst-and-the-schizoanalysis-of-nature/
+    - text: Loplop, a bird-headed figure whose body is a rectangular frame or easel holding a picture
+      tags: [flat, rigid, figure, medium_confidence, ernst]
+      works: [Loplop Introduces Loplop (1930), Loplop Introduces a Young Girl (1930), Loplop Introduces Members of the Surrealist Group (1931)]
+      source: https://en.wikipedia.org/wiki/Loplop
+    - text: people in clothes with bird heads
+      tags: [figure, high_confidence, ernst]
+      works: [Une semaine de bonté (1934), Attirement of the Bride (1940)]
+      source: https://www.guggenheim-venice.it/en/art/works/attirement-of-the-bride/
+    - text: collage made from 19th-century engravings, with animal-headed people and water flooding bedrooms and dining rooms
+      tags: [paper, antique, device, medium_confidence, ernst]
+      works: [La Femme 100 têtes (1929), Une semaine de bonté (1934)]
+      source: https://en.wikipedia.org/wiki/Une_semaine_de_bont%C3%A9
+    - text: a walled citadel of blank stepped walls, with no people, under a pale disc, with foliage creeping up the base
+      tags: [exterior, vast, abandoned, dim, place, high_confidence, ernst]
+      works: [Petrified City (1933), The Entire City (1934), The Entire City (1935-36)]
+      source: https://unframed.lacma.org/2023/05/16/new-acquisition-max-ernst%E2%80%99s-%E2%80%9C-entire-city%E2%80%9D
+    - text: a landscape of spongy, overgrown ruins and grottoes with a still pool, figures half absorbed into the rock
+      tags: [natural, exterior, vast, abandoned, dim, place, high_confidence, ernst]
+      works: [Attirement of the Bride (1940), Europe after the Rain II (1940-42), The Eye of Silence (1943-44)]
+      source: https://www.kemperartmuseum.wustl.edu/research/artwork-essays/ernst-max-loeil-du-silence-the-eye-of-silence-1943-44
+    oppenheim:
+    - text: an everyday object covered or lined with animal fur, such as a teacup with saucer and spoon, a pair of gloves, a beer glass
+      tags: [organic, handheld, soft, kitchen, object, high_confidence, oppenheim, overused]
+      works: [Object (1936), Fur Gloves with Wooden Fingers (1936), Squirrel (1969)]
+      source: https://glasstire.com/2022/08/30/rediscovering-meret-oppenheim-at-the-menil-collection/
+    - text: household furniture or tableware fitted with animal parts, such as a table on bird legs or a beer glass with a bushy tail
+      tags: [metal, wood, furniture, object, medium_confidence, oppenheim]
+      works: [Table with Bird's Feet (1939), Squirrel (1969)]
+      source: https://www.theartstory.org/artist/oppenheim-meret/
+    - text: 'gloves with body parts: wooden fingers with red-painted nails, or veins printed and stitched on the back'
+      tags: [leather, wood, handheld, clothing, object, high_confidence, oppenheim]
+      works: [Fur Gloves with Wooden Fingers (1936), Glove (for Parkett no. 4) (1985)]
+      source: https://www.moma.org/collection/works/61765?locale=ja
+    - text: a pair of women's shoes as sculpture, e.g. white high heels tied together and served on a silver platter
+      tags: [leather, handheld, paired, clothing, kitchen, object, medium_confidence, oppenheim]
+      works: [Ma gouvernante - My Nurse - Mein Kindermädchen (1936), The Couple (Das Paar) (1956)]
+      source: https://apollo-magazine.com/meret-oppenheim-moma-surrealism-review/
+    - text: a cloud made solid, sculpted in plaster and resting on a small boat or a bridge
+      tags: [tabletop, soft, round, object, medium_confidence, oppenheim]
+      works: [Cloud on a Boat (1963), Cloud on a Bridge (1963)]
+      source: https://glasstire.com/2022/08/30/rediscovering-meret-oppenheim-at-the-menil-collection/
+    - text: a lump of molded plaster pushing out of an ornate metal picture frame
+      tags: [metal, tabletop, soft, object, medium_confidence, oppenheim]
+      works: [Miss Gardenia (1962), A Distant Relative (1966)]
+      source: https://glasstire.com/2022/08/30/rediscovering-meret-oppenheim-at-the-menil-collection/
+    - text: a figure or object hanging in the air above dark churning water or a forest
+      tags: [figure, medium_confidence, oppenheim]
+      works: [Sweet Peppers on the Water (1938), The Suffering of Genevieve (1939), Genevieve Hovering over the Water (1957)]
+      source: https://glasstire.com/2022/08/30/rediscovering-meret-oppenheim-at-the-menil-collection/
+    - text: a carved limewood mask or totem-like monolith with a spiral-carved copper head
+      tags: [wood, metal, large, rigid, ritual, object, medium_confidence, oppenheim]
+      works: [Mask (1959), The Green Spectator (1959)]
+      source: https://glasstire.com/2022/08/30/rediscovering-meret-oppenheim-at-the-menil-collection/
+    - text: soft, dissolving fog-shapes forming a head or a flower
+      tags: [soft, device, medium_confidence, oppenheim]
+      works: [Head of Fog (1974), Flower of Fog (1974)]
+      source: https://glasstire.com/2022/08/30/rediscovering-meret-oppenheim-at-the-menil-collection/
+    bellmer:
+    - text: a life-size doll made of separate parts joined at wooden ball joints, so the limbs can be pulled apart, rearranged and reassembled
+      tags: [wood, rigid, round, toy, device, high_confidence, bellmer, mature]
+      works: [Die Puppe (1934), La Poupée (1935-36), 'Les Jeux de la poupée (photographs 1935-38, published 1949)']
+      source: https://www.boijmans.nl/en/collection/artworks/118762/les-jeux-de-la-poupee
+    - text: a doll with a plaster and papier-mâché body over a wood-and-metal frame, glass eyes and a long, tangled wig
+      tags: [wood, metal, glass, paper, large, toy, figure, high_confidence, bellmer, mature]
+      works: [Die Puppe (1934), La Poupée (1935)]
+      source: https://www.icp.org/browse/archive/constituents/hans-bellmer
+    - text: a headless doll assembled around one central ball joint, with doubled sets of legs and repeated rounded segments
+      tags: [metal, round, paired, rigid, toy, object, high_confidence, bellmer, mature]
+      works: ['La Poupée (second doll, 1935)', 'Doll (1936, cast 1965)']
+      source: https://www.moma.org/collection/works/81611
+    - text: a jointed construction of wooden and metal segments on a wooden base, with ball-joint links like a doll crossed with a tripod
+      tags: [wood, metal, tabletop, mechanical, rigid, object, high_confidence, bellmer, mature]
+      works: ['Doll (1936, cast 1965)', The Machine-Gunneress in a State of Grace (1937)]
+      source: https://www.moma.org/collection/works/81806?locale=en
+    - text: a jointed doll posed in ordinary rooms of a house, such as a bedroom, a kitchen, a staircase or a cellar
+      tags: [domestic, interior, intimate, lived-in, dim, place, high_confidence, bellmer, mature]
+      works: [La Poupée (1938), 'Les Jeux de la poupée (photographs 1935-38, published 1949)']
+      source: https://www.boijmans.nl/en/collection/artworks/118762/les-jeux-de-la-poupee
+    - text: a jointed doll posed outdoors, propped against tree trunks in a wood
+      tags: [natural, exterior, dim, place, low_confidence, bellmer, mature]
+      works: [La Poupée (1935), 'Les Jeux de la poupée (photographs 1935-38, published 1949)']
+      source: https://www.theartstory.org/artist/bellmer-hans/
+    - text: small black-and-white prints hand-tinted in pale aniline and watercolour washes of pink, green and yellow
+      tags: [paper, handheld, device, high_confidence, bellmer, mature]
+      works: [The Doll (1935), 'La Poupée, from Les Jeux de la poupée (1938)', Les Jeux de la poupée (1949)]
+      source: https://www.sfmoma.org/artwork/2003.145/
+    - text: harsh stage-like lighting and shifting camera angles on a small, album-sized print
+      tags: [lighting, device, medium_confidence, bellmer, mature]
+      works: [Die Puppe (1934), Les Jeux de la poupée (1949)]
+      source: https://www.ubugallery.com/pdf/2006_BELLMER_PressRelease.pdf
+    tanning:
+    - text: a hotel corridor or enfilade of rooms lined with doors, one door ajar with hard light spilling through
+      tags: [commercial, interior, hall, dim, artificial, place, high_confidence, tanning]
+      works: [Birthday (1942), Eine kleine Nachtmusik (1943), The Guest Room (1950-52)]
+      source: https://www.tate.org.uk/press/press-releases/tate-acquires-major-surrealist-painting
+    - text: young girls in torn, tattered dresses, their hair standing straight up as if in a strong wind
+      tags: [fabric, clothing, worn, figure, medium_confidence, tanning]
+      works: [Children's Games (1942), Eine kleine Nachtmusik (1943)]
+      source: https://apollo-magazine.com/dorothea-tanning-tate-modern/
+    - text: wallpaper torn in strips from the walls, with bodies or forms showing through or breaking out underneath
+      tags: [paper, flat, worn, domestic, object, medium_confidence, tanning]
+      works: [Children's Games (1942), 'Hôtel du Pavot, Chambre 202 (1970-73)']
+      source: https://apollo-magazine.com/dorothea-tanning-tate-modern/
+    - text: a woman in a tattered, antique-style dress, skirt ending in roots, twigs or rags
+      tags: [fabric, clothing, antique, worn, figure, high_confidence, tanning]
+      works: [Birthday (1942), Maternity (1946-47)]
+      source: https://www.tate.org.uk/tate-etc/issue-45-spring-2019/dorothea-tanning-shape-shifter-lauren-elkin
+    - text: a Pekingese dog, sometimes with a human baby's face, sitting beside people
+      tags: [organic, tabletop, figure, medium_confidence, tanning]
+      works: [Maternity (1946-47), Tableau vivant (1954), The Artist as a Dog (1967)]
+      source: https://mapmagazine.co.uk/a-canine-state-of-mind
+    - text: an open desert or bare rocky expanse with one or two small figures, framed by an open door
+      tags: [natural, exterior, vast, empty, daylight, place, medium_confidence, tanning]
+      works: [Self-Portrait (1944), Maternity (1946-47)]
+      source: https://apollo-magazine.com/dorothea-tanning-tate-modern/
+    - text: a table under a white tablecloth, with roses and forms that seem to grow up through the cloth
+      tags: [fabric, furniture, kitchen, object, medium_confidence, tanning]
+      works: [Some Roses and Their Phantoms (1952), La Truite au bleu (Poached Trout) (1952)]
+      source: https://www.tate.org.uk/art/artists/dorothea-tanning-2024/quiet-mystery
+    - text: soft sculptures of stuffed fabric (velvet, tweed, wool, ping-pong balls, pins) shaped into limb-like, body-like lumps
+      tags: [fabric, soft, furniture, object, high_confidence, tanning]
+      works: [Pincushion to Serve as Fetish (1965), Nue couchée (1969-70), Emma (1970)]
+      source: https://www.selvedge.org/blogs/selvedge/surrealist-textile-objects-dorothea-tanning
+    - text: soft cloth bodies pushing out of sofa upholstery, furniture and room walls
+      tags: [fabric, furniture, soft, object, high_confidence, tanning]
+      works: [Rainy Day Canapé (1970), 'Hôtel du Pavot, Chambre 202 (1970-73)']
+      source: https://www.dorotheatanning.org/life-and-work/view/132/
+    - text: blurred, splintered tangles of limbs, hair and faces merging into a prismatic field of colour
+      tags: [device, medium_confidence, tanning]
+      works: [Insomnias (1957), Dogs of Cythera (1963), Maternity III (1966)]
+      source: https://www.tate.org.uk/tate-etc/issue-45-spring-2019/dorothea-tanning-shape-shifter-lauren-elkin
+    man_ray:
+    - text: rayograph, objects (glassware, hands, household things) laid directly on photographic paper and exposed, giving glowing white silhouettes
+        on black
+      tags: [paper, glass, flat, device, high_confidence, man_ray]
+      works: [Champs délicieux (1922), Rayograph (1922), Rayography (The Kiss) (1922), Rayograph (1923)]
+      source: https://www.metmuseum.org/press-releases/man-ray
+    - text: solarisation, a partly reversed print with a thin dark outline and silvery halo around a face or body
+      tags: [paper, device, high_confidence, man_ray]
+      works: [Lee Miller (1929), Primacy of Matter over Thought (1929)]
+      source: https://www.metmuseum.org/perspectives/man-ray-lee-miller
+    - text: a metronome with a cut-out photograph of an eye clipped to its swinging arm
+      tags: [wood, metal, tabletop, mechanical, music, object, medium_confidence, man_ray]
+      works: [Object to Be Destroyed (1923), Indestructible Object (1958), Perpetual Motif (1970)]
+      source: https://en.wikipedia.org/wiki/Object_to_Be_Destroyed
+    - text: a single enlarged eye with heavy lashes, sometimes with glass beads on the cheek as tears
+      tags: [glass, object, medium_confidence, man_ray]
+      works: [Object to Be Destroyed (1923), Larmes (Glass Tears) (1930-32)]
+      source: https://en.wikipedia.org/wiki/Larmes
+    - text: a huge pair of red lips floating in the sky above a landscape and observatory
+      tags: [large, object, medium_confidence, man_ray, overused]
+      works: ['Observatory Time: The Lovers (1932-34)', 'À l''heure de l''observatoire: Les Amoureux (photograph, 1936)']
+      source: https://theartstory.org/artist-ray-man-artworks.htm
+    - text: a household appliance altered until it cannot be used, e.g. a flatiron with a row of tacks on its sole, a sewing machine wrapped in
+        a blanket and tied with cord
+      tags: [metal, fabric, handheld, sharp, heavy, object, medium_confidence, man_ray]
+      works: [The Enigma of Isidore Ducasse (1920), The Gift (Cadeau) (1921)]
+      source: https://theartstory.org/artist-ray-man-artworks.htm
+    - text: a woman's head or bare back posed to echo an object, e.g. violin sound-holes painted on her back, or her head lying beside a carved
+        mask
+      tags: [music, figure, medium_confidence, man_ray, overused]
+      works: [Le Violon d'Ingres (1924), Noire et blanche (1926)]
+      source: https://theartstory.org/artist-ray-man-artworks.htm
+    - text: 19th-century plaster, wood and string mathematical models, dramatically lit like strange sculptures
+      tags: [wood, paper, tabletop, lab, antique, object, high_confidence, man_ray]
+      works: [Mathematical Objects photographs (1934-36), Shakespearean Equations paintings (late 1940s)]
+      source: https://www.phillipscollection.org/press/phillips-collection-explores-intersection-art-and-science-man-ray-human-equations-journey
+    lee_miller:
+    - text: solarisation, portraits and objects with reversed, halo-like dark outlines against silvery tones
+      tags: [paper, device, high_confidence, lee_miller]
+      works: [Portraits of Meret Oppenheim (1930), Sirène (Nimet Eloui Bey) (c. 1930-32), Solarised Piano (c. 1933), Portrait of Dorothy Hill
+          (1933)]
+      source: https://www.tate.org.uk/press/press-releases/lee-miller-open
+    - text: an empty view framed through a torn screen, window or doorway, so the frame becomes the subject
+      tags: [threshold, device, high_confidence, lee_miller]
+      works: ['Windows, Paris (1930)', Portrait of Space (1937)]
+      source: https://www.nationalgalleries.org/art-and-artists/features/lee-miller
+    - text: reflections in scratched shop-door glass, perfume-shop glass or facing mirrors layering the photographer into the scene
+      tags: [glass, reflective, device, high_confidence, lee_miller]
+      works: [Exploding Hand (1930), 'Untitled (Reflection of Lee Miller), Guerlain Parfumerie (c. 1930)', Self-portrait between two mirrors (1950)]
+      source: https://collections.vam.ac.uk/item/O128576/exploding-hand-photograph-miller-lee/
+    - text: long shadows of people or frames thrown across pale walls and white columns
+      tags: [daylight, device, high_confidence, lee_miller]
+      works: ['Windows, Paris (1930)', Eileen Agar (1937)]
+      source: https://www.tate.org.uk/tate-etc/issue-67-autumn-2025/id-rather-take-a-picture-than-be-one-lee-miller
+    - text: an empty Egyptian desert of sand, rock and white domes under hard sun
+      tags: [natural, exterior, vast, empty, daylight, place, high_confidence, lee_miller]
+      works: [Portrait of Space (1937), Untitled (Domes of the Monastery of Saint Mary El Sourian) (1939), Egypt (1939), Sinai (1939)]
+      source: https://www.tate.org.uk/tate-etc/issue-67-autumn-2025/id-rather-take-a-picture-than-be-one-lee-miller
+    - text: bomb-damaged London, bricks and rubble spilling out of doorways, buildings opened up, empty streets with warning signs
+      tags: [exterior, threshold, abandoned, daylight, place, high_confidence, lee_miller]
+      works: [Non-conformist chapel (1940), 'Dolphin Square, Bridge of Sighs, Burlington Arcade (1940)', You will not lunch in Charlotte Street
+          today (1940), Revenge on Culture (1940)]
+      source: https://www.tate.org.uk/tate-etc/issue-67-autumn-2025/id-rather-take-a-picture-than-be-one-lee-miller
+    - text: smartly dressed women posed calmly among wreckage or at the mouth of a bomb shelter
+      tags: [clothing, figure, high_confidence, lee_miller]
+      works: [Fire Masks (1941), Model (Elizabeth Cowell) wearing Digby Morton suit (1941)]
+      source: https://www.tate.org.uk/tate-etc/issue-67-autumn-2025/id-rather-take-a-picture-than-be-one-lee-miller
+    - text: faces hidden behind masks or wrapped in fabric
+      tags: [fabric, clothing, figure, medium_confidence, lee_miller]
+      works: [Untitled (figure wrapped in fabric) (1930), Fire Masks (1941)]
+      source: https://www.metmuseum.org/perspectives/man-ray-lee-miller
+    - text: an artist photographed posed with their own work or as a creature, e.g. peering from behind their own box or posed as a bird of prey
+      tags: [figure, medium_confidence, lee_miller]
+      works: ['Joseph Cornell, New York (1933)', 'Max Ernst, Arizona (1946)']
+      source: https://www.nationalgalleries.org/art-and-artists/features/lee-miller
+    dora_maar:
+    - text: a shop-window mannequin or a mannequin's hand with painted nails in place of a person, e.g. a hand coming out of a conch shell on
+        sand under a storm sky
+      tags: [plastic, handheld, commercial, object, high_confidence, dora_maar]
+      works: [Untitled (Hand-Shell) (1934), Untitled (Mannequin sitting in profile in dress and evening jacket) (c. 1932-35)]
+      source: https://www.centrepompidou.fr/fr/pompidou-plus/magazine/article/focus-sur-main-coquillage-de-dora-maar
+    - text: a vaulted arcade of slightly warped stone arches, with a small figure seated or contorted beneath
+      tags: [stone, interior, hall, empty, dim, place, medium_confidence, dora_maar]
+      works: [Arcade (1934), 29 rue d'Astorg (c. 1936), The Simulator (1936)]
+      source: https://artblart.com/tag/dora-maar-29-rue-dastorg/
+    - text: photomontage that sets a figure cut from a street photograph into a strange architectural or beach setting, joins hidden
+      tags: [paper, device, high_confidence, dora_maar]
+      works: [Untitled (Hand-Shell) (1934), 29 rue d'Astorg (c. 1936), The Simulator (1936)]
+      source: https://awarewomenartists.com/en/artiste/dora-maar/
+    - text: overlaid negatives and double exposures, with two views of one face or a pattern laid across a face
+      tags: [transparent, device, medium_confidence, dora_maar]
+      works: [Les années vous guettent (1932), Untitled (Lee Miller) (c. 1933), Double Portrait with Hat (c. 1936-37)]
+      source: https://artblart.com/tag/dora-maar-29-rue-dastorg/
+    - text: drawing and paint added by hand on top of the photograph, e.g. tattoo-pattern blouses, tinted clothing, painted backdrops
+      tags: [paper, device, medium_confidence, dora_maar]
+      works: ['Woman sitting in profile, the bust dressed in a blouse made of tattoo patterns (c. 1930)', Untitled (Mannequin sitting in profile)
+          (c. 1932-35), Double Portrait with Hat (c. 1936-37)]
+      source: https://artblart.com/tag/dora-maar-29-rue-dastorg/
+    - text: a lone street figure at the kerb, such as a blind peddler, a boy on a corner, or a man peering into a pavement hatch
+      tags: [worn, figure, medium_confidence, dora_maar]
+      works: ['Blind Street Peddler, Barcelona (1933)', Street Boy on the Corner of the rue de Genets (1933), 'Man looking inside a sidewalk inspection
+          door, London (c. 1935)']
+      source: https://artblart.com/tag/dora-maar-29-rue-dastorg/
+    - text: cameraless photograms of abstract, cloudy light shapes
+      tags: [paper, device, medium_confidence, dora_maar]
+      works: [Untitled photogram (c. 1980), Untitled photograms (1980s)]
+      source: https://artblart.com/tag/dora-maar-29-rue-dastorg/
+    uelsmann:
+    - text: combination printing, several negatives printed one after another through a row of enlargers onto one sheet, with no visible seams
+      tags: [paper, optics, device, high_confidence, uelsmann]
+      works: [Symbolic Mutation (1961), Small Woods Where I Met Myself (1967), Untitled (1976)]
+      source: https://www.metmuseum.org/art/collection/search/262930
+    - text: a whole tree with bare, spreading roots floating in midair above water or an island
+      tags: [organic, wood, large, object, medium_confidence, uelsmann, overused]
+      works: [Untitled (Tree with roots) (1964), Untitled (Floating Tree) (1969)]
+      source: https://www.houstonpress.com/arts/in-untitled-jerry-uelsmann-presents-composite-photos-both-haunting-and-beautiful-6602124/
+    - text: a mirrored or reflected landscape in which the reflection shows a different scene, such as a different interior or a doubled figure
+        in the woods
+      tags: [reflective, device, medium_confidence, uelsmann]
+      works: [Small Woods Where I Met Myself (1967), Untitled (Floating Tree composite) (1969)]
+      source: https://dia.org/collection/small-woods-where-i-met-myself-final-version-63832
+    - text: a pair of human hands growing out of a tree trunk, holding a bird's nest with an egg
+      tags: [organic, wood, handheld, fragile, object, medium_confidence, uelsmann, overused]
+      works: [Tree Hands with Nest (date not confirmed), Journey into Night (date not confirmed)]
+      source: https://eskenazi.indiana.edu/news/2022/2022-04-13-uelsmann-nyt.html
+    - text: an empty rowboat drifting on still dark water, sometimes under a moon or a floating sphere
+      tags: [wood, large, hollow, nautical, object, medium_confidence, uelsmann, overused]
+      works: [Untitled (Boat and Moon) (1982), Boat and Sphere (1982), Beached Rowboats (2009), Small Boat Waiting (2012)]
+      source: https://en.wikipedia.org/wiki/Jerry_Uelsmann
+    - text: a room whose ceiling opens onto a cloudy sky, sunlight on a desk, and a tiny figure standing on an open book or map
+      tags: [domestic, interior, room, empty, daylight, place, medium_confidence, uelsmann]
+      works: [Untitled (1976), Victorian Study (date not confirmed)]
+      source: https://sites.middlebury.edu/landandlens/2016/10/06/jerry-uelsmann-untitled-1976/
+    - text: a cloud held in cupped hands or floating indoors
+      tags: [soft, handheld, object, medium_confidence, uelsmann, overused]
+      works: [Untitled (1976), Hands and Clouds with Rowboat (date not confirmed)]
+      source: https://eskenazi.indiana.edu/news/2022/2022-04-13-uelsmann-nyt.html
+    - text: a lone, half-transparent man standing in a landscape
+      tags: [transparent, figure, medium_confidence, uelsmann]
+      works: [Forgotten Promise (2012), Small Boat Waiting (2012)]
+      source: https://www.houstonpress.com/arts/in-untitled-jerry-uelsmann-presents-composite-photos-both-haunting-and-beautiful-6602124/
+    - text: a nude woman floating over mountains or water, her lower body turning into mist
+      tags: [figure, low_confidence, uelsmann, mature]
+      works: [Hovering Figure (date not confirmed), Venice (date not confirmed)]
+      source: https://eskenazi.indiana.edu/news/2022/2022-04-13-uelsmann-nyt.html
+    - text: an old stone bridge whose walkway is split by a deep crack or filled with rippling water
+      tags: [stone, exterior, transit, empty, place, medium_confidence, uelsmann]
+      works: [Now (date not confirmed), Then One Day (date not confirmed)]
+      source: https://www.houstonpress.com/arts/in-untitled-jerry-uelsmann-presents-composite-photos-both-haunting-and-beautiful-6602124/
+    varo:
+    - text: a hooded traveller steering a small vessel made from the flaps and folds of their own coat or robe, the cloth rigged as hull or sail
+      tags: [fabric, clothing, travel, nautical, mechanical, device, medium_confidence, varo]
+      works: [Exploration of the Sources of the Orinoco River (1959), Vagabond (1957), Ascension to Mount Analogue (1960)]
+      source: https://www.maramarietta.com/women-surrealist-artists-the-hermetic-tradition-2/
+    - text: a wooden house or living-room nook on wheels, pulled or pedalled along a forest path, with doors and windows on every side
+      tags: [wood, wheeled, furniture, travel, mechanical, antique, device, medium_confidence, varo]
+      works: [Caravan (1955), Vagabond (1957)]
+      source: https://www.thenewartexaminer.org/2024/02/06/remedios-varo-a-surreal-room-of-ones-own/
+    - text: identical grey-cloaked, hooded figures standing in rows or escorting others, faces heart-shaped with almond eyes and long noses
+      tags: [fabric, clothing, ritual, figure, high_confidence, varo, overused]
+      works: [The Juggler (The Magician) (1956), Embroidering the Earth's Mantle (1961), Toward the Tower (1961)]
+      source: https://www.moma.org/collection/works/291307
+    - text: a round medieval stone tower room where women work at looms or grinders, their cloth or product spilling out through slit windows
+        into the landscape
+      tags: [institutional, interior, room, lived-in, dim, stone, fabric, place, medium_confidence, varo]
+      works: [Embroidering the Earth's Mantle (1961), Celestial Pablum (1958), 'Useless Science, or The Alchemist (1955)', The Tower (1947)]
+      source: https://narrativepainting.net/remedios-varo-embroidering-the-mantle-triptych-1961/
+    - text: a hand-cranked distilling apparatus of wheels, pulleys, funnels and glass alembics over a small flame, catching rain or starlight
+        and dripping it into bottles
+      tags: [glass, metal, lab, mechanical, transparent, tabletop, antique, device, medium_confidence, varo]
+      works: ['Useless Science, or The Alchemist (1955)', Creation of the Birds (1957)]
+      source: https://www.thenewartexaminer.org/2024/02/06/remedios-varo-a-surreal-room-of-ones-own/
+    - text: a seated woman whose robe or skin turns into the pattern of the chair upholstery or the checkered floor tiles beneath her, the furniture
+        sprouting limbs
+      tags: [fabric, furniture, domestic, soft, device, medium_confidence, varo]
+      works: [Mimesis (1960), 'Useless Science, or The Alchemist (1955)']
+      source: https://www.thenewartexaminer.org/2024/02/06/remedios-varo-a-surreal-room-of-ones-own/
+    - text: pale figures stepping out through torn or broken plaster walls into a study
+      tags: [stone, threshold, interior, device, medium_confidence, varo]
+      works: [Harmony (1956), Born Again (1960)]
+      source: https://brooklynrail.org/2023/11/artseen/Remedios-Varo-Science-Fictions/
+    - text: a crescent moon shut inside a small birdcage, fed or carried by a woman
+      tags: [metal, handheld, container, fragile, object, medium_confidence, varo]
+      works: [Star Catcher (1956), Celestial Pablum (1958)]
+      source: https://surrealistcovens.substack.com/p/the-surreal-complexities-of-motherhood
+    - text: an owl-faced woman at a worktable drawing with a pen wired to a violin, a triangular lens focusing starlight, egg-shaped glass vessels
+        overhead
+      tags: [glass, lab, music, optics, writing, tabletop, figure, medium_confidence, varo]
+      works: [Creation of the Birds (1957), The Encounter (1962)]
+      source: https://www.maramarietta.com/the-arts/painting-drawing-sculpture/artists-p-w/varo/
+    - text: music played on non-instruments - a sunbeam bowed like a string, a floating staff of metal wire hung with crystals, shells and leaves
+        as notes
+      tags: [metal, music, coiled, fragile, device, medium_confidence, varo]
+      works: [Solar Music (1955), Harmony (1956), Creation of the Birds (1957)]
+      source: https://www.maramarietta.com/women-surrealist-artists-the-hermetic-tradition-2/
+    - text: tiny boats (egg-shaped shells, an upturned umbrella, a seahorse-prowed skiff) drifting through flooded forests, spiral canals or clouds
+      tags: [nautical, travel, round, hollow, fragile, object, medium_confidence, varo]
+      works: [Spiral Transit (1962), The Escape (1961), Exploration of the Sources of the Orinoco River (1959), Daughters of the Arnus Family
+          (1957), Discovery (1956)]
+      source: https://ebrary.net/153612/psychology/spiral_transit_spiritual_gold_journey_soul
+    - text: a goblet or chalice on a small table, with water springing from it or a moon reflected on its surface
+      tags: [glass, tabletop, container, reflective, ritual, object, medium_confidence, varo]
+      works: [Exploration of the Sources of the Orinoco River (1959), Born Again (1960)]
+      source: https://www.maramarietta.com/women-surrealist-artists-the-hermetic-tradition-2/
+    - text: bodies that roll on wheels - bicycles fused to riders, a spine curling into a spoked wheel, stiff beards used as wheels
+      tags: [wheeled, mechanical, bone, travel, device, medium_confidence, varo]
+      works: [Toward the Tower (1961), Homo Rodans (1959), Hairy Locomotion (1959)]
+      source: https://en.wikipedia.org/wiki/Homo_rodans
+    - text: small hinged doors and keyholes set into bodies, chests or garments, with a key held in hand
+      tags: [metal, wood, hinged, handheld, object, low_confidence, varo, overused]
+      works: [Visitors (Portrait of Dr. Ignacio Chavez) (1956), Minotaur (1959), Vagabond (1957)]
+      source: https://www.maramarietta.com/the-arts/painting-drawing-sculpture/artists-p-w/varo/
+    - text: an orange tabby cat at a table or under floorboards, watching the woman of the house
+      tags: [domestic, organic, figure, medium_confidence, varo]
+      works: [Sympathy (1955), Mimesis (1960), Vagabond (1957)]
+      source: https://brooklynrail.org/2023/11/artseen/Remedios-Varo-Science-Fictions/
+    - text: a vaulted Renaissance study with checkered floor tiles, shelves of instruments and drawers springing open
+      tags: [institutional, interior, room, lived-in, dim, lab, place, medium_confidence, varo]
+      works: [Harmony (1956), 'Useless Science, or The Alchemist (1955)', Phenomenon of Weightlessness (1963)]
+      source: https://www.thenewartexaminer.org/2024/02/06/remedios-varo-a-surreal-room-of-ones-own/
+    - text: spheres and globes floating off their stands in a laboratory, the room tilted between two planes
+      tags: [lab, round, optics, device, low_confidence, varo, overused]
+      works: [Phenomenon of Weightlessness (1963), Still Life Reviving (1963)]
+      source: https://www.maramarietta.com/the-arts/painting-drawing-sculpture/artists-p-w/varo/
+    carrington:
+    - text: a white horse - galloping past a window, frozen in ice, or chained to a tree
+      tags: [organic, natural, exterior, figure, high_confidence, carrington]
+      works: [Self-Portrait (Inn of the Dawn Horse) (1937-38), Portrait of Max Ernst (1939), Green Tea (1942), The Horses of Lord Candlestick
+          (1938)]
+      source: https://www.moma.org/collection/works/297568
+    - text: a white wooden rocking horse floating in mid-air inside a room
+      tags: [wood, toy, furniture, antique, object, medium_confidence, carrington]
+      works: [Self-Portrait (Inn of the Dawn Horse) (1937-38), The House Opposite (1945)]
+      source: https://en.wikipedia.org/wiki/Self-Portrait_(Inn_of_the_Dawn_Horse)
+    - text: a dim kitchen where robed women tend a cauldron or griddle, with garlic on the floor and food carried between rooms
+      tags: [domestic, interior, room, lived-in, dim, kitchen, ritual, metal, place, medium_confidence, carrington]
+      works: [The House Opposite (1945), Grandmother Moorhead's Aromatic Kitchen (1975), Night Nursery Everything (1947)]
+      source: https://www.theartstory.org/blog/alchemy-as-science-the-surrealist-works-of-leonora-carrington/
+    - text: a long table laid for a strange meal, with women, animals and birds seated round it under an arch
+      tags: [domestic, interior, hall, lived-in, kitchen, ritual, furniture, wood, place, high_confidence, carrington]
+      works: [The Old Maids (1947), The Meal of Lord Candlestick (1938), Three Women Around the Table (1951), AB EO QUOD (1956), The House Opposite
+          (1945)]
+      source: https://sainsburycentre.ac.uk/art-and-objects/27-the-old-maids/
+    - text: a large white or speckled egg, cupped in small hands or set on a table and guarded by a creature
+      tags: [organic, round, fragile, handheld, ritual, object, medium_confidence, carrington]
+      works: [The Giantess (The Guardian of the Egg) (1947), The Kitchen Garden on the Eyot (1946), Ulu's Pants (1952), 'Who Art Thou Whiteface?
+          (1959)', AB EO QUOD (1956)]
+      source: https://en.wikipedia.org/wiki/The_Giantess_(The_Guardian_of_the_Egg)
+    - text: a woman so tall her head touches the ceiling or rises above the forest, in a long cape, with tiny figures at her feet
+      tags: [fabric, clothing, large, figure, high_confidence, carrington]
+      works: [The Giantess (The Guardian of the Egg) (1947), The Old Maids (1947)]
+      source: https://sainsburycentre.ac.uk/art-and-objects/27-the-old-maids/
+    - text: three women standing or seated together as a group, often small and half-hidden
+      tags: [ritual, figure, medium_confidence, carrington]
+      works: [The Giantess (The Guardian of the Egg) (1947), Three Women Around the Table (1951), The Old Maids (1947), The Magdalens (1986)]
+      source: https://en.wikipedia.org/wiki/The_Giantess_(The_Guardian_of_the_Egg)
+    - text: small pale robed figures with moon-like faces, their garments spread like umbrellas or bristling with a halo of white spikes
+      tags: [fabric, clothing, ritual, sharp, figure, high_confidence, carrington]
+      works: [The Old Maids (1947), The Temptation of St. Anthony (1945), And Then We Saw the Daughter of the Minotaur (1953), The Giantess (The
+          Guardian of the Egg) (1947)]
+      source: https://sainsburycentre.ac.uk/art-and-objects/27-the-old-maids/
+    - text: animal-headed or plant-headed people in long robes - a minotaur woman in red, a tree-headed figure carrying a sack
+      tags: [clothing, organic, ritual, figure, low_confidence, carrington]
+      works: [And Then We Saw the Daughter of the Minotaur (1953), The House Opposite (1945), Ulu's Pants (1952)]
+      source: https://www.thecollector.com/leonora-carrington-paintings-hidden-figures/
+    - text: geese, magpies or quail in a flock around and among human figures, indoors or streaming from under a cloak
+      tags: [organic, farm, figure, medium_confidence, carrington]
+      works: [The Giantess (The Guardian of the Egg) (1947), The Old Maids (1947), The Kitchen Garden on the Eyot (1946), The Bird Bath (1974)]
+      source: https://www.theartstory.org/artist/carrington-leonora/
+    - text: processions of robed women and horned beasts crossing a frieze-like strip of land, sometimes pulling a chariot of light
+      tags: [fabric, ritual, wheeled, figure, low_confidence, carrington]
+      works: [Palatine Predella (1946), Amor que move il sole e l'altre stelle (1947)]
+      source: https://www.maramarietta.com/women-surrealist-artists-the-hermetic-tradition-2/
+    - text: a grey English manor house on a lawn by still water, figures fleeing or floating past it
+      tags: [domestic, exterior, vast, abandoned, daylight, stone, place, high_confidence, carrington]
+      works: [Crookhey Hall (1947), The Bird Bath (1974)]
+      source: https://nmwa.org/art/collection/crookhey-hall/
+    sage:
+    - text: open towers of wooden poles and lattice scaffolding standing on an empty plain, unfinished poles sticking out at the top
+      tags: [wood, long, rigid, large, workshop, worn, device, high_confidence, sage]
+      works: [Tomorrow Is Never (1955), The Instant (1949), Midnight (1944), 'Tomorrow, Mr. Silver (1949)']
+      source: https://www.mattmuseum.org/sage_and_tanguy/
+    - text: stiff draped cloth hanging over a tall hidden upright form, like a covered statue or folded sail
+      tags: [fabric, large, soft, rigid, object, high_confidence, sage]
+      works: [Margin of Silence (1942), I Saw Three Cities (1944), In the Third Sleep (1944), No Passing (1954), Tomorrow Is Never (1955)]
+      source: https://www.artic.edu/artworks/53237/in-the-third-sleep
+    - text: cloth-wrapped shapes caught inside lattice cages or rib-like frameworks
+      tags: [wood, fabric, hollow, rigid, device, high_confidence, sage]
+      works: [Tomorrow Is Never (1955), 'Tomorrow, Mr. Silver (1949)', The Instant (1949)]
+      source: https://www.metmuseum.org/art/collection/search/488856
+    - text: a flat grey-brown plain running to a low horizon under an overcast sky, with cracked ground and long shadows
+      tags: [natural, exterior, vast, empty, dim, place, high_confidence, sage, overused]
+      works: ['Danger, Construction Ahead (1940)', No Passing (1954), Le Passage (1956), The Answer Is No (1958)]
+      source: https://whitney.org/collection/works/1593
+    - text: stacks of blank rectangular slabs, panels and empty canvas stretchers leaning in rows toward the horizon
+      tags: [wood, fabric, flat, rigid, workshop, object, medium_confidence, sage]
+      works: [Afterwards (1937), I Saw Three Cities (1944), The Answer Is No (1958)]
+      source: https://www.theartstory.org/artist/sage-kay/
+    - text: an archway or large window hung with muted drapery, opening onto a distant landscape, with a curved wall or stairwell beside it
+      tags: [threshold, interior, empty, dim, stone, fabric, place, high_confidence, sage]
+      works: [The Unicorns Came Down to the Sea (1948), My Room Has Two Doors (1939)]
+      source: https://www.philamuseum.org/objects/59905
+    - text: a half-wrecked structure of open ribbing, wood and bone-like pieces, part machine and part carcass
+      tags: [wood, bone, hollow, worn, mechanical, device, medium_confidence, sage]
+      works: ['Starlings, Caravans (1948)', The Instant (1949), 'Tomorrow, Mr. Silver (1949)']
+      source: https://www.theartstory.org/artist/sage-kay/
+    - text: a raised ramp or dock running off diagonally into the distance past tall forms
+      tags: [industrial, exterior, vast, empty, transit, place, low_confidence, sage]
+      works: [In the Third Sleep (1944), 'Danger, Construction Ahead (1940)']
+      source: https://www.artic.edu/artworks/53237/in-the-third-sleep
+    fini:
+    - text: a sphinx with a young woman's head and bare breasts on a lion or cat body, crouched in a doorway or among ruins
+      tags: [organic, large, ritual, figure, medium_confidence, fini, mature]
+      works: [The Shepherdess of the Sphinxes (1941), Sphinx Amalburga (1942), Sphinx Philagria (1945), Sphinx Regina (1946), Petit Sphinx Ermite
+          (1948)]
+      source: https://surrealistcovens.substack.com/p/leonor-fini-the-shepherdess-of-the-sphinx
+    - text: a limp sleeping male nude on a bed or ground, a woman seated on or watching over him
+      tags: [fabric, furniture, intimate, figure, medium_confidence, fini, mature]
+      works: [Woman Seated on a Naked Man (1942), Chthonian Deity Watching Over the Sleep of a Young Man (1946)]
+      source: https://www.theartnewspaper.com/news/leonor-fini-an-artist-who-always-put-herself-on-top-finally-gets-her-due-at-new-york-s-museum-of-sex
+    - text: a bald, rigid, robed woman seated like a priestess holding an egg, long-necked birds around her on scorched ground
+      tags: [fabric, clothing, ritual, round, figure, low_confidence, fini]
+      works: [The Guardian of the Phoenixes (1954), The Guardian with the Red Egg (1955), The Guardian of the Black Egg (1955)]
+      source: https://womeninartblog.com/leonor-fini-the-guardian-of-the-phoenixes-la-gardienne-des-phenix-1954/
+    - text: skulls, pelvis bones and bird skulls lying on the ground or grown into root-like creatures with eggshells and bulbs
+      tags: [bone, organic, fragile, worn, object, medium_confidence, fini, overused]
+      works: [Le Bout du monde (1949), Petit Sphinx Ermite (1948), The Two Skulls (1950), The Emerging Ones (1958), Sphinx Regina (1946)]
+      source: https://www.encyclopedia.com/women/encyclopedias-almanacs-transcripts-and-maps/fini-leonor-1908-1996
+    - text: a pale woman standing chest-deep in a black still pool, skulls and bones floating around her
+      tags: [natural, exterior, vast, abandoned, dim, place, low_confidence, fini]
+      works: [Le Bout du monde (1949), Donna del Lago (Le Bout du monde II) (c.1953)]
+      source: https://www.shelidon.it/im-in-love-with-leonor-fini/
+    - text: a woman enthroned or seated among many cats of different postures
+      tags: [domestic, organic, figure, low_confidence, fini]
+      works: [La Vie idéale (1950), Petites filles aux chats (1960), Dimanche après-midi (1980)]
+      source: https://cats-museum.com/2025/08/05/leonor-fini-the-artist-who-thought-like-a-cat/
+    - text: a curtained alcove bed or tower bedroom where the painter poses with a male companion
+      tags: [domestic, interior, intimate, lived-in, dim, fabric, furniture, place, low_confidence, fini]
+      works: [L'Alcôve (Self-Portrait with Nico Papatakis) (1941), Dans la tour (Self-Portrait with Constantin Jelenski) (1952)]
+      source: https://www.shelidon.it/im-in-love-with-leonor-fini/
+    - text: a ruined house with peeling plaster, dark plants creeping over the sill, something hanging from the lintel
+      tags: [domestic, exterior, threshold, abandoned, dim, stone, worn, place, low_confidence, fini]
+      works: [Petit Sphinx Ermite (1948), Le Bout du monde (1949)]
+      source: https://www.maramarietta.com/women-surrealist-artists-the-hermetic-tradition-2/
+    brauner:
+    - text: a table whose legs and top grow into a stuffed wolf or fox, jaws open, tail hanging
+      tags: [wood, organic, furniture, domestic, object, high_confidence, brauner]
+      works: [Loup-table (Wolf-Table) (1939/1947), Fascination (1939), Psychological Space (1939)]
+      source: https://www.centrepompidou.fr/fr/ressources/oeuvre/cqrjab
+    - text: a single staring eye on its own, or a frontal face with one eye missing and the socket open
+      tags: [organic, round, object, medium_confidence, brauner, overused]
+      works: [Self-Portrait (1931), Antithesis (1937), Disfiguration of the Portrait of Hitler (1934)]
+      source: https://apollo-magazine.com/victor-brauner-surrealist-romania-timisoara/
+    - text: female figures built as machines, with headlamp eyes, levers, pedals, forceps and tubes, labelled like a diagram
+      tags: [metal, mechanical, medical, electrical, device, medium_confidence, brauner]
+      works: [Anatomy of Desire (1935), Depolarisation of Intimacy II (1952), The Indicator of Space (1934)]
+      source: https://www.theartstory.org/artist/brauner-victor/
+    - text: flat Egyptian-style profile figures scratched into thick layers of coloured wax, outlined in ink
+      tags: [wax, flat, antique, device, medium_confidence, brauner]
+      works: [Consciousness of Shock (1951), Prelude to a Civilization (1954), Untitled (1945)]
+      source: https://www.theartstory.org/artist/brauner-victor/
+    - text: one large animal body filled with dozens of small figures, masks and signs like a cave wall
+      tags: [wax, large, ritual, figure, low_confidence, brauner]
+      works: [Prelude to a Civilization (1954), The Mother of Myths (1965)]
+      source: https://fg-art-lifestyle.com/the-exhibition-victor-brauner-inventions-and-magic/
+    - text: one body split or doubled - two halves of a figure pulling against each other, a man meeting his own double
+      tags: [paired, figure, low_confidence, brauner]
+      works: [Consciousness of Shock (1951), Meeting with Myself at the Four Cats of the World (1948), Conglomeros (1945)]
+      source: https://www.theartstory.org/artist/brauner-victor/
+    - text: a fat middle-aged man in suit or uniform, repeated in grotesque poses, sometimes collaged with celluloid dolls and wire
+      tags: [clothing, plastic, metal, figure, high_confidence, brauner]
+      works: [The Strange Case of Monsieur K. (1933), Force de concentration de Monsieur K. (1934)]
+      source: https://www.mam.paris.fr/en/expositions/exhibitions-victor-brauner
+    - text: a checkerboard ground with holes cut into it, a figure behind a wall and a cloth-draped robot pointing
+      tags: [exterior, vast, empty, stone, place, low_confidence, brauner, overused]
+      works: [The Indicator of Space (1934), The City I Dream (1937)]
+      source: https://rarehistoricalphotos.com/victor-brauner-paintings/
+    toyen:
+    - text: an empty corset, dress or glove lying in a landscape, holding the shape of a body that is not there
+      tags: [fabric, clothing, soft, hollow, worn, object, medium_confidence, toyen]
+      works: [Sleeping (1937), Abandoned Corset (1937), Prometheus (1930s)]
+      source: https://artschaft.com/2020/05/24/toyen-a-tale-of-war-and-friendship/
+    - text: a predatory animal (fox, wolf) half-formed out of wall stains, plaster cracks or a cast shadow
+      tags: [stone, threshold, dim, device, low_confidence, toyen]
+      works: [At the Château La Coste (1946), The Myth of Light (1946)]
+      source: https://cakeordeathsite.wordpress.com/2019/01/26/at-the-chateau-la-coste/
+    - text: a headless figure hanging upside down, melting into a wall, or limp bodies of geese hanging from a stage
+      tags: [organic, soft, figure, high_confidence, toyen]
+      works: [Relâche (1943), The Shooting Gallery (1939-40)]
+      source: https://post.moma.org/surrealism-against-the-war-the-shooting-gallery-and-hide-war-by-the-czech-artist-toyen/
+    - text: oversized broken toys - toy blocks, marbles, dolls, a puppet theatre, a jump rope, a schoolbag - lying on bare ground
+      tags: [wood, toy, worn, fragile, object, high_confidence, toyen]
+      works: [The Shooting Gallery I (1940), The Shooting Gallery VI (1940), Untitled drawing for The Shooting Gallery (1939)]
+      source: https://post.moma.org/surrealism-against-the-war-the-shooting-gallery-and-hide-war-by-the-czech-artist-toyen/
+    - text: faceless girls or pale fragments of girls' bodies in a twilight landscape, sometimes a girl's head held by a huge blue owl
+      tags: [organic, fragile, figure, high_confidence, toyen]
+      works: [The Message of the Forest (1936), The Shooting Gallery (1939-40)]
+      source: https://www.nationalgalleries.org/art-and-artists/156267/poselstvi-lesa-message-forest
+    - text: a barren wasteland crossed by barbed wire and wooden poles, with building fragments and animal carcasses
+      tags: [natural, exterior, vast, abandoned, dim, wood, metal, place, high_confidence, toyen]
+      works: [The Shooting Gallery (1939-40), The Specters of the Desert (1936-37), 'Hide Yourself, War! (1944)']
+      source: https://www.labiennale.org/en/art/2022/witchs-cradle/toyen
+    - text: a scarecrow soldier-dummy of tree bark stuffed with hay, standing in an empty field
+      tags: [wood, organic, farm, clothing, worn, object, medium_confidence, toyen]
+      works: [La Guerre (The War) (1945), Field Scarecrow (1945)]
+      source: https://artschaft.com/2020/05/24/toyen-a-tale-of-war-and-friendship/
+    - text: crumbling château walls overgrown with mushrooms, with something moving in the masonry
+      tags: [sacred, exterior, abandoned, stone, worn, dim, place, low_confidence, toyen]
+      works: [At the Château La Coste (1946), At La Coste Castle (1943)]
+      source: https://www.ngprague.cz/en/event/3049/toyen-the-dreaming-rebel
+    svankmajer:
+    - text: mouths eating what is not food - heads of fruit and kitchen utensils chewing each other to pulp, diners swallowing chair legs and
+        their own clothes, a tree-stump baby devouring neighbours
+      tags: [organic, kitchen, ceramic, metal, wood, device, medium_confidence, svankmajer]
+      works: [Dimensions of Dialogue (1982), Food (1992), Little Otik (2000)]
+      source: https://en.wikipedia.org/wiki/Dimensions_of_Dialogue
+    - text: two clay heads or bodies squeezing into each other, merging, then boiling into shapeless grey pulp
+      tags: [organic, soft, device, medium_confidence, svankmajer]
+      works: [Dimensions of Dialogue (1982), 'Darkness, Light, Darkness (1989)', The Fall of the House of Usher (1980)]
+      source: https://www.academia.edu/63353986/Grotesque_Metamorphoses_and_Creative_Practices_in_Jan_Svankmajer
+    - text: raw meat, real cow tongues, eyeballs and brains crawling across tables and floors by stop-motion
+      tags: [organic, kitchen, soft, object, medium_confidence, svankmajer]
+      works: ['Darkness, Light, Darkness (1989)', Lunacy (2005)]
+      source: https://offscreen.com/view/svankmajers_lunacy
+    - text: a stuffed taxidermy animal with glass eyes that comes alive, leaking sawdust from a split seam
+      tags: [organic, fabric, glass, worn, antique, object, medium_confidence, svankmajer]
+      works: [Alice (1988), Lunacy (2005)]
+      source: https://apollo-magazine.com/jan-svankmaker-films-surreal-czech-puppets/
+    - text: small creatures assembled from animal skulls and skeletons fitted with manufactured parts
+      tags: [bone, metal, tabletop, lab, object, medium_confidence, svankmajer]
+      works: [Alice (1988), Historia Naturae (1967)]
+      source: https://en.wikipedia.org/wiki/Jan_%C5%A0vankmajer
+    - text: dolls and toy soldiers that move alone in a nursery - dolls cooked in toy pans, a flat iron pressing dolls into paper dolls
+      tags: [ceramic, fabric, toy, fragile, antique, object, medium_confidence, svankmajer, overused]
+      works: [Jabberwocky (1971), Alice (1988)]
+      source: https://en.wikipedia.org/wiki/Jabberwocky_(1971_film)
+    - text: wooden marionettes and giant papier-mache puppet heads on visible strings, sharing the stage with live actors
+      tags: [wood, paper, toy, antique, worn, figure, medium_confidence, svankmajer]
+      works: [The Last Trick (1964), Faust (1994), Alice (1988)]
+      source: https://apollo-magazine.com/jan-svankmaker-films-surreal-czech-puppets/
+    - text: drawers, wardrobes and cupboards that open by themselves onto rooms, tunnels or landscapes
+      tags: [wood, furniture, hinged, antique, device, medium_confidence, svankmajer]
+      works: [Alice (1988), Jabberwocky (1971), Conspirators of Pleasure (1996)]
+      source: https://en.wikipedia.org/wiki/Alice_(1988_film)
+    - text: a shabby old flat or cellar with scratched walls where furniture, spoons and doors refuse to work
+      tags: [domestic, interior, room, abandoned, dim, worn, place, medium_confidence, svankmajer]
+      works: [The Flat (1968), Down to the Cellar (1983), The Fall of the House of Usher (1980)]
+      source: https://en.wikipedia.org/wiki/The_Flat_(1968_film)
+    - text: paired everyday objects pushed out of mouths on tongues and combined wrongly - toothbrush with shoe, bread with pencil
+      tags: [paired, handheld, kitchen, device, low_confidence, svankmajer]
+      works: [Dimensions of Dialogue (1982), Food (1992)]
+      source: https://apollo-magazine.com/jan-svankmaker-films-surreal-czech-puppets/
+    - text: homemade fetish contraptions of rolling pins, fur, feathers and papier-mache - a chicken head made from newspaper, a stroking machine
+        wired to a TV
+      tags: [wood, paper, organic, mechanical, electrical, kitchen, device, low_confidence, svankmajer]
+      works: [Conspirators of Pleasure (1996), Lunacy (2005)]
+      source: https://en.wikipedia.org/wiki/Conspirators_of_Pleasure
+    - text: live and dead chickens and roosters - on a lap, in a pan, as a mask
+      tags: [organic, farm, kitchen, figure, medium_confidence, svankmajer]
+      works: [The Flat (1968), Alice (1988), Conspirators of Pleasure (1996), Lunacy (2005)]
+      source: https://en.wikipedia.org/wiki/Conspirators_of_Pleasure

@@ -22,6 +22,10 @@ from .wildcard_support import (
     llm_block,
     report_lines,
     resolve_wildcards,
+    filter_notes_of,
+    lead_with_filter_notes,
+    screen_output,
+    wildcard_nsfw_input,
 )
 from .utils import save_prompts_to_file, parse_keywords
 
@@ -662,6 +666,7 @@ class TextToImagePromptEnhancer:
                 # Wildcards use this node's own random_seed / seed_mode, so no separate wildcard seed is needed.
                 "wildcard_llm_block": WILDCARD_LLM_BLOCK_INPUT,
                 "wildcard_instructions": WILDCARD_INSTRUCTIONS_INPUT,
+                **wildcard_nsfw_input(),
             }
         }
     
@@ -734,7 +739,9 @@ class TextToImagePromptEnhancer:
         reference_caption_override_1: str = "",
         reference_caption_override_2: str = "",
         wildcard_llm_block: bool = True,
-        wildcard_instructions: str = ""
+        wildcard_instructions: str = "",
+        nsfw: str = "off",
+        violence_filter: str = "off"
     ) -> Tuple[str, str, str, str]:
         """Main processing function"""
         try:
@@ -755,7 +762,8 @@ class TextToImagePromptEnhancer:
             # STEP 0: Resolve wildcards and {a|b} alternations first (before LLM) with the shared
             # engine (core/wildcards), seeded by this node's resolved seed so "fixed" mode reproduces.
             wildcard_resolution = resolve_wildcards(
-                text_prompt, seed=seed_value, legacy=True, upstream_instructions=wildcard_instructions
+                text_prompt, seed=seed_value, legacy=True, upstream_instructions=wildcard_instructions,
+                nsfw=nsfw, violence_filter=violence_filter,
             )
             text_prompt = wildcard_resolution.text
             
@@ -1044,8 +1052,8 @@ class TextToImagePromptEnhancer:
             self._surreal_block = ""
             if str(resolved_settings.get("genre_style", "")).strip().lower() == "surreal":
                 try:
-                    from .surreal_support import preset_block
-                    self._surreal_block, surreal_note = preset_block(text_prompt, seed_value, "image")
+                    from .surreal_support import preset_plan
+                    text_prompt, self._surreal_block, surreal_note = preset_plan(text_prompt, seed_value, "image")
                     print(f"[Text-to-Image] {surreal_note}")
                 except Exception as error:
                     print(f"[Text-to-Image] surreal engine unavailable ({error}); using the genre line")
@@ -1133,6 +1141,7 @@ class TextToImagePromptEnhancer:
 
             # STEP 6b: Verbatim wildcard picks (__=name__) must survive the rewrite word for word
             enhanced_prompt, _restored_verbatim = enforce_verbatim(enhanced_prompt, wildcard_resolution)
+            enhanced_prompt, block_note = screen_output(enhanced_prompt, "Text-to-Image output")
             
             # STEP 7: Add platform-specific required tokens
             enhanced_prompt = self._add_platform_requirements(enhanced_prompt, target_platform)
@@ -1201,6 +1210,7 @@ class TextToImagePromptEnhancer:
             wildcard_report = report_lines(wildcard_resolution)
             if wildcard_report:
                 settings_display = f"{settings_display}\n\n{wildcard_report}"
+            settings_display = lead_with_filter_notes(settings_display, filter_notes_of(wildcard_resolution, block_note))
             
             # STEP 10: Save if requested
             if save_to_file:

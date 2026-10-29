@@ -368,6 +368,7 @@ def rewrite_for_platform(
     extra_system: str = "",
     custom_negatives: Optional[Sequence[str]] = None,
     llm: Any = None,
+    length_guard: str = "retry+trim",
 ) -> RewriteResult:
     """
     One idea -> one platform prompt. Fail-soft: when the LLM cannot be reached the original idea
@@ -410,7 +411,66 @@ def rewrite_for_platform(
         result.error = "the LLM returned nothing usable. The idea was passed through unchanged."
         return result
 
+    if "SURREAL PREMISE" in (extra_system or "") and profile.caption_style not in ("json", "fields"):
+        # A surreal brief rode along: remove what has no pixels, report substitution grammar and named replaced objects.
+        try:
+            from .core.strategies.surreal import lint_prompt, suppress_from_instructions
+            text, surreal_warnings = lint_prompt(text, suppress_from_instructions(extra_system))
+            warnings = list(warnings) + surreal_warnings
+        except Exception as error:      # a guard must never cost the user their prompt
+            warnings = list(warnings) + [f"surreal lint failed ({error}); prompt passed through"]
+
+    if length_guard != "off" and profile.caption_style not in ("json", "fields"):
+        try:
+            text, budget_notes, budget_warnings = _apply_token_budget(
+                text, profile, plan, llm, max_tokens, length_guard, result.word_range)
+            result.notes.extend(budget_notes)
+            warnings = list(warnings) + budget_warnings
+        except Exception as error:      # a guard must never cost the user their prompt
+            warnings = list(warnings) + [f"token budget check failed ({error}); prompt passed through"]
+
     result.ok = True
     result.prompt = text
     result.warnings = warnings
     return result
+
+
+def _apply_token_budget(text, profile, plan, llm, max_tokens, length_guard, word_range):
+    """Keep the answer inside the encoder's token limit minus headroom for LoRA triggers.
+    retry+trim: one LLM retry asking for a tighter version, then a sentence-boundary trim.
+    trim: trim only. Returns (text, notes, warnings)."""
+    from .core.profiles.token_budget import budget_for, counter_for, fit_to_budget
+    from .core.profiles.validate import word_count
+    limit, target = budget_for(profile)
+    if not limit:
+        return text, [], []
+    count, how = counter_for(profile)
+    notes, warns = [], []
+    n = count(text)
+    if n > target and length_guard == "retry+trim" and llm is not None:
+        per_word = n / max(1, word_count(text))
+        want = max(20, int(target / per_word * 0.9))
+        user = (f"{plan.user}\n\nYour previous answer below is {n} tokens. This model reads at most {limit} "
+                f"tokens and silently cuts off the rest. Rewrite it in at most {want} words. Keep every subject, "
+                "action, setting, style term, artist name, quoted text and unusual or invented word exactly as "
+                "written; drop repetition and minor detail first. Answer with the prompt only.\n\n"
+                f"Previous answer:\n{text}")
+        try:
+            response = llm.send_prompt(plan.system, user, max_tokens=max_tokens)
+        except Exception as error:
+            response = {"success": False, "error": str(error)}
+        if response.get("success"):
+            shorter, _ = check(response.get("response", ""), profile, plan.task, word_range=word_range)
+            if shorter and count(shorter) < n:
+                n2 = count(shorter)
+                notes.append(f"length: {n} tokens was over the {target}-token target; the LLM tightened it to {n2}")
+                text, n = shorter, n2
+        else:
+            notes.append(f"length: tighten request failed ({response.get('error', 'no answer')}); trimming instead")
+    if n > target:
+        trimmed, n2, dropped = fit_to_budget(text, target, count)
+        warns.append(f"prompt trimmed {n} -> {n2} tokens to fit the {target}-token target (encoder limit {limit})"
+                     + (f"; removed: \"{dropped[0]}\"" if dropped else ""))
+        text, n = trimmed, n2
+    notes.append(f"length: {n}/{limit} tokens ({how}); target {target}, the rest is headroom for LoRA triggers")
+    return text, notes, warns

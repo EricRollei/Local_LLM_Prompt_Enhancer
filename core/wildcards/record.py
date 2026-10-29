@@ -37,6 +37,12 @@ class Slot:
     option_count: int = 0
 
 
+def is_filter_note(text: str) -> bool:
+    """A warning written by the content filter, the violence filter or the nsfw filter."""
+    return text.startswith(("content filter:", "violence filter", "nsfw filter")) or ": content filter:" in text \
+        or ": violence filter" in text or ": nsfw filter" in text
+
+
 @dataclass
 class Resolution:
     text: str = ""
@@ -48,6 +54,7 @@ class Resolution:
     combination_space: int = 1     # product of option counts met on this path (combinatorial mode)
     fresh_roll: bool = False       # True when no seed was given and the engine drew one (it is in `seed`)
     upstream_instructions: str = ""  # an llm_instructions block handed in from a node earlier in the graph
+    blocked: str = ""              # why the content filter blanked this prompt ('' = it did not)
 
     # -- views ------------------------------------------------------------------
     def top_level_slots(self) -> List[Slot]:
@@ -92,13 +99,20 @@ class Resolution:
         seed_text = f"seed={self.seed}"
         if self.fresh_roll:
             seed_text += " (fresh roll - use this number as the seed to get these picks again)"
-        lines = [f"{len(self.top_level_slots())} slot(s) resolved, mode={self.mode}, {seed_text}"]
+        # Filter notes lead the report: what the content / violence filter held back or blocked.
+        lines = [f"FILTER: {note}" for note in self.filter_notes()]
+        lines.append(f"{len(self.top_level_slots())} slot(s) resolved, mode={self.mode}, {seed_text}")
         for slot in self.top_level_slots():
             name = slot.label or slot.source
             lines.append(f"  [{slot.binding}] {name} -> {slot.value}")
         for warning in self.warnings:
-            lines.append(f"  warning: {warning}")
+            if not is_filter_note(warning):
+                lines.append(f"  warning: {warning}")
         return "\n".join(lines)
+
+    def filter_notes(self) -> List[str]:
+        """The warnings the content and violence filters left (re-rolls, blocked prompts, dropped references)."""
+        return [warning for warning in self.warnings if is_filter_note(warning)]
 
     def format_for_llm(self) -> str:
         """

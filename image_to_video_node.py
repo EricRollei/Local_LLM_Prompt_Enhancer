@@ -21,6 +21,10 @@ from .wildcard_support import (
     enforce_verbatim,
     is_changed_token,
     normalise_seed,
+    filter_notes_of,
+    lead_with_filter_notes,
+    screen_output,
+    wildcard_nsfw_input,
     wildcard_optional_inputs,
 )
 from .profile_support import WAN_TARGET, add_required_terms, get_profile, target_report_lines, video_target_inputs
@@ -245,6 +249,7 @@ class ImageToVideoPromptExpander:
             "optional": {
                 **wildcard_optional_inputs(),
                 **video_target_inputs(),      # target_model, duration_seconds
+                **wildcard_nsfw_input(),
             }
         }
 
@@ -287,7 +292,9 @@ class ImageToVideoPromptExpander:
         wildcard_instructions: str = "",
         # Absent only in API-format workflows saved before these inputs existed: those keep the Wan 2.2 path.
         target_model: str = WAN_TARGET,
-        duration_seconds: float = 0.0
+        duration_seconds: float = 0.0,
+        nsfw: str = "off",
+        violence_filter: str = "off"
     ) -> Tuple[str, str, str, str]:
         """
         Main processing: Analyze image → Combine with motion → Expand
@@ -358,6 +365,8 @@ class ImageToVideoPromptExpander:
                 wildcard_seed=normalise_seed(wildcard_seed),
                 wildcard_llm_block=wildcard_llm_block,
                 wildcard_instructions=wildcard_instructions,
+                nsfw=nsfw,
+                violence_filter=violence_filter,
                 vision_caption=start_frame_caption,
                 target_model=target_model,
                 duration_seconds=duration_seconds
@@ -412,6 +421,7 @@ class ImageToVideoPromptExpander:
                 
                 # Verbatim wildcard picks (__=name__) must survive the rewrite word for word
                 enhanced_prompt, _restored = enforce_verbatim(enhanced_prompt, self.expander.last_resolution)
+            enhanced_prompt, block_note = screen_output(enhanced_prompt, "Image-to-Video output")
             
             # STEP 7: Generate negative prompt
             negative_prompt = self.expander.generate_negative_prompt(
@@ -459,6 +469,7 @@ class ImageToVideoPromptExpander:
             status = f"✅ Image-to-Video prompt | {target_display} | Vision: {use_vision_model} | {file_status}"
             for warning in breakdown_dict.get("target_warnings") or []:
                 status += f"\n⚠️ {warning}"
+            status = lead_with_filter_notes(status, filter_notes_of(self.expander.last_resolution, block_note))
             
             return (
                 enhanced_prompt,

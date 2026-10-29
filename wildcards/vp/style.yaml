@@ -1,0 +1,223 @@
+# Wildcard Composer lists: Style & finish.
+# Written for this package (dual licence, see LICENSE). Names: __vp/style/<list>__.
+vp:
+  style:
+    colour_palette:
+      - teal and orange
+      - muted earth tones
+      - warm terracotta and ochre
+      - cool blues and greys
+      - pastel pinks and mint
+      - monochrome red
+      - monochrome blue
+      - black, white and one red accent
+      - desaturated with a single saturated accent
+      - jewel tones, emerald and sapphire
+      - neon magenta and cyan
+      - sepia and cream
+      - forest greens and browns
+      - sun-bleached pastels
+      - high-contrast black and gold
+      - dusty rose and sage
+      - primary colours, bold and flat
+      - complementary purple and yellow
+      - analogous warm reds and oranges
+      - candy-coloured brights
+      - faded 1970s film colours
+      - icy whites and pale blues
+      - autumn rust and mustard
+      - deep burgundy and navy
+      - duotone blue and pink
+      - muted storybook pastels
+      - chiaroscuro browns and blacks
+      - silvery greys
+      - limited palette of three spot colours
+      - vintage print colours
+    # Photographer: reads after "by" or "in the style of". Tags: genre.
+    photographer:
+      - {text: Ansel Adams, tags: [landscape, bw]}
+      - {text: Edward Weston, tags: [fine-art, bw]}
+      - {text: Imogen Cunningham, tags: [fine-art, bw]}
+      - {text: Alfred Stieglitz, tags: [fine-art, bw]}
+      - {text: Edward Steichen, tags: [portrait, fashion]}
+      - {text: Man Ray, tags: [surreal, bw]}
+      - {text: Julia Margaret Cameron, tags: [portrait, historic]}
+      - {text: Eugène Atget, tags: [street, historic]}
+      - {text: August Sander, tags: [portrait, bw]}
+      - {text: Karl Blossfeldt, tags: [botanical, bw]}
+      - {text: Eadweard Muybridge, tags: [motion, historic]}
+      - {text: Berenice Abbott, tags: [street, bw]}
+      - {text: Brassaï, tags: [street, night]}
+      - {text: André Kertész, tags: [street, bw]}
+      - {text: Henri Cartier-Bresson, tags: [street, bw]}
+      - {text: Robert Doisneau, tags: [street, bw]}
+      - {text: Elliott Erwitt, tags: [street, humour]}
+      - {text: Robert Frank, tags: [documentary, bw]}
+      - {text: Garry Winogrand, tags: [street, bw]}
+      - {text: Lee Friedlander, tags: [street, bw]}
+      - {text: Vivian Maier, tags: [street, bw]}
+      - {text: Weegee, tags: [documentary, night]}
+      - {text: Dorothea Lange, tags: [documentary, bw]}
+      - {text: Walker Evans, tags: [documentary, bw]}
+      - {text: Margaret Bourke-White, tags: [documentary, bw]}
+      - {text: Robert Capa, tags: [documentary, war]}
+      - {text: Gordon Parks, tags: [documentary, portrait]}
+      - {text: Diane Arbus, tags: [portrait, bw]}
+      - {text: Richard Avedon, tags: [portrait, fashion]}
+      - {text: Irving Penn, tags: [portrait, still-life]}
+      - {text: Yousuf Karsh, tags: [portrait, bw]}
+      - {text: Arnold Newman, tags: [portrait, environmental]}
+      - {text: Cecil Beaton, tags: [fashion, portrait]}
+      - {text: Horst P. Horst, tags: [fashion, bw]}
+      - {text: Helmut Newton, tags: [fashion, bw]}
+      - {text: Guy Bourdin, tags: [fashion, colour]}
+      - {text: Peter Lindbergh, tags: [fashion, bw]}
+      - {text: Paolo Roversi, tags: [fashion, soft]}
+      - {text: Bill Brandt, tags: [fine-art, bw]}
+      - {text: Harry Callahan, tags: [fine-art, bw]}
+      - {text: Aaron Siskind, tags: [abstract, bw]}
+      - {text: Saul Leiter, tags: [street, colour]}
+      - {text: Fan Ho, tags: [street, bw]}
+      - {text: Ernst Haas, tags: [colour, motion]}
+      - {text: Fred Herzog, tags: [street, colour]}
+      - {text: William Eggleston, tags: [colour, vernacular]}
+      - {text: Stephen Shore, tags: [colour, vernacular]}
+      - {text: Joel Meyerowitz, tags: [street, colour]}
+      - {text: Alex Webb, tags: [street, colour]}
+      - {text: Martin Parr, tags: [documentary, colour]}
+      - {text: Mary Ellen Mark, tags: [documentary, portrait]}
+      - {text: Sebastião Salgado, tags: [documentary, bw]}
+      - {text: Steve McCurry, tags: [documentary, colour]}
+      - {text: Annie Leibovitz, tags: [portrait, colour]}
+      - {text: Cindy Sherman, tags: [conceptual, colour]}
+      - {text: Gregory Crewdson, tags: [cinematic, colour]}
+      - {text: Andreas Gursky, tags: [fine-art, colour]}
+      - {text: Hiroshi Sugimoto, tags: [fine-art, bw]}
+      - {text: Daido Moriyama, tags: [street, bw]}
+      - {text: Rinko Kawauchi, tags: [fine-art, soft]}
+      - {text: Michael Kenna, tags: [landscape, bw]}
+      - {text: Edward Burtynsky, tags: [landscape, colour]}
+      - {text: Todd Hido, tags: [cinematic, night]}
+      - {text: Frans Lanting, tags: [wildlife, colour]}
+    # Colour grade: reads as its own phrase: "..., {teal and orange grade}".
+    colour_grade:
+      - teal and orange grade
+      - bleach bypass
+      - cross-processed colours
+      - faded matte film look
+      - warm vintage fade
+      - cool desaturated grade
+      - high-contrast punchy colour
+      - muted pastel grade
+      - green-tinted night grade
+      - sepia tone
+      - selenium-toned black and white
+      - cyanotype blue
+      - split-toned warm highlights and cool shadows
+      - Technicolor saturation
+      - day-for-night blue
+      - sodium-vapour orange
+      - neon magenta and cyan
+      - golden-hour warmth
+      - moody low-key grade
+      - bright airy high-key grade
+      - monochrome with one colour kept
+      - Kodachrome-like reds
+      - expired film colour shift
+      - infrared false colour
+      - noir black and white
+      - washed-out overexposed look
+      - dusty earth-tone grade
+      - crisp clean commercial grade
+    # Era aesthetic: reads as its own phrase: "..., {1980s VHS aesthetic}". Tags: period.
+    era_aesthetic:
+      - {text: Victorian daguerreotype look, tags: [1800s]}
+      - {text: tintype portrait look, tags: [1800s]}
+      - {text: Art Nouveau poster aesthetic, tags: [1900s]}
+      - {text: 1920s Art Deco glamour, tags: [1920s]}
+      - {text: 1920s silent film look, tags: [1920s]}
+      - {text: 1930s pulp magazine aesthetic, tags: [1930s]}
+      - {text: 1940s film noir, tags: [1940s]}
+      - {text: 1940s wartime propaganda poster, tags: [1940s]}
+      - {text: 1950s Kodachrome postcard, tags: [1950s]}
+      - {text: 1950s atomic age, tags: [1950s]}
+      - {text: 1950s pin-up illustration, tags: [1950s]}
+      - {text: 1960s mod pop art, tags: [1960s]}
+      - {text: 1960s space age, tags: [1960s]}
+      - {text: 1960s psychedelic, tags: [1960s]}
+      - {text: 1970s faded snapshot, tags: [1970s]}
+      - {text: 1970s disco glam, tags: [1970s]}
+      - {text: 1970s sci-fi paperback, tags: [1970s]}
+      - {text: 1980s VHS, tags: [1980s]}
+      - {text: 1980s synthwave neon, tags: [1980s]}
+      - {text: 1980s Memphis design, tags: [1980s]}
+      - {text: 1980s airbrush art, tags: [1980s]}
+      - {text: 1990s grunge zine, tags: [1990s]}
+      - {text: 1990s disposable camera, tags: [1990s]}
+      - {text: 1990s early CGI, tags: [1990s]}
+      - {text: 1990s anime cel, tags: [1990s]}
+      - {text: Y2K chrome and gloss, tags: [2000s]}
+      - {text: 2000s digicam flash, tags: [2000s]}
+      - {text: 2000s MySpace scene, tags: [2000s]}
+      - {text: 2010s Instagram filter, tags: [2010s]}
+      - {text: vaporwave, tags: [retro]}
+      - {text: frutiger aero, tags: [2000s]}
+      - {text: 8-bit pixel art, tags: [1980s]}
+      - {text: 16-bit console game, tags: [1990s]}
+      - {text: PS1 low-poly, tags: [1990s]}
+      - {text: medieval illuminated manuscript, tags: [medieval]}
+      - {text: Renaissance fresco, tags: [1500s]}
+      - {text: Baroque chiaroscuro, tags: [1600s]}
+      - {text: Edo woodblock print, tags: [1800s]}
+      - {text: Soviet constructivist poster, tags: [1920s]}
+      - {text: Bauhaus, tags: [1920s]}
+      - {text: mid-century modern, tags: [1950s]}
+      - {text: 1970s fantasy paperback, tags: [1970s]}
+      - {text: golden age of illustration, tags: [1900s]}
+      - {text: 2010s modern anime, tags: [2010s]}
+      - {text: 1980s anime, tags: [1980s]}
+      - {text: modern comic book art, tags: [2010s]}
+    # Texture & finish: reads as its own phrase: "..., {fine film grain}".
+    texture_finish:
+      - fine film grain
+      - heavy film grain
+      - matte finish
+      - glossy finish
+      - satin finish
+      - halftone dots
+      - Ben-Day dots
+      - risograph texture
+      - screen-print misregistration
+      - letterpress deboss
+      - canvas weave
+      - cold-press watercolour paper
+      - rough charcoal paper
+      - visible brushstrokes
+      - impasto ridges
+      - palette-knife texture
+      - cracked varnish craquelure
+      - aged paper stains
+      - foxing and yellowed edges
+      - scratched film emulsion
+      - dust and hair on the scan
+      - light-leak burns
+      - VHS tracking lines
+      - CRT scanlines
+      - JPEG compression artefacts
+      - pixel dithering
+      - embossed foil
+      - holographic sheen
+      - chalk pastel smudges
+      - felt-tip streaks
+      - clean vector flat colour
+      - cel-shaded outlines
+      - cross-hatched ink shading
+      - fine pen hatching
+      - stippled dotwork shading
+      - fine linework
+      - flat shapes with no outlines
+      - clean lineart
+      - simple shading, semi-flat
+      - photorealistic rendering
+      - outline only, uncoloured
+      - two-tone shading

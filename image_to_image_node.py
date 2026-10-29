@@ -18,6 +18,10 @@ from .wildcard_support import (
     normalise_seed,
     report_lines,
     resolve_wildcards,
+    filter_notes_of,
+    lead_with_filter_notes,
+    screen_output,
+    wildcard_nsfw_input,
     wildcard_optional_inputs,
 )
 
@@ -220,6 +224,7 @@ class ImageToImagePromptExpander:
             # New inputs are only ever APPENDED here, so saved workflows keep their widget order.
             "optional": {
                 **wildcard_optional_inputs(),
+                **wildcard_nsfw_input(),
             }
         }
 
@@ -258,7 +263,9 @@ class ImageToImagePromptExpander:
         filename_base: str,
         wildcard_seed: int = -1,
         wildcard_llm_block: bool = True,
-        wildcard_instructions: str = ""
+        wildcard_instructions: str = "",
+        nsfw: str = "off",
+        violence_filter: str = "off"
     ) -> Tuple[str, str, str, str]:
         """Main processing function"""
         
@@ -266,7 +273,8 @@ class ImageToImagePromptExpander:
             # STEP 0: Resolve wildcards in the change request (core/wildcards). New in this node.
             wildcard_resolution = resolve_wildcards(
                 change_request, seed=normalise_seed(wildcard_seed), legacy=True,
-                upstream_instructions=wildcard_instructions,
+                upstream_instructions=wildcard_instructions, nsfw=nsfw,
+                violence_filter=violence_filter,
             )
             change_request = wildcard_resolution.text
             
@@ -351,6 +359,7 @@ class ImageToImagePromptExpander:
 
             # Verbatim wildcard picks (__=name__) must survive the rewrite word for word
             enhanced_prompt, _restored = enforce_verbatim(enhanced_prompt, wildcard_resolution)
+            enhanced_prompt, block_note = screen_output(enhanced_prompt, "Image-to-Image output")
             
             # STEP 6: Generate negative prompt
             negative_prompt = self.expander.generate_negative_prompt(
@@ -390,6 +399,7 @@ class ImageToImagePromptExpander:
             wildcard_report = report_lines(wildcard_resolution)
             if wildcard_report:
                 status = f"{status}\n{wildcard_report}"
+            status = lead_with_filter_notes(status, filter_notes_of(wildcard_resolution, block_note))
             
             return (
                 enhanced_prompt,

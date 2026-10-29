@@ -1,0 +1,146 @@
+# Wildcard Composer lists: Action.
+# Written for this package (dual licence, see LICENSE). Names: __vp/action/<list>__.
+# Holding: entries read after "holding": "holding {a paper lantern}".
+vp:
+  action:
+    holding:
+      - a paper lantern
+      - a steaming cup of coffee
+      - an open umbrella
+      - a bouquet of wildflowers
+      - a vintage camera
+      - a worn leather book
+      - a glass of red wine
+      - a single red rose
+      - a lit candle
+      - a sword resting on the shoulder
+      - a violin
+      - an acoustic guitar
+      - a basket of apples
+      - a cat in their arms
+      - a sleeping puppy
+      - a map
+      - a smartphone
+      - a paintbrush
+      - a sketchbook
+      - a teacup and saucer
+      - a bicycle by the handlebars
+      - a surfboard under one arm
+      - a skateboard
+      - a fishing rod
+      - a lantern held high
+      - a handful of sand
+      - a letter
+      - a pair of scissors
+      - an old key
+      - a crystal ball
+      - a folded newspaper
+      - a bag of groceries
+      - a potted plant
+      - an ice-cream cone
+      - a balloon on a string
+      - a bundle of firewood
+      - a microphone
+      - a staff
+      - a shield
+      - a torch
+      - a pocket watch on a chain
+      - a lit sparkler
+      - a jar of fireflies
+      - a folded map
+      - a violin and bow
+      - a lantern made of glass bottles
+      - a sleeping cat
+      - a stack of vinyl records
+      - a paintbrush dripping with paint
+      - a handwritten letter
+      - a wooden sword
+      - a bunch of balloons
+      - a potted fern
+      - a loaf of fresh bread
+      - a compass
+      - a smartphone, filming
+    # Gesture: reads after the subject: "a sailor {shading her eyes with one hand}".
+    gesture:
+      - shading the eyes with one hand
+      - hand raised in a wave
+      - waving goodbye
+      - pointing into the distance
+      - pointing at the viewer
+      - finger to the lips, shushing
+      - hands clasped in prayer
+      - arms crossed
+      - hands on hips
+      - hands in pockets
+      - chin resting on one hand
+      - rubbing the temples
+      - running a hand through the hair
+      - tucking hair behind an ear
+      - adjusting a hat brim
+      - straightening a tie
+      - hand over the heart
+      - covering the mouth while laughing
+      - giving a thumbs up
+      - making a peace sign
+      - raising a fist
+      - arms outstretched
+      - arms raised in triumph
+      - shrugging
+      - beckoning with one finger
+      - holding up a hand to stop
+      - counting on fingers
+      - snapping fingers
+      - clapping
+      - blowing a kiss
+      - tipping a hat
+      - saluting
+      - bowing slightly
+      - hands framing the face
+      - reaching toward the camera
+      - fists clenched
+      - palms open, pleading
+      - fingers steepled
+      - biting a thumbnail
+      - wiping away a tear
+    # Interaction: reads between two subjects: "a boy {whispering to} his grandmother".
+    interaction:
+      - whispering to
+      - dancing with
+      - embracing
+      - hugging
+      - holding hands with
+      - leaning on
+      - arguing with
+      - laughing with
+      - shaking hands with
+      - high-fiving
+      - teaching
+      - listening to
+      - comforting
+      - consoling
+      - chasing
+      - racing
+      - playing chess with
+      - sharing a meal with
+      - sharing an umbrella with
+      - toasting with
+      - helping up
+      - carrying
+      - giving a piggyback ride to
+      - handing a gift to
+      - pouring tea for
+      - painting a portrait of
+      - photographing
+      - tending the wounds of
+      - fencing with
+      - sparring with
+      - arm-wrestling
+      - staring down
+      - turning away from
+      - waiting for
+      - walking arm in arm with
+      - back to back with
+      - reading a story to
+      - singing to
+      - feeding
+      - braiding the hair of

@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wildcard Review</title>
+<style>
+:root {
+  --bg:#f6f4ef; --panel:#ffffff; --fg:#1f1f1d; --muted:#7a776f; --line:#e2ded4; --soft:#efece4;
+  --accent:#2f5d8a; --accent-fg:#ffffff; --accent-soft:#dde7f2; --warn:#a85a14; --good:#2e7d4f; --bad:#a83232; --new:#7a4fa0;
+  --sug:#c9a227; --nud:#c96a27; --exp:#b03030;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#151617; --panel:#1e2022; --fg:#e8e6e1; --muted:#9a978f; --line:#33363a; --soft:#26292c;
+          --accent:#7fa8d6; --accent-fg:#10161d; --accent-soft:#24364a; --warn:#e0a060; --good:#6cc28f; --bad:#e07a7a; --new:#b99be0;
+          --sug:#d8b84a; --nud:#e0904a; --exp:#e06060; }
+}
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+button, select, input { font:inherit; color:inherit; }
+header { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:8px 14px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5; }
+header h1 { font-size:15px; margin:0 6px 0 0; }
+header select, header input { background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:4px 6px; }
+header input { width:150px; }
+header .progress { color:var(--muted); margin-left:auto; font-size:12px; }
+.btn { border:1px solid var(--line); background:var(--soft); border-radius:6px; padding:4px 10px; cursor:pointer; }
+.btn:hover { border-color:var(--accent); }
+.btn.primary { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+.seg { display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+.seg button { border:0; background:var(--soft); padding:4px 10px; cursor:pointer; }
+.seg button.on { background:var(--accent); color:var(--accent-fg); }
+.layout { display:grid; grid-template-columns:280px 1fr; height:calc(100% - 49px); }
+aside { border-right:1px solid var(--line); overflow:auto; background:var(--panel); }
+aside .item { padding:6px 12px; border-bottom:1px solid var(--soft); cursor:pointer; display:flex; gap:8px; align-items:center; }
+aside .item:hover { background:var(--soft); }
+aside .item.on { background:var(--accent-soft); }
+aside .item .n { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+aside .item small { color:var(--muted); }
+.dot { width:9px; height:9px; border-radius:50%; background:var(--line); flex:none; }
+.dot.keep { background:var(--good); } .dot.dump { background:var(--bad); } .dot.same { background:var(--new); } .dot.unsure { background:var(--warn); }
+main { overflow:auto; padding:14px 18px 110px; }
+.empty { color:var(--muted); padding:40px; text-align:center; }
+.title { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+.title h2 { margin:0; font-size:19px; overflow-wrap:anywhere; }
+.dim { font-size:16px; color:var(--accent); }
+.badges { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 4px; }
+.badge { font-size:11px; border:1px solid var(--line); border-radius:10px; padding:1px 8px; color:var(--muted); }
+.badge.sug { color:var(--sug); border-color:var(--sug); } .badge.nud { color:var(--nud); border-color:var(--nud); } .badge.exp { color:var(--exp); border-color:var(--exp); }
+.file { font-size:12px; color:var(--muted); overflow-wrap:anywhere; cursor:copy; }
+.judge { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:9px 12px; margin:10px 0; display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13px; }
+.judge b { color:var(--muted); font-weight:500; }
+.verdict { font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.verdict.keep, .verdict.aside { color:var(--good); } .verdict.merge { color:var(--new); } .verdict.purge { color:var(--bad); }
+.meter { display:inline-flex; gap:2px; vertical-align:middle; }
+.meter i { width:12px; height:8px; border-radius:2px; background:var(--line); }
+.meter i.on { background:var(--accent); }
+section.box { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:9px 11px 10px; margin-bottom:10px; }
+section.box h3 { margin:0 0 8px; font-size:13px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+section.box h3 .help { font-weight:normal; color:var(--muted); font-size:12px; }
+.entries { display:flex; flex-wrap:wrap; gap:5px; }
+.entry { border:1px solid var(--line); background:var(--soft); border-radius:6px; padding:2px 8px; font-size:13px; max-width:100%; overflow-wrap:anywhere; }
+.entry.r1 { border-color:var(--sug); } .entry.r2 { border-color:var(--nud); } .entry.r3 { border-color:var(--exp); }
+.chips { display:flex; flex-wrap:wrap; gap:5px; }
+.chip { border:1px solid var(--line); background:var(--soft); border-radius:14px; padding:2px 10px; cursor:pointer; user-select:none; font-size:13px; }
+.chip:hover { border-color:var(--accent); }
+.chip.sel { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+.chip small { opacity:.7; margin-left:4px; }
+.sect { margin-bottom:6px; }
+.sect > span { font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); display:block; margin:4px 0 3px; }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media (max-width: 1100px) { .row2 { grid-template-columns:1fr; } }
+input.text { width:100%; background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:4px 8px; }
+.bar { position:fixed; bottom:0; left:280px; right:0; background:var(--panel); border-top:1px solid var(--line); padding:10px 18px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; z-index:6; }
+.bar .d { border:1px solid var(--line); border-radius:8px; padding:7px 16px; cursor:pointer; background:var(--soft); font-weight:600; }
+.bar .d kbd { font-weight:normal; opacity:.65; margin-left:6px; font-size:11px; }
+.bar .d.keep.on, .bar .d.keep:hover { background:var(--good); color:#fff; border-color:var(--good); }
+.bar .d.dump.on, .bar .d.dump:hover { background:var(--bad); color:#fff; border-color:var(--bad); }
+.bar .d.same.on, .bar .d.same:hover { background:var(--new); color:#fff; border-color:var(--new); }
+.bar .d.unsure.on, .bar .d.unsure:hover { background:var(--warn); color:#fff; border-color:var(--warn); }
+.bar .status { color:var(--muted); font-size:12px; margin-left:auto; }
+.similar .chip { border-color:var(--new); }
+.similar .chip.sel { background:var(--new); border-color:var(--new); }
+/* grid view */
+table.grid { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+table.grid td { border-bottom:1px solid var(--soft); padding:7px 9px; vertical-align:top; font-size:13px; }
+table.grid td.k { width:28%; overflow-wrap:anywhere; }
+table.grid td.k small { color:var(--muted); display:block; }
+table.grid td.s { color:var(--fg); }
+table.grid td.s span { display:inline-block; background:var(--soft); border-radius:4px; padding:0 5px; margin:0 3px 3px 0; }
+table.grid td.c { width:200px; white-space:nowrap; }
+.tog { display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+.tog button { border:0; background:var(--soft); padding:3px 9px; cursor:pointer; font-weight:600; }
+.tog button.keep.on { background:var(--good); color:#fff; } .tog button.dump.on { background:var(--bad); color:#fff; } .tog button.unsure.on { background:var(--warn); color:#fff; }
+.tog button.sug { outline:2px dashed var(--muted); outline-offset:-3px; }
+dialog { border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--fg); max-width:760px; }
+dialog pre { max-height:300px; overflow:auto; font-size:12px; background:var(--soft); padding:8px; border-radius:6px; }
+@media (max-width: 760px) { .layout { grid-template-columns:1fr; } aside { max-height:30vh; } .bar { left:0; } }
+.chip.mine { border-style:dashed; }
+.badge.gone { color:var(--bad); border-color:var(--bad); }
+aside .item.gone { opacity:.5; }
+.preview { font-size:12px; color:var(--muted); margin-top:3px; overflow-wrap:anywhere; }
+dialog h4 { margin:12px 0 4px; }
+dialog .help { color:var(--muted); font-size:12px; }
+.dot.merge { background:#2f8a8a; }
+.bar .d.merge.on, .bar .d.merge:hover { background:#2f8a8a; color:#fff; border-color:#2f8a8a; }
+.merge-box .chip.sel { background:#2f8a8a; border-color:#2f8a8a; }
+table.mrg { width:100%; border-collapse:collapse; font-size:13px; }
+table.mrg td { border-bottom:1px solid var(--soft); padding:3px 6px; vertical-align:top; }
+table.mrg td.m { white-space:nowrap; color:var(--muted); font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+table.mrg tr.off td { opacity:.4; text-decoration:line-through; }
+table.mrg small { color:var(--muted); }
+.mrg-wrap { max-height:420px; overflow:auto; border:1px solid var(--line); border-radius:6px; margin-top:6px; }
+.grp { font-size:11px; color:var(--muted); margin:4px 0 2px; }
+.entry { cursor:pointer; }
+.entry:hover { border-color:var(--accent); }
+.entry.dropped { text-decoration:line-through; opacity:.4; }
+.entry.flagged { outline:2px dashed var(--bad); outline-offset:1px; }
+.tools { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:0 0 8px; }
+#genDlg { width:min(940px, 96vw); max-width:none; }
+#genDlg textarea { width:100%; min-height:90px; background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit; color:inherit; }
+#genDlg .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+#genDlg .cands { max-height:340px; overflow:auto; border:1px solid var(--line); border-radius:6px; padding:4px; margin-top:6px; }
+#genDlg .cand { display:flex; gap:6px; align-items:center; padding:1px 0; }
+#genDlg .cand input.text { flex:1; padding:2px 6px; }
+#genDlg .cand.off input.text { opacity:.4; text-decoration:line-through; }
+.warn { background:rgba(200,120,40,.15); border:1px solid var(--warn); border-radius:6px; padding:6px 9px; font-size:13px; margin:6px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Wildcard Review</h1>
+  <select id="source" title="Which lists"><option value="">all lists</option><option value="candidate">judged (8+ entries)</option><option value="small">5-7 entries</option><option value="nsfw">NSFW lists</option></select>
+  <select id="facet"><option value="">every facet</option></select>
+  <select id="verdict" title="What the judge said"><option value="">any judge verdict</option><option>keep</option><option>merge</option><option>aside</option><option>purge</option></select>
+  <select id="status"><option value="todo">to do (undecided)</option><option value="all">all</option><option value="keep">kept</option><option value="dump">dumped</option><option value="same">same as</option><option value="unsure">unsure</option><option value="merge">merged</option></select>
+  <select id="order"><option value="facet">by what they are</option><option value="junk">likely junk first</option><option value="pack">by pack</option><option value="size">biggest first</option></select>
+  <input id="q" placeholder="search name">
+  <span class="seg"><button id="vCard" class="on">Card</button><button id="vGrid">Grid</button></span>
+  <button class="btn" id="newListBtn" title="Have the local LLM write a list you describe">+ New list...</button>
+  <select id="model" title="The LM Studio model for Suggest junk, New list and Extend"><option value="">LLM model...</option></select>
+  <button class="btn" id="applyBtn">Apply...</button>
+  <span class="progress" id="progress"></span>
+</header>
+<div class="layout">
+  <aside id="queue"></aside>
+  <main id="main"><div class="empty">loading...</div></main>
+</div>
+<div class="bar" id="bar" hidden>
+  <span class="d keep" data-d="keep">Keep<kbd>K</kbd></span>
+  <span class="d dump" data-d="dump">Dump<kbd>D</kbd></span>
+  <span class="d same" data-d="same">Same as...<kbd>S</kbd></span>
+  <span class="d unsure" data-d="unsure">Unsure<kbd>U</kbd></span>
+  <span class="d merge" data-d="merge" title="Fold this list and others you pick into one list of your own (mine/)">Merge...<kbd>M</kbd></span>
+  <button class="btn" id="accept" title="Use the judge's verdict (keep / aside / merge -> Keep, purge -> Dump)">Judge's call<kbd> A</kbd></button>
+  <button class="btn" id="prev">&larr;</button><button class="btn" id="next">&rarr;</button>
+  <span class="status" id="saved"></span>
+</div>
+<dialog id="applyDlg">
+  <h3>Apply decisions</h3>
+  <div id="applyBody">...</div>
+  <p style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="applyCancel">Close</button><button class="btn primary" id="applyGo">Apply</button></p>
+</dialog>
+<dialog id="genDlg"><div id="genBody"></div></dialog>
+<script>
+const $ = (s) => document.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === undefined || v === null || v === false) continue;
+    if (k === "class") n.className = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+};
+const get = async (u) => { const r = await fetch(u); return r.json(); };
+const post = async (u, b) => { const r = await fetch(u, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }); return r.json(); };
+const LEVELS = ["off", "suggestive", "nudity", "explicit"];
+const JUDGE_TO = { keep: "keep", aside: "keep", merge: "keep", purge: "dump" };
+
+const S = { meta: null, queue: [], at: 0, view: "card", list: null, seed: 1, pick: {}, showAll: null, gridAt: 0, grid: [] };
+
+function loadPrefs() { try { const p = JSON.parse(localStorage.getItem("wcr") || "{}"); for (const id of ["source", "facet", "verdict", "status", "order"]) if (p[id] !== undefined) $("#" + id).value = p[id]; if (p.view) S.view = p.view; } catch (e) {} }
+function savePrefs() { try { const p = { view: S.view }; for (const id of ["source", "facet", "verdict", "status", "order"]) p[id] = $("#" + id).value; localStorage.setItem("wcr", JSON.stringify(p)); } catch (e) {} }
+
+async function boot() {
+  S.meta = await get("/api/meta");
+  for (const [f, n] of S.meta.facets) $("#facet").append(el("option", { value: f }, `${f} (${n})`));
+  loadPrefs();
+  for (const id of ["source", "facet", "verdict", "status", "order"]) $("#" + id).addEventListener("change", () => { savePrefs(); reload(); });
+  let t; $("#q").addEventListener("input", () => { clearTimeout(t); t = setTimeout(reload, 250); });
+  $("#vCard").onclick = () => setView("card"); $("#vGrid").onclick = () => setView("grid");
+  $("#applyBtn").onclick = openApply;
+  $("#newListBtn").onclick = () => openGen();
+  $("#genDlg").addEventListener("close", () => { G.stop = true; });
+  loadModels(); $("#applyCancel").onclick = () => $("#applyDlg").close(); $("#applyGo").onclick = doApply;
+  document.querySelectorAll(".bar .d").forEach((b) => b.onclick = () => decide(b.dataset.d));
+  $("#accept").onclick = acceptJudge; $("#prev").onclick = () => go(-1); $("#next").onclick = () => go(1);
+  document.addEventListener("keydown", keys);
+  setView(S.view, true);
+  await reload();
+  setInterval(refreshMeta, 15000);
+}
+
+async function loadModels() {
+  let saved = ""; try { saved = localStorage.getItem("wcr_model") || ""; } catch (e) {}
+  try {
+    const r = await get("/api/llm_models");
+    S.model = saved && r.models.includes(saved) ? saved : (r.models.includes(r.default) ? r.default : (r.models[0] || r.default));
+    $("#model").replaceChildren(...(r.models.length ? r.models : [r.default]).map((m) => el("option", { value: m, selected: m === S.model }, m)));
+    if (r.error) $("#model").title = r.error;
+  } catch (e) { S.model = saved; }
+  $("#model").onchange = (e) => { S.model = e.target.value; try { localStorage.setItem("wcr_model", S.model); } catch (x) {} };
+}
+async function refreshMeta() { S.meta = await get("/api/meta"); progress(); }
+function progress() {
+  const d = S.meta.decided || {}; const done = Object.values(d).reduce((a, b) => a + b, 0);
+  const gone = S.meta.hidden ? `${S.meta.hidden} hidden in the library (${S.meta.moved || 0} files moved to _dumped${S.meta.renamed ? `, ${S.meta.renamed} renamed` : ""})  \u00b7  ` : "";
+  $("#progress").textContent = gone + `${done} / ${S.meta.total} decided  ·  keep ${d.keep || 0} · dump ${d.dump || 0} · same ${d.same || 0} · unsure ${d.unsure || 0}  ·  queue ${S.queue.length}  ·  library ${S.meta.library}`;
+}
+
+async function reload(keepKey) {
+  const p = new URLSearchParams({ source: $("#source").value, facet: $("#facet").value, verdict: $("#verdict").value, status: $("#status").value, order: $("#order").value, q: $("#q").value });
+  S.queue = await get("/api/queue?" + p);
+  const idx = keepKey ? S.queue.findIndex((i) => i.key === keepKey) : -1;
+  S.at = idx >= 0 ? idx : Math.min(S.at, Math.max(0, S.queue.length - 1));
+  S.gridAt = 0;
+  drawQueue(); progress();
+  if (S.view === "card") openAt(S.at); else drawGrid();
+}
+
+function drawQueue() {
+  const box = $("#queue"); box.replaceChildren();
+  const max = Math.min(S.queue.length, 2000);
+  for (let i = 0; i < max; i++) {
+    const it = S.queue[i];
+    box.append(el("div", { class: "item" + (i === S.at && S.view === "card" ? " on" : "") + (it.moved ? " gone" : ""), title: it.moved ? "file moved to _dumped" : it.hidden ? "hidden in the library" : "", onclick: () => { if (S.view === "grid") setView("card"); openAt(i); } },
+      el("span", { class: "dot " + it.decision }), el("span", { class: "n", title: it.key }, it.dim || it.key, el("br"), el("small", {}, `${it.key}  ·  ${it.entries}`))));
+  }
+  if (S.queue.length > max) box.append(el("div", { class: "empty" }, `${S.queue.length - max} more - narrow the filters`));
+}
+
+function setView(v, quiet) {
+  S.view = v; $("#vCard").classList.toggle("on", v === "card"); $("#vGrid").classList.toggle("on", v === "grid");
+  $("#bar").hidden = v !== "card"; savePrefs();
+  if (!quiet) { if (v === "card") openAt(S.at); else drawGrid(); drawQueue(); }
+}
+
+// ---------------------------------------------------------------- card view
+async function openAt(i) {
+  if (!S.queue.length) { $("#main").replaceChildren(el("div", { class: "empty" }, "Nothing here with these filters.")); $("#bar").hidden = true; return; }
+  S.at = Math.max(0, Math.min(i, S.queue.length - 1));
+  S.seed = 1; S.showAll = null; S.flags = null; S.dropCount = undefined; S.matchQ = ""; S.junkBusy = false;
+  const key = S.queue[S.at].key;
+  S.list = await get("/api/list?" + new URLSearchParams({ key, seed: S.seed }));
+  const r = S.list.review || {};
+  S.pick = { decision: r.decision || "", same_as: r.same_as || "", buttons: (r.button || "").split(",").filter(Boolean), name: r.name || "", nsfw: r.review_nsfw || "", nameTouched: !!r.name,
+             merge_with: (r.merge_with || "").split(",").filter(Boolean), merge_name: r.merge_name || "",
+             merge_drop: new Set((() => { try { return JSON.parse(r.merge_drop || "[]"); } catch (e) { return []; } })()) };
+  S.mergeOpen = r.decision === "merge"; S.mergePreview = null; S.mergeShow = "all";
+  if (S.mergeOpen) loadMergePreview();
+  drawCard(); drawQueue();
+  const cur = $("#queue .item.on"); if (cur) cur.scrollIntoView({ block: "nearest" });
+}
+
+function meter(n) { return el("span", { class: "meter", title: `${n ?? "?"}/4` }, [0, 1, 2, 3].map((i) => el("i", { class: i < (n || 0) ? "on" : "" }))); }
+const levelBadge = (lv, label) => lv ? el("span", { class: "badge " + ["", "sug", "nud", "exp"][lv] }, `${label}${LEVELS[lv]}`) : null;
+
+function drawCard() {
+  const L = S.list, j = L.judge || {}, main = $("#main");
+  const rated = L.rated ? L.rated.slice(1).reduce((a, b) => a + b, 0) : null;
+  const head = el("div", {},
+    el("div", { class: "title" }, el("h2", {}, L.name), el("span", { class: "dim" }, j.dimension || "")),
+    el("div", { class: "badges" },
+      el("span", { class: "badge" }, `${L.entries} entries`), el("span", { class: "badge" }, L.kind || "?"),
+      L.pack ? el("span", { class: "badge" }, L.pack) : null,
+      el("span", { class: "badge" }, { candidate: "judged list", small: "5-7 entries", nsfw: "from the NSFW set-aside" }[L.source]),
+      levelBadge(L.list_rating, "list rated "),
+      rated ? el("span", { class: "badge" }, `${rated} entries rated NSFW`) : null,
+      ...stateBadges(L),
+      L.from_library ? null : el("span", { class: "badge" }, (L.review || {}).moved_to ? "file moved: samples from the triage" : "catalog samples (library still loading)")),
+    el("div", { class: "file", title: "click to copy", onclick: () => navigator.clipboard?.writeText(L.file) }, L.file));
+  const judge = el("div", { class: "judge" },
+    el("b", {}, "judge"), el("span", {}, el("span", { class: "verdict " + (j.verdict || "") }, j.verdict || "?"), `  ${j.reason || ""}`, el("small", { style: "color:var(--muted)" }, `   (${j.model || ""}, confidence ${j.confidence ?? "?"})`)),
+    el("b", {}, "is"), el("span", {}, `${j.dimension || "?"}  ·  facet ${j.facet || "?"}  ·  entries read as ${j.slot_form || "?"}${j.era_specific ? "  ·  old-model tokens" : ""}`),
+    el("b", {}, "quality"), el("span", {}, "one kind of thing ", meter(j.coherence), "    changes the picture ", meter(j.visual)));
+
+  const entriesBox = entriesSection(L);
+
+  const similar = el("section", { class: "box similar" },
+    el("h3", {}, "Same as...", el("span", { class: "help" }, "pick the better list this one duplicates (it is hidden in favour of that one)")),
+    el("div", { class: "chips" }, (L.similar || []).map((o) => el("span", {
+      class: "chip" + (S.pick.same_as === o.key ? " sel" : ""), title: o.key,
+      onclick: () => { S.pick.same_as = S.pick.same_as === o.key ? "" : o.key; decide("same", true); } },
+      o.dim || o.key, el("small", {}, `${o.entries}${o.decision ? " · " + o.decision : ""}`)))),
+    el("div", { style: "margin-top:6px;display:flex;gap:6px" },
+      el("input", { class: "text", id: "sameq", placeholder: "or find another list by name", oninput: (e) => findSame(e.target.value) })),
+    el("div", { class: "chips", id: "sameHits", style: "margin-top:5px" }));
+
+  const preview = el("div", { class: "preview" });
+  const showPreview = () => {
+    const s = slugify(name.value), dir = L.file.includes("/") ? L.file.slice(0, L.file.lastIndexOf("/") + 1) : "";
+    preview.textContent = !S.pick.nameTouched || !s ? "" : s === L.key.split("/").pop() ? "that is its name already"
+      : (L.kind_of_file === "txt" ? `on Apply: renamed to ${dir}${s}.txt` : `on Apply: written out of ${L.file} as ${dir}${s}.txt (that key is hidden)`)
+        + " \u00b7 its old name keeps working";
+  };
+  const name = el("input", { class: "text", value: S.pick.name || j.dimension || "", oninput: (e) => { S.pick.name = e.target.value; S.pick.nameTouched = true; showPreview(); } });
+  const what = el("section", { class: "box" },
+    el("h3", {}, "What it is", el("span", { class: "help" }, "for lists you keep: a new name, the Composer buttons that should offer it, an NSFW level fix")),
+    el("div", { class: "row2" },
+      el("div", {}, el("div", { class: "sect" }, el("span", {}, "Name"), name,
+        el("label", { style: "font-size:12px;color:var(--muted)" }, el("input", { type: "checkbox", checked: S.pick.nameTouched, onchange: (e) => { S.pick.nameTouched = e.target.checked; if (e.target.checked && !S.pick.name) S.pick.name = name.value; } }), " rename the list to this (on Apply)"), preview),
+        el("div", { class: "sect" }, el("span", {}, "NSFW level"), el("div", { class: "chips" },
+          ["", ...LEVELS].map((lv) => el("span", { class: "chip" + ((S.pick.nsfw || "") === lv ? " sel" : ""), onclick: () => { S.pick.nsfw = lv; drawCard(); } }, lv || "auto"))))),
+      buttonsBox()));
+
+  main.replaceChildren(head, judge, entriesBox, similar, what, S.mergeOpen ? mergeBox(L) : null);
+  showPreview();
+  document.querySelectorAll(".bar .d").forEach((b) => b.classList.toggle("on", b.dataset.d === S.pick.decision));
+  $("#saved").textContent = (L.review && L.review.decided_at) ? `saved ${L.review.decided_at}${L.review.applied_at ? " · applied " + L.review.applied_at : ""}` : `${S.at + 1} of ${S.queue.length}`;
+}
+
+function slugify(text) { return (text || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80); }
+
+function stateBadges(L) {
+  const r = L.review || {};
+  const applied = r.applied_at && (!r.decided_at || r.applied_at >= r.decided_at);
+  return [
+    r.decision === "dump" && applied ? el("span", { class: "badge gone" }, r.moved_to ? `dumped · file moved to ${r.moved_to}` : "dumped · hidden in the library") : null,
+    r.decision === "dump" && !applied ? el("span", { class: "badge gone" }, "dumped · not applied yet") : null,
+    r.renamed_from ? el("span", { class: "badge" }, `renamed from ${r.renamed_from}`) : null,
+    r.merged_into ? el("span", { class: "badge gone" }, `merged into ${r.merged_into}`) : null,
+    r.decision === "merge" && !r.merged_into ? el("span", { class: "badge" }, `merge with ${(r.merge_with || "").split(",").length} list(s) \u00b7 on Apply`) : null,
+  ];
+}
+
+/** Composer buttons: yours (dashed, My buttons) and the shipped ones; click any number. "+ new button" makes one. */
+function buttonsBox() {
+  const toggle = (id) => { const s = new Set(S.pick.buttons); if (s.has(id)) s.delete(id); else s.add(id); S.pick.buttons = [...s]; drawCard(); };
+  const label = el("input", { class: "text", placeholder: "new button, e.g. Bird species", style: "max-width:230px" });
+  const sections = S.meta.sections || [];
+  const guess = { subject: "subject", action: "action", setting: "setting", place: "setting", lighting: "lighting", style: "style", camera: "camera", composition: "composition", format: "format" }[(S.list.judge || {}).facet] || "subject";
+  const section = el("select", {}, sections.map((s) => el("option", { value: s.section, selected: s.section === guess }, s.label)));
+  const heading = el("select", { title: "Which heading of that section the button sits under (the Composer's groups)" });
+  const fillHeadings = () => {
+    const sec = sections.find((s) => s.section === section.value) || { groups: ["My buttons"] };
+    heading.replaceChildren(...sec.groups.map((g) => el("option", { value: g }, g === "My buttons" ? "My buttons (top)" : `under ${g}`)));
+  };
+  section.addEventListener("change", fillHeadings); fillHeadings();
+  const make = async () => {
+    if (!label.value.trim()) { label.focus(); return; }
+    const r = await post("/api/button", { label: label.value, section: section.value, group: heading.value, key: S.list.key });
+    if (!r.ok) { $("#saved").textContent = "button not made: " + (r.error || "?"); return; }
+    S.meta = await get("/api/meta");
+    S.pick.buttons = [...new Set([...S.pick.buttons, r.button.id])];
+    drawCard();
+    $("#saved").textContent = `made "${r.button.label}" (${r.button.group}) with this list on it · press Keep to save`;
+  };
+  label.addEventListener("keydown", (e) => { if (e.key === "Enter") make(); });
+  return el("div", {},
+    el("div", { class: "sect" }, el("span", {}, "Composer buttons · click any number · dashed = yours"),
+      el("div", { style: "display:flex;gap:6px;align-items:center;flex-wrap:wrap" }, label, section, heading,
+        el("button", { class: "btn", onclick: make, title: "A new button in your My buttons (Composer), with this list on it" }, "+ new button"))),
+    S.meta.buttons.map((sec) => {
+      const groups = [];
+      for (const b of sec.buttons) { let g = groups.find((x) => x.name === (b.group || "")); if (!g) groups.push(g = { name: b.group || "", items: [] }); g.items.push(b); }
+      return el("div", { class: "sect" }, el("span", {}, sec.label), groups.map((g) => el("div", {},
+        g.name ? el("div", { class: "grp" }, g.name) : null,
+        el("div", { class: "chips" }, g.items.map((b) => el("span", {
+          class: "chip" + (b.mine ? " mine" : "") + (S.pick.buttons.includes(b.id) ? " sel" : ""),
+          title: b.mine ? "your button" : "", onclick: () => toggle(b.id) }, b.label))))));
+    }));
+}
+
+// ---------------------------------------------------------------- merge
+function defaultMergeName() { return S.pick.merge_name || (S.list.judge || {}).dimension || S.list.key.split("/").pop(); }
+function openMerge() {
+  S.mergeOpen = true;
+  if (!S.pick.merge_with.length) S.pick.merge_with = [];
+  drawCard(); loadMergePreview();
+  setTimeout(() => document.getElementById("mergeBox")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+}
+async function loadMergePreview() {
+  if (!S.pick.merge_with.length) { S.mergePreview = null; return; }
+  const key = S.list.key;
+  const p = await get("/api/merge_preview?" + new URLSearchParams({ key, with: S.pick.merge_with.join(",") }));
+  if (S.list && S.list.key === key) { S.mergePreview = p; drawCard(); }
+}
+function toggleMergeWith(k) {
+  const s = new Set(S.pick.merge_with); if (s.has(k)) s.delete(k); else s.add(k);
+  S.pick.merge_with = [...s]; S.mergePreview = null; drawCard(); loadMergePreview();
+}
+let mergeTimer;
+function findMerge(q) {
+  clearTimeout(mergeTimer);
+  mergeTimer = setTimeout(async () => {
+    const box = document.getElementById("mergeHits"); if (!box) return;
+    if (q.trim().length < 2) { box.replaceChildren(); return; }
+    const hits = await get("/api/queue?" + new URLSearchParams({ status: "all", q, order: "facet" }));
+    box.replaceChildren(...hits.filter((h) => h.key !== S.list.key).slice(0, 16).map((h) => el("span", {
+      class: "chip" + (S.pick.merge_with.includes(h.key) ? " sel" : ""), title: h.key, onclick: () => toggleMergeWith(h.key) },
+      h.dim || h.key, el("small", {}, `${h.entries}`))));
+  }, 250);
+}
+function mergeBox(L) {
+  const j = L.judge || {}, p = S.mergePreview;
+  const slot = S.pick.buttons[0] || "review";
+  const name = el("input", { class: "text", style: "max-width:320px", value: defaultMergeName(), oninput: (e) => { S.pick.merge_name = e.target.value; where.textContent = whereText(); } });
+  const whereText = () => `writes mine/${slotName(slot)}/${slugify(S.pick.merge_name || defaultMergeName()) || "merged"}.txt on Apply · this list and its partners are hidden as merged into it · it goes on the buttons ticked above`;
+  const where = el("div", { class: "preview" }, whereText());
+  let rows = [];
+  if (p) {
+    rows = p.rows;
+    if (S.mergeShow === "shared") rows = rows.filter((r) => r.lists > 1);
+    else if (S.mergeShow === "mine") rows = rows.filter((r) => r.lists === 1 && r.sources[0] === 0);
+    else if (S.mergeShow === "theirs") rows = rows.filter((r) => !r.sources.includes(0));
+  }
+  const kept = p ? p.rows.filter((r) => !S.pick.merge_drop.has(r.text)).length : 0;
+  const show = (v, label) => el("span", { class: "chip" + (S.mergeShow === v ? " sel" : ""), onclick: () => { S.mergeShow = v; drawCard(); } }, label);
+  const shown = rows.slice(0, 600);
+  return el("section", { class: "box merge-box", id: "mergeBox" },
+    el("h3", {}, "Merge", el("span", { class: "help" }, "fold this list and the ones you pick into one list of your own; near-duplicates fold together, shared entries first"),
+      el("button", { class: "btn", onclick: () => { S.mergeOpen = false; drawCard(); } }, "close")),
+    j.verdict === "merge" ? el("div", { class: "preview", style: "margin-bottom:6px" }, `judge: ${j.reason || ""}`) : null,
+    el("div", { class: "sect" }, el("span", {}, "Merge with (click any number)"),
+      el("div", { class: "chips" }, (L.similar || []).map((o) => el("span", {
+        class: "chip" + (S.pick.merge_with.includes(o.key) ? " sel" : ""), title: o.key, onclick: () => toggleMergeWith(o.key) },
+        o.dim || o.key, el("small", {}, `${o.entries}${o.decision ? " · " + o.decision : ""}`)))),
+      el("input", { class: "text", style: "margin-top:6px;max-width:320px", placeholder: "or find other lists by name", oninput: (e) => findMerge(e.target.value) }),
+      el("div", { class: "chips", id: "mergeHits", style: "margin-top:5px" }),
+      S.pick.merge_with.filter((k) => !(L.similar || []).some((o) => o.key === k)).length
+        ? el("div", { class: "chips", style: "margin-top:5px" }, S.pick.merge_with.filter((k) => !(L.similar || []).some((o) => o.key === k))
+            .map((k) => el("span", { class: "chip sel", title: "click to remove", onclick: () => toggleMergeWith(k) }, k))) : null),
+    el("div", { class: "sect" }, el("span", {}, "Name of the merged list"), name, where),
+    !S.pick.merge_with.length ? el("div", { class: "preview" }, "Pick at least one list to merge with; the preview appears here.")
+    : !p ? el("div", { class: "preview" }, "merging...")
+    : el("div", {},
+        el("div", { style: "display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px" },
+          el("b", {}, `${p.total} entries after folding · ${p.shared} shared · ${kept} kept`),
+          show("all", "all"), show("shared", "shared"), show("mine", "only this list"), show("theirs", "only the others"),
+          el("button", { class: "btn", onclick: () => { for (const r of rows) S.pick.merge_drop.add(r.text); drawCard(); } }, "untick shown"),
+          el("button", { class: "btn", onclick: () => { for (const r of rows) S.pick.merge_drop.delete(r.text); drawCard(); } }, "tick shown")),
+        el("div", { class: "preview" }, p.sources.map((s, i) => `${i + 1} = ${s.dim || s.key} (${s.entries})`).join("   ")),
+        el("div", { class: "mrg-wrap" }, el("table", { class: "mrg" }, shown.map((r) => el("tr", { class: S.pick.merge_drop.has(r.text) ? "off" : "" },
+          el("td", {}, el("input", { type: "checkbox", checked: !S.pick.merge_drop.has(r.text), onchange: (e) => { if (e.target.checked) S.pick.merge_drop.delete(r.text); else S.pick.merge_drop.add(r.text); e.target.closest("tr").className = e.target.checked ? "" : "off"; } })),
+          el("td", {}, r.text, r.variants && r.variants.length ? el("small", {}, `  also: ${r.variants.join(", ")}`) : null),
+          el("td", { class: "m", title: "which lists have it" }, p.sources.map((s, i) => r.sources.includes(i) ? String(i + 1) : "·").join(" ")))))),
+        rows.length > shown.length ? el("div", { class: "preview" }, `first ${shown.length} of ${rows.length} shown; the rest are kept unless you narrow the view and untick them`) : null,
+        el("div", { style: "margin-top:8px" }, el("button", { class: "btn primary", onclick: () => decide("merge") }, "Save as merge (M)"))));
+}
+function slotName(id) { return (id || "review").toLowerCase().replace(/[^a-z0-9_\-]+/g, "_").replace(/^[_-]+|[_-]+$/g, "").slice(0, 60) || "review"; }
+
+// ---------------------------------------------------------------- quick edits: drop lines (saved at once)
+function entryChip(e) {
+  const flagged = S.flags && S.flags.has(e.text);
+  return el("span", { class: "entry r" + (e.rating || 0) + (e.dropped ? " dropped" : "") + (flagged ? " flagged" : ""),
+    title: e.dropped ? "dropped: click to bring it back" : flagged ? "the LLM thinks this does not belong: click to drop it" : "click to drop this line (never picked; saved now)",
+    onclick: () => toggleDrop(e) }, e.text);
+}
+function markDropped(texts, on) {
+  const set = new Set(texts);
+  for (const arr of [S.list.sample || [], (S.showAll && S.showAll.entries) || []]) for (const x of arr) if (set.has(x.text)) x.dropped = on;
+  if (on && S.flags) for (const t of texts) S.flags.delete(t);
+}
+async function toggleDrop(e) {
+  const r = await post("/api/drop", { key: S.list.key, texts: [e.text], undrop: !!e.dropped });
+  if (!r.ok) { $("#saved").textContent = "not saved: " + (r.error || "?"); return; }
+  markDropped([e.text], !e.dropped); S.dropCount = r.dropped; drawCard();
+}
+let matchTimer;
+function previewMatch() {
+  clearTimeout(matchTimer);
+  matchTimer = setTimeout(async () => {
+    const info = document.getElementById("matchInfo"); if (!info) return;
+    if (!(S.matchQ || "").trim()) { info.textContent = ""; return; }
+    const r = await post("/api/drop_matching", { key: S.list.key, pattern: S.matchQ, regex: !!S.matchRx, drop: false });
+    info.textContent = r.ok ? `${r.count} line${r.count === 1 ? "" : "s"} match` : r.error;
+    info.title = r.ok ? r.matches.slice(0, 30).join("\n") : "";
+  }, 250);
+}
+async function dropMatching() {
+  if (!(S.matchQ || "").trim()) return;
+  const r = await post("/api/drop_matching", { key: S.list.key, pattern: S.matchQ, regex: !!S.matchRx, drop: true });
+  if (!r.ok) { $("#saved").textContent = r.error; return; }
+  $("#saved").textContent = `dropped ${r.count} lines with "${S.matchQ}"`;
+  S.matchQ = ""; await refreshEntries();
+}
+async function suggestJunk() {
+  S.junkBusy = true; drawCard();
+  try {
+    const r = await post("/api/suggest_junk", { key: S.list.key, model: S.model });
+    if (r.ok === false || r.error) { $("#saved").textContent = "LLM: " + (r.error || "failed"); }
+    else {
+      S.flags = new Set(r.flagged);
+      $("#saved").textContent = `the LLM flagged ${r.flagged.length} of ${r.read} lines (meant to hold: ${r.meant}); check them, then Drop flagged`;
+      if (!S.showAll && r.flagged.length) { S.showAll = await get("/api/entries?" + new URLSearchParams({ key: S.list.key, limit: 500 })); }
+    }
+  } catch (e) { $("#saved").textContent = "LLM: " + e.message; }
+  S.junkBusy = false; drawCard();
+}
+async function dropFlagged() {
+  const texts = [...(S.flags || [])]; if (!texts.length) return;
+  const r = await post("/api/drop", { key: S.list.key, texts });
+  if (r.ok) { markDropped(texts, true); S.dropCount = r.dropped; S.flags = null; drawCard(); }
+}
+async function refreshEntries() {
+  if (S.showAll) {
+    const n = Math.max(500, S.showAll.entries.length);
+    const r = await get("/api/entries?" + new URLSearchParams({ key: S.list.key, q: S.showAll.q || "", limit: n })); r.q = S.showAll.q; S.showAll = r; S.dropCount = r.dropped;
+  } else {
+    const fresh = await get("/api/list?" + new URLSearchParams({ key: S.list.key, seed: S.seed })); S.list.sample = fresh.sample; S.dropCount = undefined;
+  }
+  drawCard();
+}
+async function loadMoreAll() {
+  const r = await get("/api/entries?" + new URLSearchParams({ key: S.list.key, q: S.showAll.q || "", offset: S.showAll.entries.length, limit: 500 }));
+  S.showAll.entries = S.showAll.entries.concat(r.entries); drawCard();
+}
+function entriesSection(L) {
+  const list = S.showAll ? S.showAll.entries : L.sample;
+  const dropped = S.dropCount ?? (S.showAll ? S.showAll.dropped : list.filter((e) => e.dropped).length);
+  const flags = S.flags ? S.flags.size : 0;
+  const match = el("input", { class: "text", style: "max-width:170px", placeholder: "drop lines with...", value: S.matchQ || "",
+    oninput: (e) => { S.matchQ = e.target.value; previewMatch(); }, onkeydown: (e) => { if (e.key === "Enter") dropMatching(); } });
+  const rx = el("input", { type: "checkbox", checked: !!S.matchRx, onchange: (e) => { S.matchRx = e.target.checked; previewMatch(); } });
+  return el("section", { class: "box" },
+    el("h3", {}, S.showAll ? `All entries (${S.showAll.matched} of ${S.showAll.total})` : `Sample (${L.sample.length} of ${L.entries})`,
+      el("span", { class: "help" }, `click a line to drop it, again to bring it back (saved now)${dropped ? ` · ${dropped} dropped` : ""} · outlined = rated NSFW`),
+      el("button", { class: "btn", onclick: reroll }, "Roll again (R)"),
+      el("button", { class: "btn", onclick: toggleAll }, S.showAll ? "Back to sample" : "Show all"),
+      S.showAll ? el("input", { class: "text", style: "max-width:200px", placeholder: "search entries", value: S.showAll.q || "", oninput: (e) => searchAll(e.target.value) }) : null),
+    L.from_library ? el("div", { class: "tools" },
+      match, el("label", { class: "help" }, rx, " regex"), el("span", { id: "matchInfo", class: "help" }),
+      el("button", { class: "btn", onclick: dropMatching, title: "Drop every line that has this word (or matches the regex)" }, "Drop matching"),
+      el("button", { class: "btn", onclick: suggestJunk, disabled: S.junkBusy ? true : null, title: "Ask the local LLM which lines don't belong; they get a red outline and you decide" }, S.junkBusy ? "asking the LLM..." : "Suggest junk"),
+      flags ? el("button", { class: "btn primary", onclick: dropFlagged }, `Drop ${flags} flagged`) : null,
+      flags ? el("button", { class: "btn", onclick: () => { S.flags = null; drawCard(); } }, "clear flags") : null,
+      el("button", { class: "btn", style: "margin-left:auto", onclick: () => openGen({ extend: S.list }), title: "Have the local LLM write more lines like these; saved as your own list in mine/" }, "Extend...")) : null,
+    el("div", { class: "entries", id: "entries" }, list.map(entryChip)),
+    S.showAll && S.showAll.entries.length < S.showAll.matched
+      ? el("div", { style: "margin-top:6px" }, el("button", { class: "btn", onclick: loadMoreAll }, `load 500 more (${S.showAll.entries.length} of ${S.showAll.matched})`)) : null);
+}
+
+// ---------------------------------------------------------------- LLM lists: + New list / Extend
+const G = {};
+async function openGen(opts = {}) {
+  const L = opts.extend || null;
+  Object.assign(G, { extend: L ? L.key : "", name: L ? L.key.split("/").pop() + "_more" : "", description: L ? ((L.judge || {}).dimension || "") : "",
+    samples: "", style: "short", count: L ? Math.max(40, Math.min(200, (L.entries || 0) * 3)) : 60, items: [], busy: false, stop: false,
+    warn: false, error: "", saved: null, buttons: L ? [...(S.pick.buttons || [])] : [], have: [], startHits: [] });
+  if (L) {
+    const all = await get("/api/entries?" + new URLSearchParams({ key: L.key, limit: 500 }));
+    G.have = all.entries.filter((e) => !e.dropped).map((e) => e.text);
+    G.samples = G.have.slice(0, 25).join("\n");
+  }
+  drawGen(); $("#genDlg").showModal();
+}
+let startTimer;
+function findStart(q) {
+  clearTimeout(startTimer);
+  startTimer = setTimeout(async () => {
+    G.startHits = q.trim().length < 2 ? [] : (await get("/api/queue?" + new URLSearchParams({ status: "all", q, order: "facet" }))).slice(0, 12);
+    const box = document.getElementById("startHits"); if (!box) return;
+    box.replaceChildren(...G.startHits.map((h) => el("span", { class: "chip", title: h.key, onclick: () => startFrom(h.key) }, h.dim || h.key, el("small", {}, `${h.entries}`))));
+  }, 250);
+}
+async function startFrom(key) {
+  const r = await get("/api/entries?" + new URLSearchParams({ key, limit: 300 }));
+  const pool = r.entries.filter((e) => !e.dropped).map((e) => e.text);
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const mine = G.samples.split("\n").map((s) => s.trim()).filter(Boolean);
+  G.samples = [...new Set([...mine, ...pool.slice(0, 15)])].join("\n");
+  drawGen();
+}
+async function runGen() {
+  G.busy = true; G.stop = false; G.error = ""; G.saved = null; drawGen();
+  const samples = G.samples.split("\n").map((s) => s.trim()).filter(Boolean);
+  let empty = 0, tries = 0;
+  while (!G.stop && G.items.length < G.count && tries < 15 && empty < 2) {
+    tries++;
+    let r;
+    try {
+      r = await post("/api/generate", { name: G.name, description: G.description, samples, style: G.style, model: S.model,
+        have: [...G.have, ...G.items.map((i) => i.text)], count: Math.min(40, G.count - G.items.length + 5) });
+    } catch (e) { G.error = e.message; break; }
+    if (!r.ok) { G.error = r.error || "failed"; break; }
+    G.warn = G.warn || r.warn_names;
+    if (!r.items.length) empty++; else empty = 0;
+    for (const t of r.items) G.items.push({ text: t, on: true });
+    drawGen();
+  }
+  if (empty >= 2 && !G.error) G.error = "the model stopped coming up with new items";
+  G.busy = false; drawGen();
+}
+async function saveGen() {
+  const entries = G.items.filter((i) => i.on).map((i) => i.text.trim()).filter(Boolean);
+  if (!entries.length) { G.error = "tick at least one line"; drawGen(); return; }
+  G.saved = await post("/api/save_list", { name: G.name, description: G.description, entries, buttons: G.buttons, extend: G.extend, model: S.model });
+  drawGen();
+  if (G.saved.ok) { await refreshMeta(); if (G.extend) await reload(); }
+}
+function drawGen() {
+  const on = G.items.filter((i) => i.on).length;
+  const field = (label, node) => el("div", { class: "sect" }, el("span", {}, label), node);
+  const name = el("input", { class: "text", value: G.name, placeholder: "e.g. castle types", oninput: (e) => { G.name = e.target.value; } });
+  const desc = el("input", { class: "text", value: G.description, placeholder: "what the list holds, e.g. castles and fortresses, real and generic", oninput: (e) => { G.description = e.target.value; } });
+  const samples = el("textarea", { placeholder: "a few examples, one per line (they set the kind and the form)", oninput: (e) => { G.samples = e.target.value; } });
+  samples.value = G.samples;
+  const style = el("select", { onchange: (e) => { G.style = e.target.value; } },
+    [["words", "single words / names"], ["short", "short phrases (2-5 words)"], ["descriptive", "descriptive phrases (6-15 words)"]].map(([v, l]) => el("option", { value: v, selected: G.style === v }, l)));
+  const count = el("input", { class: "text", type: "number", min: 10, max: 500, value: G.count, style: "max-width:90px", oninput: (e) => { G.count = Math.max(5, Math.min(500, +e.target.value || 50)); } });
+  const pick = el("select", { onchange: (e) => { if (e.target.value && !G.buttons.includes(e.target.value)) G.buttons.push(e.target.value); drawGen(); } },
+    el("option", { value: "" }, "add a Composer button..."),
+    (S.meta.buttons || []).map((sec) => el("optgroup", { label: sec.label }, sec.buttons.map((b) => el("option", { value: b.id }, `${b.group ? b.group + " › " : ""}${b.label}`)))));
+  const label = (id) => { for (const sec of S.meta.buttons || []) for (const b of sec.buttons) if (b.id === id) return `${sec.label} › ${b.label}`; return id; };
+  const cands = el("div", { class: "cands" }, G.items.map((it) => el("div", { class: "cand" + (it.on ? "" : " off") },
+    el("input", { type: "checkbox", checked: it.on, onchange: (e) => { it.on = e.target.checked; e.target.parentNode.className = "cand" + (it.on ? "" : " off"); } }),
+    el("input", { class: "text", value: it.text, oninput: (e) => { it.text = e.target.value; } }))));
+  $("#genBody").replaceChildren(
+    el("h3", {}, G.extend ? `Extend ${G.extend}` : "New list", el("small", { style: "color:var(--muted);font-weight:normal;margin-left:8px" }, `model: ${S.model || "?"} (header menu)`)),
+    el("div", { class: "two" },
+      el("div", {}, field("Name", name), field("What it holds", desc),
+        el("div", { class: "two" }, field("Each item is", style), field("How many", count)),
+        field("Composer buttons", el("div", {}, pick, el("div", { class: "chips", style: "margin-top:4px" },
+          G.buttons.map((id) => el("span", { class: "chip sel", title: "click to remove", onclick: () => { G.buttons = G.buttons.filter((x) => x !== id); drawGen(); } }, label(id))))))),
+      el("div", {}, field(G.extend ? `Samples (from the list: ${G.have.length} lines it already has, sent as "don't repeat")` : "Samples", samples),
+        G.extend ? null : field("Start from a list (adds 15 of its lines as samples)", el("div", {},
+          el("input", { class: "text", placeholder: "find a list by name", oninput: (e) => findStart(e.target.value) }),
+          el("div", { class: "chips", id: "startHits", style: "margin-top:4px" }))))),
+    G.warn ? el("div", { class: "warn" }, "Names of real people, places or brands: small models invent some. Check the names you keep.") : null,
+    el("div", { class: "tools", style: "margin-top:8px" },
+      el("button", { class: "btn primary", disabled: G.busy ? true : null, onclick: runGen }, G.items.length ? "Generate more" : "Generate"),
+      G.busy ? el("button", { class: "btn", onclick: () => { G.stop = true; } }, "Stop") : null,
+      el("span", { class: "help" }, G.busy ? `writing... ${G.items.length} of ${G.count}` : G.items.length ? `${G.items.length} new lines · ${on} ticked · edit any line; repeats of each other and of the samples are folded away` : ""),
+      G.items.length ? el("button", { class: "btn", onclick: () => { G.items.forEach((i) => { i.on = false; }); drawGen(); } }, "untick all") : null,
+      G.items.length ? el("button", { class: "btn", onclick: () => { G.items.forEach((i) => { i.on = true; }); drawGen(); } }, "tick all") : null),
+    G.error ? el("div", { class: "warn" }, G.error) : null,
+    G.items.length ? cands : null,
+    G.saved ? el("div", { class: G.saved.ok ? "preview" : "warn" }, G.saved.ok
+      ? `Saved ${G.saved.count} lines as ${G.saved.key} (${G.saved.path})${G.extend ? "; the original is hidden as merged into it" : ""}. Undo: server.py --undo ${G.saved.manifest}`
+      : G.saved.error) : null,
+    el("p", { style: "display:flex;gap:8px;justify-content:flex-end;margin-bottom:0" },
+      el("span", { class: "help", style: "margin-right:auto" }, `saves to mine/${(G.buttons[0] || "generated")}/${slugify(G.name) || "..."}.txt${G.extend ? " with the list's own lines first" : ""}`),
+      el("button", { class: "btn", onclick: () => { G.stop = true; $("#genDlg").close(); } }, "Close"),
+      el("button", { class: "btn primary", disabled: (!G.items.length || G.busy || (G.saved && G.saved.ok)) ? true : null, onclick: saveGen }, `Save ${on} lines`)));
+}
+
+async function reroll() {
+  S.seed += 1;
+  const fresh = await get("/api/list?" + new URLSearchParams({ key: S.list.key, seed: S.seed }));
+  S.list.sample = fresh.sample; drawCard();
+}
+async function toggleAll() {
+  if (S.showAll) { S.showAll = null; drawCard(); return; }
+  S.showAll = await get("/api/entries?" + new URLSearchParams({ key: S.list.key, limit: 500 })); drawCard();
+}
+let searchTimer;
+function searchAll(q) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    const r = await get("/api/entries?" + new URLSearchParams({ key: S.list.key, q, limit: 500 })); r.q = q; S.showAll = r;
+    $("#entries").replaceChildren(...r.entries.map(entryChip));
+  }, 200);
+}
+let sameTimer;
+function findSame(q) {
+  clearTimeout(sameTimer);
+  sameTimer = setTimeout(async () => {
+    if (q.trim().length < 2) { $("#sameHits").replaceChildren(); return; }
+    const hits = await get("/api/queue?" + new URLSearchParams({ status: "all", q, order: "facet" }));
+    $("#sameHits").replaceChildren(...hits.filter((h) => h.key !== S.list.key).slice(0, 14).map((h) => el("span", {
+      class: "chip" + (S.pick.same_as === h.key ? " sel" : ""), title: h.key,
+      onclick: () => { S.pick.same_as = h.key; decide("same", true); } }, h.dim || h.key, el("small", {}, `${h.entries}`))));
+  }, 250);
+}
+
+async function decide(decision, fromSimilar) {
+  if (!S.list) return;
+  if (decision === "same" && !S.pick.same_as) { $("#sameq").focus(); $("#saved").textContent = "pick the better list under Same as..."; return; }
+  if (decision === "merge" && !S.pick.merge_with.length) { openMerge(); $("#saved").textContent = "pick the lists to merge with, below"; return; }
+  S.pick.decision = decision;
+  const body = { key: S.list.key, decision, same_as: decision === "same" ? S.pick.same_as : "", button: S.pick.buttons.join(","), nsfw: S.pick.nsfw,
+                 name: S.pick.nameTouched ? (S.pick.name || S.list.judge.dimension || "") : "" };
+  if (decision === "merge") Object.assign(body, { merge_with: S.pick.merge_with, merge_name: S.pick.merge_name || defaultMergeName(), merge_drop: [...S.pick.merge_drop] });
+  const r = await post("/api/review", body);
+  if (!r.ok) { $("#saved").textContent = "not saved: " + (r.error || "?"); return; }
+  S.queue[S.at].decision = decision;
+  S.meta.decided[decision] = (S.meta.decided[decision] || 0) + 1;
+  progress();
+  if ($("#status").value === "todo") { S.queue.splice(S.at, 1); drawQueue(); openAt(S.at); }
+  else { drawQueue(); openAt(S.at + 1); }
+}
+function acceptJudge() { const v = JUDGE_TO[S.list?.judge?.verdict]; if (v) decide(v); }
+function go(step) { if (S.view === "card") openAt(S.at + step); }
+
+function keys(e) {
+  if (e.target.matches("input, textarea, select") || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (document.querySelector("dialog[open]")) return;            // shortcuts never act behind an open window
+  if (S.view !== "card") return;
+  const k = e.key.toLowerCase();
+  if (k === "k") decide("keep"); else if (k === "d") decide("dump"); else if (k === "u") decide("unsure");
+  else if (k === "s") decide("same"); else if (k === "m") { if (S.mergeOpen && S.pick.merge_with.length) decide("merge"); else openMerge(); } else if (k === "a") acceptJudge(); else if (k === "r") reroll();
+  else if (k === "arrowright" || k === "j") go(1); else if (k === "arrowleft") go(-1);
+  else return;
+  e.preventDefault();
+}
+
+// ---------------------------------------------------------------- grid view
+const GRID = 30;
+async function drawGrid() {
+  const slice = S.queue.slice(S.gridAt, S.gridAt + GRID);
+  if (!slice.length) { $("#main").replaceChildren(el("div", { class: "empty" }, "Nothing here with these filters.")); return; }
+  const rows = await get("/api/page?keys=" + encodeURIComponent(slice.map((i) => i.key).join(",")));
+  S.grid = rows.map((r) => ({ ...r, choice: r.decision || JUDGE_TO[r.verdict] || "unsure", suggested: !r.decision }));
+  const table = el("table", { class: "grid" }, S.grid.map((r, i) => el("tr", {},
+    el("td", { class: "k" }, el("b", {}, r.dim || r.key), el("small", {}, r.key), el("small", {}, `${r.entries} entries · ${r.facet} · judge: ${r.verdict} - ${r.reason || ""}`)),
+    el("td", { class: "s" }, r.samples.map((s) => el("span", {}, s))),
+    el("td", { class: "c" }, el("span", { class: "tog" }, ["keep", "dump", "unsure"].map((d) => el("button", {
+      class: `${d}${r.choice === d ? " on" : ""}${r.choice === d && r.suggested ? " sug" : ""}`,
+      onclick: () => { r.choice = d; r.suggested = false; drawGridRows(); } }, d[0].toUpperCase())))))));
+  const makeNav = () => el("div", { style: "display:flex;gap:8px;align-items:center;margin:10px 0" },
+    el("button", { class: "btn", onclick: () => { S.gridAt = Math.max(0, S.gridAt - GRID); drawGrid(); } }, "← page"),
+    el("span", { style: "color:var(--muted)" }, `${S.gridAt + 1}-${S.gridAt + slice.length} of ${S.queue.length}  ·  dashed = the judge's suggestion, not yet yours`),
+    el("button", { class: "btn primary", style: "margin-left:auto", onclick: savePage }, "Save this page as shown"),
+    el("button", { class: "btn", onclick: () => { S.gridAt += GRID; drawGrid(); } }, "skip page →"));
+  $("#main").replaceChildren(makeNav(), table, makeNav());
+  S.gridTable = table;
+}
+function drawGridRows() { drawGridKeep(); }
+function drawGridKeep() {
+  S.gridTable.querySelectorAll("tr").forEach((tr, i) => {
+    const r = S.grid[i];
+    tr.querySelectorAll(".tog button").forEach((b, n) => { const d = ["keep", "dump", "unsure"][n]; b.className = `${d}${r.choice === d ? " on" : ""}${r.choice === d && r.suggested ? " sug" : ""}`; });
+  });
+}
+async function savePage() {
+  const items = S.grid.filter((r) => r.choice).map((r) => ({ key: r.key, decision: r.choice }));
+  const r = await post("/api/review_many", { items });
+  await refreshMeta();
+  if ($("#status").value === "todo") await reload(); else { S.gridAt += GRID; drawGrid(); }
+  $("#progress").textContent += `  ·  saved ${r.saved}`;
+}
+
+// ---------------------------------------------------------------- apply
+async function openApply() {
+  const p = await get("/api/apply_preview");
+  const ren = p.renames || [], ok = ren.filter((r) => !r.conflict), bad = ren.filter((r) => r.conflict);
+  $("#applyBody").replaceChildren(
+    el("p", {}, `${p.total} lists decided (keep ${p.counts.keep || 0}, dump ${p.counts.dump || 0}, same as ${p.counts.same || 0}); `,
+      el("b", {}, `${p.pending} new or changed since the last Apply.`)),
+    el("p", {}, "Apply writes them to ", el("code", {}, p.file), ": dump / same as -> hidden (and same_as), keep -> un-hidden, plus the Composer buttons and NSFW level you set."),
+    el("pre", {}, p.changes.map((c) => `${c.decision.padEnd(6)} ${c.name}  ${JSON.stringify(c.settings)}`).join("\n") + (p.pending > p.changes.length ? `\n... ${p.pending - p.changes.length} more` : "")),
+    ren.length ? el("h4", {}, `Renames: ${ok.length}${bad.length ? ` (${bad.length} can't)` : ""}`) : null,
+    ren.length ? el("pre", {}, [...ok.map((r) => `${r.kind === "rename" ? "rename" : "split "}  ${r.from}${r.kind === "split" ? " :: " + r.old.split("/").pop() : ""}  ->  ${r.path}`),
+      ...bad.map((r) => `SKIP    ${r.old}: ${r.conflict}`)].join("\n")) : null,
+    ren.length ? el("p", { class: "help" }, "A renamed list keeps its settings, buttons and review, and its old name keeps working (an alias). A list inside a YAML / JSON file is written out as its own .txt and that key is hidden; the pack file is not edited. Undo: python tools/wildcard_review/server.py --undo <manifest>.") : null,
+    (p.merges || []).length ? el("h4", {}, `Merges: ${p.merges.filter((m) => !m.done && !m.conflict).length} to write`) : null,
+    (p.merges || []).length ? el("pre", {}, p.merges.map((m) => `${m.done ? "done  " : m.conflict ? "SKIP  " : "merge "} ${m.key} + ${m.with.length} -> ${m.path}${m.drop ? `  (${m.drop} unticked)` : ""}${m.conflict ? "  " + m.conflict : ""}`).join("\n")) : null,
+    el("h4", {}, "Dumped files"),
+    el("div", { id: "dumpBox" }, el("p", { class: "help" }, "Dumped lists are hidden. Their files can also leave the library: they move to _dumped (same paths, the engine skips it), with a manifest to undo."),
+      el("button", { class: "btn", onclick: previewDumps }, "Move dumped files out of the library...")));
+  $("#applyDlg").showModal();
+}
+async function previewDumps() {
+  $("#dumpBox").replaceChildren(el("p", {}, "working out which files..."));
+  const d = await get("/api/dump_preview");
+  $("#dumpBox").replaceChildren(
+    el("p", {}, `${d.moves.length} files would move to `, el("code", {}, d.folder), `. ${d.stay.length} files also hold lists you kept or haven't decided: their dumped lists stay hidden in place.${d.missing.length ? ` ${d.missing.length} files are not there any more.` : ""} Dumps not applied yet are included; press Apply too.`),
+    el("pre", {}, d.moves.slice(0, 80).map((m) => `${m.file}  (${m.keys.length} list${m.keys.length > 1 ? "s" : ""})`).join("\n") + (d.moves.length > 80 ? `\n... ${d.moves.length - 80} more` : "")),
+    d.moves.length ? el("button", { class: "btn primary", onclick: doDumps }, `Move ${d.moves.length} files`) : null);
+}
+async function doDumps() {
+  $("#dumpBox").replaceChildren(el("p", {}, "moving..."));
+  const r = await post("/api/dump_move", {});
+  $("#dumpBox").replaceChildren(el("p", {}, r.ok ? `Moved ${r.moved} files to _dumped. ${r.stayed_hidden} stay hidden in place. Manifest (for --undo): ${r.manifest || "-"}` : `Failed: ${r.error}`));
+  await refreshMeta(); await reload();
+}
+async function doApply() {
+  $("#applyGo").disabled = true;
+  const r = await post("/api/apply", {});
+  $("#applyGo").disabled = false;
+  $("#applyBody").replaceChildren(el("p", {}, r.ok
+    ? `Written: ${r.written} lists to ${r.file}.${r.renamed ? ` Renamed ${r.renamed} lists.` : ""}${r.merged ? ` Merged ${r.merged} lists into mine/.` : ""}${r.manifest ? ` Manifest (for --undo): ${r.manifest}.` : ""}${r.skipped && r.skipped.length ? ` ${r.skipped.length} renames skipped: the name is taken.` : ""} The Composer picks it up within a few seconds.`
+    : `Failed: ${r.error}`));
+  await refreshMeta(); await reload();
+}
+
+boot();
+</script>
+</body>
+</html>

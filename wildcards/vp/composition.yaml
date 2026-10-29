@@ -1,0 +1,81 @@
+# Wildcard Composer lists: Composition.
+# Written for this package (dual licence, see LICENSE). Names: __vp/composition/<list>__.
+vp:
+  composition:
+    framing:
+      - centered and symmetrical
+      - rule of thirds, subject on the left third
+      - rule of thirds, subject on the right third
+      - tight crop, face filling the frame
+      - frame within a frame through a doorway
+      - framed by overhanging branches
+      - framed through a window
+      - subject off-center with room to look into
+      - cropped at the shoulders
+      - cropped just above the knees
+      - head-to-toe with space above
+      - diagonal composition
+      - triangular composition
+      - golden spiral composition
+      - strong vertical lines
+      - horizon low in the frame
+      - horizon high in the frame
+      - Dutch tilt framing
+      - square format, centered
+      - panoramic wide frame
+    layout:
+      - lots of negative space
+      - negative space above the subject
+      - subject small in a vast frame
+      - leading lines drawing the eye to the subject
+      - converging lines to a vanishing point
+      - repeating patterns across the frame
+      - a single point of colour in a muted frame
+      - balanced asymmetry
+      - crowded, busy frame
+      - minimalist frame with one element
+      - subject and its reflection
+      - mirror symmetry
+      - layered silhouettes
+      - split frame, two halves in contrast
+      - s-curve leading through the scene
+      - wide empty foreground
+    depth_layers:
+      - blurred foreground leaves
+      - out-of-focus foreground figures
+      - foreground rain streaks on glass
+      - layered mountain ridges fading into haze
+      - foreground, middle ground and background clearly separated
+      - shallow depth with a creamy background
+      - deep focus from front to back
+      - foreground framing element in silhouette
+      - distant city lights in the background
+      - soft bokeh lights behind the subject
+      - atmospheric haze adding depth
+      - overlapping planes receding into the distance
+      - a path leading into the background
+      - flat, graphic depth with no perspective
+    # Perspective: reads as its own phrase: "..., {one-point perspective}".
+    perspective:
+      - one-point perspective
+      - two-point perspective
+      - three-point perspective
+      - isometric view
+      - orthographic view
+      - worm's-eye view
+      - bird's-eye view
+      - top-down flat lay
+      - forced perspective
+      - extreme foreshortening
+      - fisheye distortion
+      - curvilinear perspective
+      - cutaway view
+      - cross-section view
+      - exploded view
+      - reverse perspective
+      - aerial perspective with receding haze
+      - point of view shot
+      - over-the-shoulder view
+      - view through a doorway
+      - reflection-only view
+      - satellite view

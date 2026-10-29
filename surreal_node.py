@@ -6,13 +6,15 @@ Surreal as a working procedure instead of a style word. Image models regress tow
 a GENERATOR supplied material they could not have planned (chance, a rule, a stock of unrelated things, a
 misperception) and a CRITIC then selected one thing and finished it with full craft. This node is that loop:
 
-    idea -> generator modes (eight, from Magritte, Ernst, Dali, Varo, Uelsmann, Atget, Man Ray) -> candidates
-         -> critic (an LLM, or seeded code) keeps ONE -> a premise stated as plain physical fact
+    idea -> ordinary-scene inventory -> generator modes -> candidates
+         -> critic (an LLM, or seeded code) keeps ONE -> structured render plan
+         -> operation-specific compiler -> transformed scene stated as visible physical fact
 
-Connect `text` to an enhancer's prompt input and `llm_instructions` to its `wildcard_instructions` input. The
-enhancer then writes for its platform while protecting the premise. `why` shows every candidate and the
-reasoning, so the choice can be judged. A Concept Survival Check on the enhancer's output (fed the same
-llm_instructions) measures whether the anomaly survived the rewrite.
+Connect `text` to an enhancer's prompt input and `llm_instructions` to its `wildcard_instructions` input. `text`
+is the compiled transformed scene, not the untouched idea plus an added premise, so an object that was replaced
+cannot be restored by the enhancer's faithfulness rules. `why` shows the inventory, structured plan, candidates
+and reasoning. A Concept Survival Check on the enhancer's output (fed the same llm_instructions) measures whether
+the anomaly survived the rewrite.
 
 Two of the modes depict nothing impossible at all (found strange, process estrangement). That is on purpose.
 
@@ -21,11 +23,12 @@ License: Dual License (Non-Commercial and Commercial Use). See LICENSE.
 """
 
 from .core.strategies.surreal import (
-    CHARGE_CHOICES, CHARGES, MODE_CHOICES, MODES, OPERATION_CHOICES, OPERATIONS, REGISTER_CHOICES, STRANGENESS_CHOICES,
-    SurrealSettings,
+    CHARGE_CHOICES, CHARGES, MODE_CHOICES, MODES, OPERATION_CHOICES, OPERATIONS, REGISTER_CHOICES, STAGING_CHOICES,
+    STRANGENESS_CHOICES, SurrealSettings,
 )
 from .surreal_support import surreal_brief
-from .wildcard_support import is_changed_token, llm_block, normalise_seed, report_lines, resolve_wildcards
+from .wildcard_support import is_changed_token, llm_block, normalise_seed, report_lines, resolve_wildcards, screen_output, wildcard_nsfw_input
+from .wildcard_support import filter_notes_of, lead_with_filter_notes
 
 EMBEDDER_CHOICES = ["none", "auto", "qwen3vl", "openclip", "graph_clip", "sentence"]
 
@@ -45,8 +48,9 @@ def _operation_tooltip():
 class SurrealPremise:
     CATEGORY = "Eric Prompt Enhancers"
     FUNCTION = "make"
-    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("text", "llm_instructions", "why", "title", "negative_additions")
+    # New outputs are only ever APPENDED, so links in saved workflows (stored by index) keep working.
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("text", "llm_instructions", "why", "title", "negative_additions", "law", "scene_prompt", "edit_instruction")
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -102,6 +106,30 @@ class SurrealPremise:
                 "use_archive": ("BOOLEAN", {"default": True, "tooltip": "Let the archive-composite mode draw fragments from your prompt database as well as your iconography file."}),
                 "clip": ("CLIP", {"tooltip": "Optional. Used as the embedder when `embedder` is auto or graph_clip."}),
                 "wildcard_instructions": ("STRING", {"forceInput": True, "tooltip": "llm_instructions from a Wildcard Processor or Semantic Variation node upstream; passed on with this node's block."}),
+                "law": ("STRING", {
+                    "default": "", "multiline": True,
+                    "tooltip": (
+                        "The transformation rule the picture obeys: what may change, what may not, and how the change behaves.\n"
+                        "An anomaly that obeys no rule reads as random; this is the commonest failure. Leave blank and one is\n"
+                        "drawn for you (from the chosen operation, or from the charge: grief makes things heavier, desire changes\n"
+                        "scale) and the LLM critic rewrites it to fit the premise it chose. Typed here, it is never overridden.\n"
+                        "Example: only patterned fabric can cross the boundary between a body and a wall."
+                    ),
+                }),
+                # New inputs are only ever APPENDED below this line, so saved workflows keep their widget order.
+                **wildcard_nsfw_input(),
+                "staging": (STAGING_CHOICES, {
+                    "default": "one_stage",
+                    "tooltip": (
+                        "How the picture is made.\n"
+                        "one_stage = one prompt carries the anomaly (text + llm_instructions into an enhancer).\n"
+                        "two_stage = generate the ORDINARY picture from scene_prompt, then apply edit_instruction with an edit\n"
+                        "model (Qwen-Image-Edit, Flux 2 edit, Kontext, Qwen-Image 2.1 i2i). Edit models are trained on exactly\n"
+                        "replace / make-it-out-of / enlarge, and keep the rest of the picture intact, so the anomaly survives.\n"
+                        "two_stage also restricts the automatic choice to operations that can be done as one edit.\n"
+                        "scene_prompt and edit_instruction are filled whenever the operation allows it, in either setting."
+                    ),
+                }),
             },
         }
 
@@ -110,12 +138,14 @@ class SurrealPremise:
         return is_changed_token(seed)
 
     def make(self, idea, mode, operation, count, strangeness, register, charge, critic, candidates, seed, medium,
-             backend, endpoint, model, temperature, embedder="none", use_archive=True, clip=None, wildcard_instructions=""):
+             backend, endpoint, model, temperature, embedder="none", use_archive=True, clip=None, wildcard_instructions="",
+             law="", nsfw="off", violence_filter="off", staging="one_stage"):
         run_seed = normalise_seed(seed)
-        resolution = resolve_wildcards(idea or "", seed=run_seed, legacy=True, upstream_instructions=wildcard_instructions)
+        resolution = resolve_wildcards(idea or "", seed=run_seed, legacy=True, upstream_instructions=wildcard_instructions,
+                                       nsfw=nsfw, violence_filter=violence_filter)
         resolved = resolution.text
         if not resolved.strip():
-            return ("", (wildcard_instructions or ""), "Empty idea - nothing to do.", "", "")
+            return ("", (wildcard_instructions or ""), "Empty idea - nothing to do.", "", "", "", "", "")
 
         llm = None
         if critic == "llm":
@@ -123,7 +153,8 @@ class SurrealPremise:
             llm = LLMBackend(backend, endpoint, model or None, temperature)
 
         settings = SurrealSettings(mode=mode, operation=operation, count=int(count), register=register, charge=charge,
-                                   strangeness=strangeness, medium=medium, candidates=int(candidates))
+                                   strangeness=strangeness, medium=medium, candidates=int(candidates), law=(law or "").strip(),
+                                   staging=staging if staging in STAGING_CHOICES else "one_stage")
         result = surreal_brief(resolved, settings, run_seed if run_seed is not None else getattr(resolution, "seed", None),
                                llm=llm, embedder=embedder, clip=clip, use_archive=bool(use_archive))
 
@@ -134,4 +165,8 @@ class SurrealPremise:
         if wildcard_report:
             why = f"{why}\n{wildcard_report}"
         print(f"[Surreal Premise] {', '.join(result.operations) or 'nothing'}: {(result.premises or [''])[0][:100]}")
-        return (result.text, instructions, why, result.title, result.negative_additions)
+        text, block_note = screen_output(result.text, "Surreal Premise output")
+        scene, scene_note = screen_output(result.scene_prompt, "Surreal Premise scene_prompt") if result.scene_prompt else ("", "")
+        edit, edit_note = screen_output(result.edit_instruction, "Surreal Premise edit_instruction") if result.edit_instruction else ("", "")
+        why = lead_with_filter_notes(why, filter_notes_of(resolution, block_note, scene_note, edit_note))
+        return (text, instructions, why, result.title, result.negative_additions, result.law, scene, edit)

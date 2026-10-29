@@ -11,6 +11,12 @@ Where wildcard packs live (highest priority first; the first folder that has a k
     4. "wildcard_paths" in this package's config.json
     5. this package's own wildcards/ folder     the lists that ship with the nodes
 
+Inside any of those folders (see core/wildcards/library.py):
+    _nsfw/<pack>/...     NSFW lists (explicit), used only when a node's nsfw input is explicit
+    _generated/...       lists written by the tools, always searched
+    _other/              any other top-level folder starting with "_" is ignored
+                         (_duplicates, _quarantine, ...)
+
 Seed convention (wildcard_seed input):
     -1      fresh roll on every run (the node is never cached by ComfyUI)
     >= 0    reproducible: same seed + same wildcard files = same picks
@@ -24,7 +30,7 @@ import random
 import time
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from .core.wildcards import Resolution, WildcardEngine, get_engine
+from .core.wildcards import NSFW_LEVELS, VIOLENCE_LEVELS, Resolution, WildcardEngine, get_engine, prompt_block_reason
 
 DB_CANDIDATE_LIMIT = 200
 
@@ -91,9 +97,52 @@ def comfy_wildcard_dirs() -> List[str]:
     return existing
 
 
+WILDCARD_NSFW_INPUT = (list(NSFW_LEVELS), {
+    "default": NSFW_LEVELS[0],
+    "tooltip": (
+        "How far wildcard picks may go (a word match on each entry and on list names, no model).\n"
+        "off = SFW: no suggestive, nude or explicit lists or entries\n"
+        "suggestive = also lingerie, bikinis, sexy, seductive ...\n"
+        "nudity = also nude, naked, topless ...\n"
+        "explicit = everything, including lists under _nsfw/\n"
+        "Fix a wrong rating in _catalog_user.yaml (nsfw: on a list, ratings: on entries). Entries pairing\n"
+        "minor-related and sexual terms are removed at every level (config.json \"content_filter\")."
+    ),
+})
+
+WILDCARD_VIOLENCE_INPUT = (list(VIOLENCE_LEVELS), {
+    "default": VIOLENCE_LEVELS[0],
+    "tooltip": (
+        "Hold back violent wildcard picks (a word match on each entry and on list names, no model).\n"
+        "off = nothing held back\n"
+        "no gore = blood and gore, torture, mutilation, corpses\n"
+        "no gore or violent acts = also murder, execution, stabbing, strangling, suicide ...\n"
+        "no violence or weapons = also guns, swords, knives, bombs, battle, war\n"
+        "Only wildcard picks are filtered; text you type is left as is."
+    ),
+})
+
+
+def wildcard_nsfw_input() -> Dict[str, Any]:
+    """
+    The nsfw and violence_filter inputs (violence_filter after nsfw). Kept apart from wildcard_optional_inputs() on purpose: nodes append it at the
+    very END of their optional section, after anything added since, so saved widget order is unchanged.
+    """
+    return {"nsfw": WILDCARD_NSFW_INPUT, "violence_filter": WILDCARD_VIOLENCE_INPUT}
+
+
+CATALOG_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache", "catalogs")
+
+
 def get_wildcard_engine(extra_paths: Optional[Iterable[str]] = None) -> WildcardEngine:
-    """The engine every node uses: node extra paths, then ComfyUI's wildcard folders, config, shipped lists."""
-    return get_engine(extra_paths, host_paths=comfy_wildcard_dirs())
+    """
+    The engine every node uses: node extra paths, then ComfyUI's wildcard folders, config, shipped lists.
+    The catalog and the user's curation (_catalog_user.yaml) are attached on first use; the catalog of
+    new or changed lists is built in a background thread (config.json "wildcards": {"catalog": false} = off).
+    """
+    engine = get_engine(extra_paths, host_paths=comfy_wildcard_dirs())
+    engine.enable_curation(CATALOG_CACHE_DIR)
+    return engine
 
 
 def wildcard_optional_inputs() -> Dict[str, Any]:
@@ -144,7 +193,8 @@ def database_provider(argument: str, text_so_far: str, rng: random.Random) -> Op
 
 
 def resolve_wildcards(text: str, seed: Optional[int] = None, legacy: bool = True,
-                      upstream_instructions: str = "") -> Resolution:
+                      upstream_instructions: str = "", nsfw: str = "off",
+                      violence_filter: str = "off") -> Resolution:
     """
     Resolve wildcard syntax in `text`. Never raises: on any failure the text comes back
     unchanged with a warning, so a prompt problem cannot break a workflow.
@@ -152,6 +202,9 @@ def resolve_wildcards(text: str, seed: Optional[int] = None, legacy: bool = True
     upstream_instructions: the llm_instructions text of a Wildcard Processor or Semantic Variation
     node that resolved wildcards earlier in the graph. It travels on the Resolution, so llm_block()
     and enforce_verbatim() treat those picks like this node's own.
+
+    nsfw: the node's nsfw input (NSFW_LEVELS); lists and entries rated above it are left out.
+    violence_filter: the node's violence_filter input (VIOLENCE_LEVELS).
     """
     try:
         resolution = get_wildcard_engine().process(
@@ -159,12 +212,47 @@ def resolve_wildcards(text: str, seed: Optional[int] = None, legacy: bool = True
             seed=seed,
             legacy=legacy,
             providers={"db": database_provider},
+            nsfw=nsfw,
+            violence=violence_filter,
         )
     except Exception as error:  # pragma: no cover - defensive
         resolution = Resolution(text=text or "", seed=seed)
         resolution.warnings.append(f"wildcard engine failed, text passed through: {error}")
     resolution.upstream_instructions = (upstream_instructions or "").strip()
     return resolution
+
+
+def screen_output(text: str, where: str = "") -> Tuple[str, str]:
+    """
+    The content filter on a finished prompt that did not come from the wildcard engine (an LLM's
+    rewrite). Returns (text, note): ('', why) when it pairs a minor term with an explicit sexual
+    term, else (text, ''). Put the note at the top of the node's report (lead_with_filter_notes).
+    Off when config.json "wildcards": {"content_filter": false}.
+    """
+    if not text or not get_wildcard_engine().library.content_filter:
+        return text, ""
+    reason = prompt_block_reason(text)
+    if not reason:
+        return text, ""
+    note = (f"content filter: {where or 'prompt'} blocked ({reason}); "
+            f"set \"content_filter\": false in config.json to turn the filter off")
+    print(f"[video_prompter] {note}")
+    return "", note
+
+
+def filter_notes_of(resolution: Optional[Resolution], *extra: str) -> List[str]:
+    """What the content and violence filters did in this run: the resolution's filter notes, then `extra`."""
+    notes = list(resolution.filter_notes()) if resolution is not None else []
+    return notes + [note for note in extra if note]
+
+
+def lead_with_filter_notes(report: str, notes: Iterable[str]) -> str:
+    """The report with one 'FILTER: ...' line per note at the very top (duplicates dropped)."""
+    unique = list(dict.fromkeys(note for note in notes if note))
+    if not unique:
+        return report
+    head = "\n".join(f"FILTER: {note}" for note in unique)
+    return f"{head}\n{report}" if report else head
 
 
 def items_from_instructions(instructions: str, heading: str) -> List[str]:
@@ -229,5 +317,6 @@ def report_lines(resolution: Optional[Resolution]) -> str:
     upstream = "Wildcards resolved upstream: instructions received." if getattr(resolution, "upstream_instructions", "") else ""
     if not (resolution.top_level_slots() or resolution.warnings):
         return upstream
-    own = "Wildcards: " + resolution.summary()
+    # Filter notes are left out here: nodes put them at the top of their report (lead_with_filter_notes).
+    own = "Wildcards: " + "\n".join(line for line in resolution.summary().splitlines() if not line.startswith("FILTER: "))
     return f"{own}\n{upstream}" if upstream else own

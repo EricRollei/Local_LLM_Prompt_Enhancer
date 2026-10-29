@@ -42,7 +42,8 @@ JUDGE_SYSTEM = (
     "decide whether the prompt actually states that idea, in any wording. A related topic does not count: a pigeon "
     "is not a barn owl, light from a window is not light from below, rain outside is not rain indoors. "
     "Answer with JSON only, no other text, in this shape: "
-    '{"results": [{"concept": "<the concept exactly as given>", "present": true, "phrase": "<the exact words from the prompt that carry it>"}]} '
+    '{"results": [{"n": 1, "concept": "<the concept exactly as given>", "present": true, "phrase": "<the exact words from the prompt that carry it>"}]} '
+    "One result per concept, in the same order, with its number in n. "
     "Use present=false and an empty phrase when the idea is missing."
 )
 
@@ -60,12 +61,49 @@ def judge_with_llm(prompt, concepts, backend, endpoint, model):
         return None, response.get("error", "LLM call failed")
     try:
         parsed = extract_json_object(clean_llm_output(response.get("response", ""), keep_json=True))
-        verdicts = {}
-        for item in parsed.get("results", []):
-            verdicts[str(item.get("concept", "")).strip().lower()] = (bool(item.get("present")), str(item.get("phrase", "") or ""))
-        return verdicts, ""
+        return _match_verdicts(parsed.get("results", []), concepts), ""
     except Exception as error:
         return None, f"the judge's answer was not usable JSON ({error})"
+
+
+def _words(text):
+    import re
+    return set(re.findall(r"[a-z]{3,}", (text or "").lower()))
+
+
+def _match_verdicts(results, concepts):
+    """{concept.lower(): (present, phrase)}. Matched by the concept's number, then by its exact text, then by word
+    overlap, then by position. Keying on the exact text alone lost every verdict whenever the judge echoed a
+    concept slightly differently (live 2026-10-01, two-sentence surreal concepts: six of nine runs reported
+    '[none]' for anomalies that were plainly in the prompt)."""
+    verdicts, unmatched = {}, []
+    lowered = [concept.strip().lower() for concept in concepts]
+    for position, item in enumerate(results if isinstance(results, list) else []):
+        if not isinstance(item, dict):
+            continue
+        value = (bool(item.get("present")), str(item.get("phrase", "") or ""))
+        key = None
+        try:
+            number = int(item.get("n"))
+            if 1 <= number <= len(concepts):
+                key = lowered[number - 1]
+        except (TypeError, ValueError):
+            pass
+        text = str(item.get("concept", "")).strip().lower()
+        if key is None and text in lowered:
+            key = text
+        if key is None and text:
+            best = max(lowered, key=lambda concept: len(_words(concept) & _words(text)), default=None)
+            if best is not None and len(_words(best) & _words(text)) >= max(2, len(_words(best)) // 3):
+                key = best
+        if key is None:
+            unmatched.append((position, value))
+            continue
+        verdicts.setdefault(key, value)
+    for position, value in unmatched:          # last resort: same position as the concept list
+        if position < len(lowered) and lowered[position] not in verdicts:
+            verdicts[lowered[position]] = value
+    return verdicts
 
 
 class ConceptSurvivalCheck:

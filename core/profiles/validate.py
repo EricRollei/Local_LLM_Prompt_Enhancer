@@ -288,6 +288,131 @@ def _validate_tags(text: str, profile: Profile, warnings: List[str]) -> str:
     return flat
 
 
+# -- instruction leaks ----------------------------------------------------------------------
+# A long instruction block stops being read as rules and starts being read as text to include.
+# Observed in a real run: "the law of the garden holds: only patterned fabric may cross the boundary
+# between a body and a wall" and "no symbolic objects, no emotional expression, no text or captions"
+# arrived inside a positive Krea2 prompt, the second of those from the very line that forbids writing
+# 'no X'. No amount of further instruction fixes this; removing the clauses mechanically does.
+#
+# The unit of removal is the CLAUSE, not the sentence: these leaks arrive as trailing comma- or
+# dash-separated clauses inside an otherwise good sentence, and taking the whole sentence would cost
+# real description.
+INSTRUCTION_LEAK = re.compile(
+    r"""(?ix)
+    (?: the \s+ (?: law | rule ) \s+ (?: of \s+ the \s+ \w+ \s+ )? (?: holds | is | states | applies | governs ) )
+  | (?: (?: which | that | it ) \s+ )? (?: obeys | follows | observes ) \s+ (?: this | the ) \s+ (?: law | rule )
+  | (?: in \s+ (?: accordance | keeping ) \s+ with \s+ (?: this | the ) \s+ (?: law | rule ) )
+  | (?: no \s+ (?: further | additional | other )? \s* symbolic \s+ \w+ )
+  | (?: no \s+ (?: text | captions? | titles? | watermarks? | lettering | writing ) \b )
+  | (?: no \s+ emotional \s+ (?: expression | melodrama | display ) )
+  | (?: no \s+ (?: explanation | symbolism | moral | caption ) )
+  | (?: exactly \s+ (?: one | ONE ) \s+ anomal )
+  | (?: the \s+ (?: anomaly | premise | rupture | transformation \s+ rule ) \b )
+  | (?: stated? \s+ as \s+ plain \s+ physical \s+ fact )
+  | (?: (?: the \s+ way \s+ )? a \s+ (?: police \s+ )? report \s+ would )
+  | (?: (?: image | diffusion ) \s+ model )
+  | (?: (?: positive | negative ) \s+ prompt )
+  | (?: register \s* : )
+  | (?: THE \s+ SUBJECT )
+  | (?: rigorously \s+ ordinary )
+  | (?: never \s+ name \s+ the \s+ emotion )
+  | (?: pose \s+ the \s+ question \s+ and \s+ refuse )
+    """
+)
+# A clause that merely excludes something. In a positive prose prompt "no mist" summons mist, exactly as
+# it does in a tag list, where _validate_tags has always removed it.
+#
+# [a-z] was wrong: it matched "no mist" but not "no 4K", "no 3D render" or "no 8M", which is precisely the
+# form a repetition collapse takes. Anything that is not whitespace or a separator counts.
+NEGATION_CLAUSE = re.compile(r"(?i)^\s*(?:and\s+|but\s+|with\s+)?(?:no|without)\s+[^\s,;]")
+_DIGITS = re.compile(r"\d+")
+_CLAUSE_SPLIT = re.compile(r"\s*(,|;|\s+[-–—]+\s+)\s*")
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+
+
+REPEAT_LIMIT = 3          # the same clause SHAPE more than three times is a model looping, not a description
+
+
+def strip_instruction_leaks(text: str, drop_negations: bool = True) -> Tuple[str, List[str], List[str], int]:
+    """(cleaned, leaked clauses, negation clauses, repeated clauses dropped).
+
+    drop_negations defaults to True and should stay true for every positive prompt. It was first gated on the
+    model HAVING a negative prompt, on the reasoning that there was otherwise nowhere to move the exclusion
+    to - which is backwards. 'no mist' summons mist whether or not the model offers a negative field; with
+    nowhere to move it, the right answer is still to delete it."""
+    leaked: List[str] = []
+    negated: List[str] = []
+    repeats = 0
+    shapes: Dict[str, int] = {}
+    kept_sentences: List[str] = []
+    for sentence in _SENTENCE_SPLIT.split(text):
+        if not sentence.strip():
+            continue
+        pieces = _CLAUSE_SPLIT.split(sentence)
+        # pieces alternates clause, separator, clause, ...
+        clauses = pieces[0::2]
+        separators = pieces[1::2]
+        keep_clause, keep_separator = [], []
+        for index, clause in enumerate(clauses):
+            bare = clause.strip()
+            if not bare:
+                continue
+            if INSTRUCTION_LEAK.search(bare):
+                leaked.append(bare)
+                continue
+            if drop_negations and NEGATION_CLAUSE.match(bare):
+                negated.append(bare)
+                continue
+            # Repetition collapse: "no 4K, no 8K, no 16K ..." for twelve thousand characters. Digits are
+            # normalised away so the whole run reduces to one shape, and only the first few are kept.
+            shape = _DIGITS.sub("#", bare.lower())
+            shapes[shape] = shapes.get(shape, 0) + 1
+            if shapes[shape] > REPEAT_LIMIT:
+                repeats += 1
+                continue
+            keep_clause.append(bare)
+            keep_separator.append(separators[index] if index < len(separators) else "")
+        if not keep_clause:
+            continue
+        rebuilt = ""
+        for index, clause in enumerate(keep_clause):
+            rebuilt += clause
+            if index < len(keep_clause) - 1:
+                separator = keep_separator[index].strip()
+                rebuilt += "; " if separator == ";" else ", "
+        kept_sentences.append(rebuilt)
+    cleaned = " ".join(kept_sentences)
+    # A dropped final clause can leave a dangling comma or a doubled full stop.
+    cleaned = re.sub(r"\s*,\s*([.!?])", r"\1", cleaned)
+    cleaned = re.sub(r"\s*,\s*$", "", cleaned.strip())
+    cleaned = re.sub(r"([.!?])\1+", r"\1", cleaned)
+    # Only close a sentence that was one to begin with: a tag list must not gain a full stop.
+    if cleaned and text.rstrip().endswith((".", "!", "?")) and not cleaned.endswith((".", "!", "?", '"')):
+        cleaned += "."
+    return cleaned, leaked, negated, repeats
+
+
+# Where a leak is worth hunting: free-running text. Structured formats (json, named fields, per-shot
+# lines) are held in shape by their own validators, and splitting them on commas would damage them.
+LEAK_CHECKED_STYLES = ("prose", "tags_prose", "tags", "instruction", "bracket_prose")
+
+RUNAWAY_FACTOR = 2.5      # past this multiple of the profile's upper word bound the answer is broken, not long
+
+
+def _truncate_words(text: str, limit: int) -> str:
+    """Cut to `limit` words, preferring the last sentence end, then the last clause end, before that point."""
+    words = re.findall(r"\S+", text)
+    if len(words) <= limit:
+        return text
+    head = " ".join(words[:limit])
+    for boundary in (r"[.!?](?=[^.!?]*$)", r"[,;](?=[^,;]*$)"):
+        match = list(re.finditer(boundary, head))
+        if match and match[-1].end() > len(head) * 0.5:
+            return head[:match[-1].end()].rstrip(",; ").rstrip() + ("" if head[match[-1].start()] in ".!?" else ".")
+    return head.rstrip(",; ") + "."
+
+
 def _validate_edit(text: str, profile: Profile, warnings: List[str]) -> str:
     if not re.search(r"\b(keep|keeping|maintain|maintaining|preserv|unchanged|same|identical|stays?)\b", text, re.I):
         warnings.append("edit instruction does not say what must stay the same")
@@ -329,6 +454,30 @@ def check(text: str, profile: Profile, task: str, word_range: Optional[Tuple[int
         except Exception as error:  # a validator bug must never cost the user their prompt
             warnings.append(f"validator '{validator_name}' failed ({error}); text passed through")
 
+    # instruction leaks: the block was transcribed instead of obeyed. Mechanical, and independent of
+    # any model choosing to co-operate.
+    if profile.caption_style in LEAK_CHECKED_STYLES:
+        try:
+            repaired, leaked, negated, repeats = strip_instruction_leaks(cleaned)
+            if repaired and (leaked or negated or repeats):
+                cleaned = repaired
+                if leaked:
+                    warnings.append(f"{len(leaked)} clause(s) of the instruction block were copied into the prompt and have been "
+                                    "removed: " + " / ".join(clause[:70] for clause in leaked[:3]) + (" ..." if len(leaked) > 3 else ""))
+                if negated:
+                    destination = "put them in the negative prompt" if profile.negative in ("yes", "inline") else \
+                                  "this model has no negative prompt, so they are simply dropped"
+                    warnings.append(f"{len(negated)} 'no ...' clause(s) removed from the positive prompt (they summon what they "
+                                    f"exclude; {destination}): " + " / ".join(clause[:50] for clause in negated[:3])
+                                    + (" ..." if len(negated) > 3 else ""))
+                if repeats:
+                    warnings.append(f"the model looped: {repeats} repeated clause(s) removed. A prompt that degenerates into a "
+                                    "repeating pattern usually means the request was too long or too constrained for it.")
+            elif (leaked or negated) and not repaired:
+                warnings.append("the answer was almost entirely instruction text; it has been left alone for you to judge")
+        except Exception as error:      # a guard bug must never cost the user their prompt
+            warnings.append(f"instruction-leak guard failed ({error}); text passed through")
+
     # prefix: mechanical and safe to repair
     if profile.prefix and profile.quality_tokens == "required" and not is_json:
         if not cleaned.lower().startswith(profile.prefix.lower().rstrip(", ")):
@@ -351,6 +500,15 @@ def check(text: str, profile: Profile, task: str, word_range: Optional[Tuple[int
     if not is_json:
         low, high = word_range if word_range and word_range[1] > 0 else profile.words_for(task)
         count = word_count(cleaned)
+        # A runaway answer is not a long prompt, it is a broken one: a model that loops can emit thousands of
+        # words, and everything past the model's own limit is discarded by the sampler anyway. Cut it at a
+        # sentence boundary rather than handing the user twelve thousand characters of "no 4K, no 8K".
+        if high and count > high * RUNAWAY_FACTOR:
+            trimmed = _truncate_words(cleaned, int(high * RUNAWAY_FACTOR))
+            warnings.append(f"runaway answer: {count} words for a {low}-{high} word target, cut to {word_count(trimmed)}. "
+                            "The model almost certainly lost the thread; re-run before using this.")
+            cleaned = trimmed
+            count = word_count(cleaned)
         if count > high * 1.35:
             warnings.append(f"{count} words; the target for {profile.name} is {low}-{high}")
         elif count < low * 0.5:

@@ -32,10 +32,40 @@ from .wildcard_support import (
     normalise_seed,
     report_lines,
     resolve_wildcards,
+    filter_notes_of,
+    lead_with_filter_notes,
+    screen_output,
+    wildcard_nsfw_input,
     wildcard_optional_inputs,
 )
 
 DEFAULT_PLATFORM = "krea2"
+
+
+def _fit_final(prompt, profile, resolution, result):
+    """Last budget check AFTER verbatim picks were re-added: trim the body, never the verbatim
+    picks (LoRA triggers, names)."""
+    try:
+        from .core.profiles.token_budget import budget_for, counter_for, fit_to_budget
+        from .wildcard_support import verbatim_from_instructions
+        limit, target = budget_for(profile)
+        if not limit:
+            return prompt
+        count, _how = counter_for(profile)
+        n = count(prompt)
+        if n <= target:
+            return prompt
+        protect = []
+        if resolution is not None:
+            protect = [slot.value for slot in resolution.slots_by_binding("verbatim")]
+            protect += verbatim_from_instructions(getattr(resolution, "upstream_instructions", ""))
+        fitted, n2, dropped = fit_to_budget(prompt, target, count, protect=protect)
+        result.warnings.append(f"after re-adding verbatim picks: trimmed {n} -> {n2} tokens (target {target}), "
+                               "verbatim picks kept" + (f"; removed: \"{dropped[0]}\"" if dropped else ""))
+        return fitted
+    except Exception as error:
+        result.warnings.append(f"final token budget check failed ({error})")
+        return prompt
 
 
 def _platform_choices():
@@ -141,6 +171,19 @@ class PlatformPromptRewriter:
                     ),
                 }),
                 "end_image": ("IMAGE", {"tooltip": "For flf2v: the last frame. Captioned like `image`."}),
+                **wildcard_nsfw_input(),
+                # Appended 2026-10-08 (append-only rule).
+                "length_guard": (["retry+trim", "trim", "off"], {
+                    "default": "retry+trim",
+                    "tooltip": (
+                        "Keeps the prompt inside the model's text-encoder limit (Krea 2: 512 tokens), with\n"
+                        "headroom for LoRA trigger words added later - past the limit the encoder silently\n"
+                        "drops the END, which is where triggers sit.\n"
+                        "retry+trim = ask the LLM once for a tighter version, then trim at a sentence end\n"
+                        "trim       = trim only (no extra LLM call)\n"
+                        "off        = report only"
+                    ),
+                }),
             },
         }
 
@@ -152,10 +195,12 @@ class PlatformPromptRewriter:
     def rewrite(self, idea, platform, task, backend, endpoint, model, temperature, max_tokens, official_prompt,
                 image=None, end_image=None, image_description="", end_image_description="", dialogue="",
                 duration_seconds=0.0, aspect_ratio="", audio="auto", language="auto", extra_instructions="",
-                negative_keywords="", wildcard_seed=-1, wildcard_llm_block=True, wildcard_instructions=""):
+                negative_keywords="", wildcard_seed=-1, wildcard_llm_block=True, wildcard_instructions="", nsfw="off",
+                violence_filter="off", length_guard="retry+trim"):
 
         resolution = resolve_wildcards(idea or "", seed=normalise_seed(wildcard_seed), legacy=True,
-                                       upstream_instructions=wildcard_instructions)
+                                       upstream_instructions=wildcard_instructions, nsfw=nsfw,
+                                       violence_filter=violence_filter)
         resolved_idea = resolution.text
 
         if not resolved_idea.strip():
@@ -198,6 +243,7 @@ class PlatformPromptRewriter:
             resolved_idea, platform, task=task, backend=backend, endpoint=endpoint, model=model,
             temperature=temperature, max_tokens=max_tokens, facts=facts, official_mode=official_prompt,
             extra_system=llm_block(resolution, wildcard_llm_block), custom_negatives=custom_negatives,
+            length_guard=length_guard,
         )
 
         result.notes.extend(caption_notes)
@@ -212,10 +258,14 @@ class PlatformPromptRewriter:
             elif missing:
                 prompt = repaired
                 result.notes.append("verbatim wildcard picks the LLM dropped were added back: " + ", ".join(missing))
+            if not structured and length_guard != "off":
+                prompt = _fit_final(prompt, profile, resolution, result)
 
+        prompt, block_note = screen_output(prompt, "Platform Prompt Rewriter output")
         report = result.report(profile)
         wildcard_report = report_lines(resolution)
         if wildcard_report:
             report = f"{report}\n{wildcard_report}"
+        report = lead_with_filter_notes(report, filter_notes_of(resolution, block_note))
         print(f"[Platform Prompt Rewriter] {platform}: {'ok' if result.ok else 'FAILED'} ({result.base or 'no plan'})")
         return (prompt, result.negative, report, result.system_prompt)

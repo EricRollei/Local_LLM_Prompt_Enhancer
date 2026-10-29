@@ -87,8 +87,19 @@ from .semantic_variation_node import SemanticVariation
 from .concept_survival_node import ConceptSurvivalCheck
 from .surreal_node import SurrealPremise
 
+# LoRA Suggester: moved to the Eric_LoRA_Catalog node pack (2026-10-11).
+
 # Platform profiles (core/profiles + profiles/*.yaml)
 from .platform_rewriter_node import PlatformPromptRewriter
+
+# Prompt builders (core/builder + builders/*.yaml + web/prompt_builder.js)
+from .prompt_builder_node import CharacterBuilder, PromptBuilder
+from .prompt_builder_support import register_routes as _register_builder_routes
+
+try:
+    _register_builder_routes()
+except Exception as _error:  # the nodes still work without the panel's routes
+    print(f"[Wildcard Composer] routes not registered: {_error}")
 
 # Node class mappings for ComfyUI
 NODE_CLASS_MAPPINGS = {
@@ -112,6 +123,9 @@ NODE_CLASS_MAPPINGS = {
     "EricSurrealPremise": SurrealPremise,
     # Platform profiles
     "EricPlatformPromptRewriter": PlatformPromptRewriter,
+    # Prompt builders
+    "EricPromptBuilder": PromptBuilder,
+    "EricCharacterBuilder": CharacterBuilder,
 }
 
 # Display names in ComfyUI
@@ -136,6 +150,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "EricSurrealPremise": "Surreal Premise",
     # Platform profiles
     "EricPlatformPromptRewriter": "Platform Prompt Rewriter",
+    # Prompt builders
+    "EricPromptBuilder": "Wildcard Prompt Composer",
+    "EricCharacterBuilder": "Wildcard Character Composer",
 }
 
 WEB_DIRECTORY = "./web"

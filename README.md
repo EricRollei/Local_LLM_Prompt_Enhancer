@@ -1,12 +1,12 @@
 # Eric's Prompt Enhancers for ComfyUI
 
 [![License](https://img.shields.io/badge/License-Dual%20(NC%2FCommercial)-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.1.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.2.0-green.svg)](CHANGELOG.md)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Compatible-orange.svg)](https://github.com/comfyanonymous/ComfyUI)
 
-A comprehensive suite of **5 AI-powered prompt enhancement nodes** for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation.
+A comprehensive suite of **18 nodes** for ComfyUI using local LLMs (LM Studio or Ollama). Transform simple prompts into detailed, platform-optimized descriptions for video and image generation.
 
-![Eric's Prompt Enhancers](https://img.shields.io/badge/Nodes-5-brightgreen) ![Platforms](https://img.shields.io/badge/Image%20Platforms-8-blue) ![Video Support](https://img.shields.io/badge/Video-✓-success)
+![Eric's Prompt Enhancers](https://img.shields.io/badge/Nodes-18-brightgreen) ![Platforms](https://img.shields.io/badge/Image%20Platforms-8-blue) ![Video Support](https://img.shields.io/badge/Video-✓-success)
 
 ---
 
@@ -26,8 +26,7 @@ Restart ComfyUI. All nodes will appear under: **Add Node → Eric Prompt Enhance
 ## 🆕 New in 2.0
 
 Version 2.0 keeps every existing node and every saved workflow, and adds three things underneath them.
-The rest of this README still describes the 1.x nodes and will be brought up to date in a later 2.0.x release;
-the documents linked here are current.
+The documents linked here are current.
 
 **A real wildcard engine.** The Dynamic Prompts / Impact Pack grammar (`__name__`, `{a|b|c}`, weights, ranges,
 variables, tag queries such as `__objects[metal AND handheld]__`), read straight from `ComfyUI/models/wildcards`,
@@ -45,10 +44,21 @@ Kling 3, Veo 3.1, Wan 3.0 and others. Your own go in `profiles_user/`. The new *
 writes for any of them, including the structured formats (MiniMax H3 fields, FLUX.2 and Ideogram JSON, edit
 instructions). See [PLATFORM_NOTES.md](PLATFORM_NOTES.md).
 
-**Surreal as a procedure.** The `surreal` preset and genre now run a generator / critic loop grounded in how
+**Prompts stay inside the text-encoder limit.** A text encoder silently drops whatever runs past its
+limit (Krea 2: 512 tokens) - from the END, which is where LoRA trigger words usually go. The Platform
+Prompt Rewriter now counts the answer the way the model will (the Qwen tokenizer for Qwen-encoder
+models, from files already on disk; a conservative estimate otherwise) and aims below the limit with
+headroom for triggers. `length_guard` (appended): `retry+trim` asks the LLM once for a tighter version,
+then trims; `trim` trims only; `off` reports only. Trimming drops sentences just before the last one,
+so the subject (first) and medium / style (last) survive, and verbatim wildcard picks are never cut.
+The report shows `length: N/512 tokens`.
+
+**Surreal as a procedure.** The `surreal` preset and genre now run an ordinary-scene inventory, generator,
+critic and structured compiler grounded in how
 Magritte, Ernst, Dali, Varo, Uelsmann, Atget and Man Ray actually worked: one anomaly stated as plain fact against
-a credible world, chosen for affinity rather than distance, with a **Surreal Premise** node that shows every
-candidate and the reasoning. See [docs/SURREAL_GUIDE.md](docs/SURREAL_GUIDE.md).
+a credible world, chosen for affinity rather than distance. The compiler removes replaced objects before the
+platform rewriter and requires visible physical proof of the anomaly. The **Surreal Premise** node shows every
+candidate, the structured plan and the reasoning. See [docs/SURREAL_GUIDE.md](docs/SURREAL_GUIDE.md).
 
 **The video nodes have a `target_model`.** The three video expanders were written around Wan 2.2. They now
 write for any video profile, and the default is **MiniMax H3**. Choose `wan22_video` to get the original
@@ -57,15 +67,16 @@ it loads with the default (MiniMax H3) - set it to `wan22_video` once and save.
 
 ---
 
-## 🎯 The 5 Nodes
+## 🎯 The Nodes
 
-Find all nodes under the **"Eric Prompt Enhancers"** category in ComfyUI.
+All **18 nodes** live under the **"Eric Prompt Enhancers"** category in ComfyUI. The five LLM expanders come
+first, then platform output, wildcards and variation, the prompt builders, and the prompt database.
 
 ### 1. 🎬 Video Prompt Expander
 
 Simple video prompt expansion with style presets.
 
-- **4 Detail Levels**: Concise, Moderate, Detailed, Exhaustive
+- **5 Expansion Tiers**: auto, basic, enhanced, advanced, cinematic (`auto` detects the right tier)
 - **6 Style Presets**: Cinematic, Surreal, Action, Stylized, Noir, Random
 - **Auto-Variation**: Generate up to 3 unique variations
 - **Best for**: Quick video prompt expansion from short ideas
@@ -105,7 +116,7 @@ Vision model analyzes images and adds motion descriptions for video generation.
 
 Platform-aware image-to-image prompt generation.
 
-- **5 Platforms**: Flux Redux, SDXL Img2Img, Hunyuan Img2Img, Qwen Edit, Wan Edit
+- **6 Platforms**: Flux, SDXL, Wan 2.2, HunyuanImage, Qwen-Image, Qwen-Image-Edit
 - **Transformation Controls**: Style transfer, detail level, creativity settings
 - **Vision Analysis**: Understands source image characteristics
 - **Best for**: Image transformation and editing workflows
@@ -122,6 +133,92 @@ Advanced multi-platform image prompt enhancement with extensive creative control
 - **Advanced Settings**: Camera angle, composition, lighting (source/quality), weather, time, color mood
 - **Special Syntax**: Emphasis `(keyword:1.5)` and Alternation `{a|b|c}` support
 - **Best for**: Professional image generation with platform-specific optimization
+
+### 6. 🎞️ Alice T2V Prompt Refiner
+
+Refines rough text and/or reference images into structured Alice text-to-video prompts.
+
+- **Text-only or image-guided**: optional Qwen3-VL vision analysis of reference images
+- **Best for**: Alice / text-to-video prompts from a loose idea
+
+**— Platform output —**
+
+### 7. ✍️ Platform Prompt Rewriter
+
+Rewrites a finished prompt for any **platform profile** (60+ open and hosted models), in that model's exact format,
+and keeps it inside the text encoder's token limit so trigger words aren't silently dropped.
+
+- **60+ profiles**: FLUX.2, Krea 2, Qwen-Image, Ideogram 4, Illustrious, MiniMax H3, Wan 2.2, Veo 3.1, and more
+  (`profiles/`; your own go in `profiles_user/`)
+- **Structured formats**: MiniMax H3 fields, FLUX.2 / Ideogram JSON, edit instructions
+- **`length_guard`**: counts tokens the way the model will and trims to fit, never cutting verbatim wildcard picks
+- **Outputs**: prompt, negative_prompt, report, system_prompt
+
+### 8. 🪄 Ideogram 4 Magic Prompt
+
+Builds an Ideogram 4 "magic prompt" (structured JSON plus a high-level line) with a recommended canvas size.
+
+- **Outputs**: prompt_json, high_level, width, height, report
+- **Best for**: Ideogram 4 generation
+
+**— Wildcards & variation —**
+
+### 9. 🎲 Wildcard Processor
+
+Resolves wildcards, variants, variables and tag queries in a prompt — the Dynamic Prompts / Impact Pack grammar
+(`__name__`, `{a|b|c}`, weights, ranges, variables, `__objects[metal AND handheld]__`), read from `models/wildcards`.
+
+### 10. 🔀 Semantic Variation
+
+Varies a wildcard prompt by moving each random pick to a semantic neighbour, along named direction axes.
+
+### 11. ✅ Concept Survival Check
+
+Measures whether the key concepts (a surreal anomaly, exact LoRA triggers, ...) survived the LLM rewrite.
+
+- **Outputs**: report, all_survived, missing, carried_by_json
+
+### 12. 🌀 Surreal Premise
+
+Turns an ordinary scene into **one anomaly stated as plain physical fact**, with an instruction block that protects
+it through the rewrite, a Magritte-style title and counter-terms. Eight generator modes feed one critic.
+
+- Its `llm_instructions` plug into any enhancer's `wildcard_instructions`
+- See [docs/SURREAL_GUIDE.md](docs/SURREAL_GUIDE.md)
+
+**— Prompt builders (click, don't type) —**
+
+### 13. 🧩 Wildcard Prompt Composer
+
+Builds a whole prompt section by section with clickable pills instead of typed wildcard syntax. Holds every section
+(Format, Subject, Action, Setting, Light & atmosphere, Composition, Camera, Style & finish, plus optional Text) in
+the order the chosen platform wants. Lock a section to hold it while the seed re-rolls, drag to reorder, save as a
+template.
+
+### 14. 👤 Wildcard Character Composer
+
+The same node limited to the Subject section, for a character you reuse across several prompts or branches.
+
+- See [docs/PROMPT_BUILDER_GUIDE.md](docs/PROMPT_BUILDER_GUIDE.md)
+
+**— Prompt database —**
+
+### 15. 💾 Save Prompt to DB
+
+Saves a prompt (and optional negative) to the local SQLite database, passing the prompt through unchanged so the node
+can sit inline before a sampler.
+
+### 16. 🔎 Search Prompt DB
+
+Searches the database by keyword, category, platform, rating, tags or favourites, and returns the top match.
+
+### 17. 📥 Import Prompts to DB
+
+Bulk-imports prompts from external files (`.txt`, `.csv`, and more) into the local database.
+
+### 18. 🎰 Browse / Random Prompt DB
+
+Fetches a specific prompt by ID, or a random/filtered prompt by seed.
 
 ---
 
@@ -376,6 +473,98 @@ All nodes return:
 
 ---
 
+## 🗂️ Maintaining Your Wildcard and LoRA Libraries
+
+The Wildcard Composer and the LoRA Suggester are only as good as the lists and LoRA cards behind them. This is
+how to add to both, clean them up and keep their indexes current.
+
+### Wildcards
+
+**Where they live.** Any wildcard folder ComfyUI knows (`ComfyUI/models/wildcards`, plus extra model paths such as
+`A:\Models\wildcards`). A few top-level folders are special:
+
+| Folder | What it is |
+|---|---|
+| `_nsfw/` | NSFW lists, used only at the matching NSFW level (`_nsfw/suggestive/`, `_nsfw/nudity/` rate lower) |
+| `_prompts/` | whole prompts, one per line: reached only through the Composer's **Prompt** line or `__prompts/<pack>/...__` |
+| `_generated/` | lists the tools write |
+| `_dumped/` | lists you dumped in the review; the engine skips it |
+| `mine/` | your own lists: merges, lists made with the LLM |
+
+Your choices (stars, hidden lists, dropped lines, NSFW ratings, renames, button assignments) are kept in
+`_catalog_user.yaml` in the wildcard folder. The pack files themselves are never edited.
+
+**Adding lists.** Copy the files in; nothing else is needed to *use* them. ComfyUI rescans the wildcard folders every
+10 seconds, so a new list works in `__name__` references and the Composer at once. The catalog behind Find, More
+lists and button ranking catches up by itself in the background each time ComfyUI starts: restart ComfyUI to refresh it.
+
+**Reviewing and cleaning: the wildcard review tool.** Run `tools\wildcard_review\wildcard_review.bat` and open
+http://127.0.0.1:8766. (Close an old review window first: a server still running holds the port, and you would
+see the old version.) Per list you can:
+
+- **Keep / Dump / Same as / Merge** (keys K / D / S / M; **A** takes the AI judge's call). Dump hides a list and
+  never deletes it.
+- **Rename** a list you keep, so it is easy to find in pills and pages. Its old name keeps working, so saved workflows
+  are safe.
+- **Put it on Composer buttons**, any number of them. **+ new button** makes one of your own, under the heading you
+  pick (Setting › Place, Subject › Clothing ...).
+- **Merge** it with similar lists. A preview shows every combined line and which lists have it; untick any to leave
+  them out. The result is written to `mine/`.
+- **Drop bad lines.** Click a line and it is never picked again; this is saved at once. **Drop matching** drops every
+  line with a word or regex. **Suggest junk** asks the local LLM which lines don't belong, and you confirm.
+- **Make new lists** with the local LLM (LM Studio): **+ New list...** from a description and a few samples, or
+  **Extend...** to grow a short list. You check every line before it is saved to `mine/`.
+
+**Apply** writes your decisions and does the renames and merges, showing a preview first. **Move dumped files**,
+in the same window, moves dumped files to `_dumped/`. Every rename, merge, move and new list writes a manifest; to undo
+one, run:
+
+    python tools\wildcard_review\server.py --undo tools\wildcard_review\manifests\<file>.json
+
+The review tool reads the folder set in `LIBRARY_ROOT` at the top of `tools/wildcard_review/server.py` (default
+`A:\Models\wildcards`; the `WCR_ROOT` environment variable overrides it). The LLM features use LM Studio at
+`http://localhost:1234`; choose the model in the page's header menu.
+
+**Getting new lists into the review.** The review shows lists the triage and the AI judge have seen. After adding
+packs, restart ComfyUI (so the catalog is current), then from this folder run the commands below. The judge needs
+LM Studio and only judges lists it has not seen.
+
+    ..\..\..\python_embeded\python.exe -X utf8 dev\wildcard_triage.py
+    ..\..\..\python_embeded\python.exe -X utf8 dev\wildcard_judge.py --all
+
+Note: check how a fresh triage run treats lists you have since renamed, merged or moved to `_dumped/` before
+re-running it on a reviewed library.
+
+See [docs/WILDCARD_GUIDE.md](docs/WILDCARD_GUIDE.md) for the syntax and the folder rules, and
+[docs/PROMPT_BUILDER_GUIDE.md](docs/PROMPT_BUILDER_GUIDE.md) for the Composer.
+
+### LoRAs (the LoRA Catalog)
+
+The LoRA Suggester reads a catalog of LoRA "cards": what each LoRA does, its style and subject words. They are
+built by the companion LoRA Catalog tool, kept in its own folder (`A:\LoRA_Catalog` here). The path to its database
+is the `lora_suggest` section of `config.json` (default `L:\Models\loras\_lora_catalog.sqlite`).
+
+**After adding LoRAs**, run `refresh_new_loras.bat` in the LoRA Catalog folder, with LM Studio running. Every step
+skips work already done, so it is safe to run any time. It writes `refresh_new_loras.log`.
+
+| Step | Command | What it does |
+|---|---|---|
+| 1 | `run.py index` | reads new or changed LoRA files (headers, sidecars, LoRA Manager data) |
+| 2 | `run.py crawl` | fetches Civitai records for LoRAs that have none yet (internet; the run carries on if it fails) |
+| 3 | `run.py creators` | looks up who made each LoRA (internet; the run carries on if it fails) |
+| 4 | `run.py cards --workers 3` | the local LLM writes a card for every LoRA without one |
+| 5 | `run.py review-all` | rebuilds the HTML review pages |
+| 6 | `run.py facets` | rebuilds `card_facets`, the table the LoRA Suggester reads |
+
+`refresh_new_loras.bat some/model-id` writes the new cards with another LM Studio model. To redo cards that already
+exist, run step 4 by hand with `--force` (add `--only Krea2/graphic-art` to limit it to one folder), then step 6.
+Never run `facets` while a cards run is still writing.
+
+**Checking and correcting cards: the card editor.** Run `card_editor.bat` in the LoRA Catalog folder and open
+http://127.0.0.1:8765. Your edits are kept apart from the generated cards and win over them. Reload the page to see
+newly written cards; after editing, run `run.py facets` so the Suggester sees your changes. The pick-list words live
+in `vocab.yaml` in the same folder.
+
 ## 📚 Documentation
 
 ### Quick References
@@ -386,8 +575,10 @@ All nodes return:
 ### Node Guides
 - [TXT2IMG_GUIDE.md](docs/TXT2IMG_GUIDE.md) - Text-to-Image node complete guide
 - [IMG2IMG_GUIDE.md](docs/IMG2IMG_GUIDE.md) - Image-to-Image workflows
+- [PROMPT_BUILDER_GUIDE.md](docs/PROMPT_BUILDER_GUIDE.md) - Wildcard Prompt / Character Composer panel
+- [SURREAL_GUIDE.md](docs/SURREAL_GUIDE.md) - Surreal Premise node and the surreal engine
+- [WILDCARD_GUIDE.md](docs/WILDCARD_GUIDE.md) - Wildcard syntax, folders and the review tool
 - [NODE_COMPARISON.md](docs/NODE_COMPARISON.md) - Which node to use when
-- [ADVANCED_NODE_REDESIGN.md](docs/ADVANCED_NODE_REDESIGN.md) - Advanced node v1.8 redesign details
 
 ### Setup Guides
 - [LM_STUDIO_SETUP.md](docs/LM_STUDIO_SETUP.md) - LM Studio configuration
@@ -395,14 +586,46 @@ All nodes return:
 - [CONFIGURATION.md](docs/CONFIGURATION.md) - Advanced configuration options
 
 ### Platform & Technical
+- [PLATFORM_NOTES.md](PLATFORM_NOTES.md) - Platform profiles and structured formats
 - [WAN_GUIDE_REFERENCE.md](docs/WAN_GUIDE_REFERENCE.md) - Wan 2.2 video prompt guide
-- [WILDCARD_GUIDE.md](docs/WILDCARD_GUIDE.md) - Wildcard syntax examples
 
 ### Updates & Fixes
 - [CHANGELOG.md](CHANGELOG.md) - Complete version history
-- [UPDATE_V17_ENHANCED_CONTROLS.md](docs/UPDATE_V17_ENHANCED_CONTROLS.md) - v1.7 features
-- [BUGFIX_ADVANCED_NODE.md](docs/BUGFIX_ADVANCED_NODE.md) - v1.8 bug fixes
-- [BUGFIX_V161.md](docs/BUGFIX_V161.md) - v1.6.1 syntax fixes
+
+---
+
+## 🆕 What's New in v2.2.0
+
+### Wildcard Prompt Composer — build a prompt section by section, with buttons
+
+Two new builder nodes write a prompt one section at a time, with clickable pills instead of typed wildcard syntax:
+
+- **Wildcard Prompt Composer** holds every section in one node — Format, Subject, Action, Setting, Light &
+  atmosphere, Composition, Camera and Style & finish (plus optional Text) — shown in the order the chosen platform
+  wants (Krea 2, FLUX.2, ...). Each `[Pill]` is a wildcard; the words around them are yours. Lock a section to hold
+  it while the seed re-rolls, drag sections to reorder, and save the result as a template.
+- **Wildcard Character Composer** is the same node limited to the Subject section, for a character you reuse across
+  several prompts or branches.
+
+See [docs/PROMPT_BUILDER_GUIDE.md](docs/PROMPT_BUILDER_GUIDE.md) for the full panel reference.
+
+### Wildcard review tool — curate your library in the browser
+
+A local browser tool for cleaning up and organising your wildcard lists. Run
+`tools\wildcard_review\wildcard_review.bat` and open http://127.0.0.1:8766. Working one list at a time, you can:
+
+- **Keep or rename** a list; the old name keeps working through aliases, so saved workflows and templates don't break.
+- **Put it on Composer buttons** (any number), or make your own button under the heading you pick.
+- **Merge** similar lists, with a preview of every combined line so you can untick ones to leave out.
+- **Drop bad lines** — one click removes a line from future picks; "Drop matching" clears a pattern across lists.
+- **Extend** a short list with the local LLM, checking every line before it's saved.
+
+**Apply** writes your decisions (renames, merges, moves) after showing a preview, and **every change writes a manifest
+you can undo**. The tool reads the folder set in `LIBRARY_ROOT` at the top of `tools/wildcard_review/server.py`
+(default `A:\Models\wildcards`); LLM features use LM Studio at `http://localhost:1234`.
+
+See the **Wildcards → Reviewing and cleaning** section below and
+[docs/WILDCARD_GUIDE.md](docs/WILDCARD_GUIDE.md) for full details.
 
 ---
 
@@ -430,8 +653,6 @@ All nodes return:
    - Status shows when image is being used
 
 **Bonus:** All video nodes now support emphasis `(keyword:1.5)` and alternation `{a|b|c}` syntax!
-
-See [docs/ADVANCED_NODE_REDESIGN.md](docs/ADVANCED_NODE_REDESIGN.md) for complete details.
 
 ---
 

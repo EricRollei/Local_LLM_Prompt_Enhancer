@@ -1,0 +1,29 @@
+{
+ "v": 1,
+ "name": "Illustration",
+ "builder": "prompt",
+ "platform": "",
+ "saved": "",
+ "composer": {
+  "v": 1,
+  "parts": {
+   "format": [{"t": "text", "v": "an"}, {"t": "tok", "id": 1}, {"t": "text", "v": ""}],
+   "subject": [{"t": "text", "v": "a"}, {"t": "tok", "id": 2}, {"t": "text", "v": "person"}],
+   "action": [{"t": "text", "v": ""}, {"t": "tok", "id": 3}, {"t": "text", "v": ""}],
+   "setting": [{"t": "text", "v": "against"}, {"t": "tok", "id": 4}, {"t": "text", "v": ""}],
+   "style": [{"t": "text", "v": ""}, {"t": "tok", "id": 5}, {"t": "text", "v": ","}, {"t": "tok", "id": 6}, {"t": "text", "v": ""}]
+  },
+  "tokens": {
+   "1": {"slot": "", "key": "vp/format/illustration_type", "label": "Illustration type", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "2": {"slot": "", "key": "vp/subject/age", "label": "Age", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "3": {"slot": "", "key": "vp/action/gesture", "label": "Gesture", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "4": {"slot": "", "key": "vp/setting/studio_backdrop", "label": "Studio backdrop", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "5": {"slot": "", "key": "vp/style/colour_palette", "label": "Colour palette", "mode": "random", "picks": [], "count": 1, "keep": "meaning"},
+   "6": {"slot": "", "key": "vp/style/texture_finish", "label": "Texture & finish", "mode": "random", "picks": [], "count": 1, "keep": "meaning"}
+  },
+  "next": 7,
+  "locks": {},
+  "fill": {},
+  "kinds": {"subject": "person"}
+ }
+}

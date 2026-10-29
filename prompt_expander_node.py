@@ -19,6 +19,10 @@ from .wildcard_support import (
     enforce_verbatim,
     is_changed_token,
     normalise_seed,
+    filter_notes_of,
+    lead_with_filter_notes,
+    screen_output,
+    wildcard_nsfw_input,
     wildcard_optional_inputs,
 )
 from .profile_support import WAN_TARGET, add_required_terms, target_report_lines, video_target_inputs
@@ -139,6 +143,7 @@ class AIVideoPromptExpander:
             "optional": {
                 **wildcard_optional_inputs(),
                 **video_target_inputs(),      # target_model, duration_seconds
+                **wildcard_nsfw_input(),
             }
         }
 
@@ -180,7 +185,9 @@ class AIVideoPromptExpander:
         wildcard_instructions: str = "",
         # Absent only in API-format workflows saved before these inputs existed: those keep the Wan 2.2 path.
         target_model: str = WAN_TARGET,
-        duration_seconds: float = 0.0
+        duration_seconds: float = 0.0,
+        nsfw: str = "off",
+        violence_filter: str = "off"
     ) -> Tuple[str, str, str, str, str, str]:
         """Main processing function"""
         
@@ -210,6 +217,7 @@ class AIVideoPromptExpander:
             
             positive_prompts = []
             breakdowns = []
+            run_filter_notes = []      # content / violence filter notes, for the top of the status
             
             for var_num in range(num_variations):
                 system_prompt, user_prompt, breakdown_dict = self.expander.expand_prompt(
@@ -222,6 +230,8 @@ class AIVideoPromptExpander:
                     wildcard_seed=normalise_seed(wildcard_seed, offset=var_num),
                     wildcard_llm_block=wildcard_llm_block,
                     wildcard_instructions=wildcard_instructions,
+                    nsfw=nsfw,
+                    violence_filter=violence_filter,
                     target_model=target_model,
                     duration_seconds=duration_seconds
                 )
@@ -272,6 +282,8 @@ class AIVideoPromptExpander:
                     
                     # Verbatim wildcard picks (__=name__) must survive the rewrite word for word
                     enhanced_prompt, _restored = enforce_verbatim(enhanced_prompt, self.expander.last_resolution)
+                    enhanced_prompt, block_note = screen_output(enhanced_prompt, "Prompt Expander output")
+                    run_filter_notes.extend(filter_notes_of(self.expander.last_resolution, block_note))
                 
                 positive_prompts.append(enhanced_prompt)
                 breakdowns.append(breakdown_dict)
@@ -325,6 +337,7 @@ class AIVideoPromptExpander:
             
             target_display = breakdowns[0].get("target_name") or breakdowns[0].get("target_model", WAN_TARGET)
             status = f"✅ Generated {num_variations} variation(s) | {target_display} | {tier_display} | Preset: {preset} | {file_status}"
+            status = lead_with_filter_notes(status, run_filter_notes)
             
             return (
                 positive_prompts[0],

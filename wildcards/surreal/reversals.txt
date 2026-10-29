@@ -1,0 +1,20 @@
+# The effect is present and complete; its cause is absent, or is still to come. Evidence without an event.
+# Used by the surreal engine (causal reversal) and usable directly as __surreal/reversals__.
+# THE SUBJECT is replaced by the engine, or read by the LLM as the main subject of the idea.
+# Nothing in the scene anticipates, reacts to or explains the missing cause.
+the ground around THE SUBJECT is soaked in a perfect circle and the sky above it is dry and clear
+THE SUBJECT is covered in a fine ash that is still settling, and nothing nearby has burned
+the window behind THE SUBJECT holds the exact hole of a thrown object, and the object is nowhere and the glass is warm
+every surface near THE SUBJECT is scorched on the side facing away from the sun
+the dust on the floor around THE SUBJECT records the passage of something heavy, and the door and the windows are shut
+THE SUBJECT is soaking wet indoors in dry weather, and the floor beneath is dry
+the chairs around THE SUBJECT are overturned and the dust on them is undisturbed
+the snow around THE SUBJECT has melted in the shape of a body that is not there, down to the bare ground
+the paint on the wall behind THE SUBJECT has blistered outward, and the wall is cold
+THE SUBJECT is wearing the marks of a fall, and is standing perfectly upright and at ease
+the tree beside THE SUBJECT has been felled by a wind that has left every leaf on every other tree still
+THE SUBJECT holds a broken cup, and the pieces on the floor belong to a cup that is still whole on the table
+the shelf above THE SUBJECT is empty, its contents arranged unbroken on the floor in the order they stood
+the bandage on THE SUBJECT is fresh and clean and the injury is not yet there
+the candles around THE SUBJECT have burned down to stubs and their wicks are unlit and white
+the crowd's footprints all lead away from THE SUBJECT and none lead toward it

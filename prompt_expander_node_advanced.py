@@ -19,6 +19,10 @@ from .wildcard_support import (
     enforce_verbatim,
     is_changed_token,
     normalise_seed,
+    filter_notes_of,
+    lead_with_filter_notes,
+    screen_output,
+    wildcard_nsfw_input,
     wildcard_optional_inputs,
 )
 from .profile_support import WAN_TARGET, add_required_terms, target_report_lines, video_target_inputs
@@ -472,6 +476,7 @@ class AIVideoPromptExpanderAdvanced:
                 # New inputs are only ever APPENDED below this line, so saved workflows keep their widget order.
                 **wildcard_optional_inputs(),
                 **video_target_inputs(),      # target_model, duration_seconds
+                **wildcard_nsfw_input(),
             }
         }
 
@@ -531,7 +536,9 @@ class AIVideoPromptExpanderAdvanced:
         wildcard_instructions: str = "",
         # Absent only in API-format workflows saved before these inputs existed: those keep the Wan 2.2 path.
         target_model: str = WAN_TARGET,
-        duration_seconds: float = 0.0
+        duration_seconds: float = 0.0,
+        nsfw: str = "off",
+        violence_filter: str = "off"
     ) -> Tuple[str, str, str, str, str, str, str]:
         """
         Main processing function with aesthetic controls
@@ -623,6 +630,7 @@ class AIVideoPromptExpanderAdvanced:
             # Generate variations
             positive_prompts = []
             breakdowns = []
+            run_filter_notes = []      # content / violence filter notes, for the top of the status
             
             for var_num in range(num_variations):
                 # Build expansion prompts with:
@@ -647,6 +655,8 @@ class AIVideoPromptExpanderAdvanced:
                     wildcard_seed=normalise_seed(wildcard_seed, offset=var_num),
                     wildcard_llm_block=wildcard_llm_block,
                     wildcard_instructions=wildcard_instructions,
+                    nsfw=nsfw,
+                    violence_filter=violence_filter,
                     target_model=target_model,
                     duration_seconds=duration_seconds,
                     shots_chosen_by_user=True      # this node has a shot_structure widget
@@ -700,6 +710,8 @@ class AIVideoPromptExpanderAdvanced:
                     
                     # Verbatim wildcard picks (__=name__) must survive the rewrite word for word
                     enhanced_prompt, _restored = enforce_verbatim(enhanced_prompt, self.expander.last_resolution)
+                    enhanced_prompt, block_note = screen_output(enhanced_prompt, "Prompt Expander (advanced) output")
+                    run_filter_notes.extend(filter_notes_of(self.expander.last_resolution, block_note))
                 
                 positive_prompts.append(enhanced_prompt)
                 breakdowns.append(breakdown_dict)
@@ -763,6 +775,7 @@ class AIVideoPromptExpanderAdvanced:
             vision_status = f" | Vision: {len(vision_caption)} chars" if vision_caption else ""
             target_display = breakdowns[0].get("target_name") or breakdowns[0].get("target_model", WAN_TARGET)
             status = f"✅ Generated {num_variations} variation(s) | {target_display} | {operation_mode} | Detail: {detail_level} | Preset: {preset}\n{mode_display}{vision_status}\n{controls_summary}\n{file_status}"
+            status = lead_with_filter_notes(status, run_filter_notes)
             
             return (
                 positive_prompts[0],

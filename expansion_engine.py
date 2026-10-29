@@ -40,7 +40,9 @@ class PromptExpander:
         wildcard_instructions: str = "",
         target_model: str = "wan22_video",
         duration_seconds: float = 0.0,
-        shots_chosen_by_user: bool = False
+        shots_chosen_by_user: bool = False,
+        nsfw: str = "off",
+        violence_filter: str = "off"
     ) -> Tuple[str, str, Dict]:
         """
         target_model: a video profile id. "wan22_video" (the default here) is the original Wan 2.2 path,
@@ -84,7 +86,8 @@ class PromptExpander:
         # STEP 1: Process wildcards in the input prompt - exactly once, before anything reads it
         effective_wildcard_seed = wildcard_seed if wildcard_seed is not None else variation_seed
         processed_prompt, wildcard_replacements = self._process_wildcards(
-            basic_prompt, effective_wildcard_seed, upstream_instructions=wildcard_instructions
+            basic_prompt, effective_wildcard_seed, upstream_instructions=wildcard_instructions, nsfw=nsfw,
+            violence_filter=violence_filter
         )
 
         # Convert new names to old internal names
@@ -105,8 +108,9 @@ class PromptExpander:
         self._surreal_block, self._surreal_note = "", ""
         if preset == "surreal":
             try:
-                from .surreal_support import preset_block
-                self._surreal_block, self._surreal_note = preset_block(processed_prompt, effective_wildcard_seed, "video")
+                from .surreal_support import preset_plan
+                processed_prompt, self._surreal_block, self._surreal_note = preset_plan(
+                    processed_prompt, effective_wildcard_seed, "video")
             except Exception as error:
                 self._surreal_note = f"surreal engine unavailable ({error}); the preset's style words were used"
         
@@ -301,7 +305,8 @@ class PromptExpander:
         return plan.system, plan.user, info
     
     def _process_wildcards(self, prompt: str, seed: Optional[int] = None,
-                           upstream_instructions: str = "") -> Tuple[str, Dict]:
+                           upstream_instructions: str = "", nsfw: str = "off",
+                           violence_filter: str = "off") -> Tuple[str, Dict]:
         """
         Resolve wildcards in the prompt with the shared engine (core/wildcards).
 
@@ -317,7 +322,8 @@ class PromptExpander:
             return prompt, {}
 
         # upstream_instructions: llm_instructions from a Wildcard Processor / Semantic Variation node earlier in the graph
-        resolution = resolve_wildcards(prompt, seed=seed, legacy=True, upstream_instructions=upstream_instructions)
+        resolution = resolve_wildcards(prompt, seed=seed, legacy=True, upstream_instructions=upstream_instructions,
+                                       nsfw=nsfw, violence_filter=violence_filter)
         self.last_resolution = resolution
         return resolution.text, resolution.legacy_replacements()
     
@@ -1199,4 +1205,3 @@ Maintain cinematic flow from beginning to end in one unified narrative.
 
 [STYLE/TECH FOOTER - 1-2 sentences]
 Include: fps, resolution, style tags, negative prompt"""
-

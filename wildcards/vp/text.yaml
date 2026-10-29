@@ -1,0 +1,65 @@
+# Wildcard Composer lists: Text.
+# Written for this package (dual licence, see LICENSE). Names: __vp/text/<list>__.
+vp:
+  text:
+    # Typography: reads before "lettering" or "type": "{bold condensed sans serif} lettering". Tags: family.
+    typography:
+      - {text: bold condensed sans serif, tags: [sans]}
+      - {text: clean geometric sans serif, tags: [sans]}
+      - {text: rounded friendly sans serif, tags: [sans]}
+      - {text: thin elegant sans serif, tags: [sans]}
+      - {text: wide extended sans serif, tags: [sans]}
+      - {text: Swiss grotesque, tags: [sans]}
+      - {text: classic old-style serif, tags: [serif]}
+      - {text: high-contrast Didone serif, tags: [serif]}
+      - {text: slab serif, tags: [serif]}
+      - {text: chunky Western slab serif, tags: [serif]}
+      - {text: typewriter monospace, tags: [mono]}
+      - {text: pixel bitmap, tags: [mono]}
+      - {text: hand-lettered brush script, tags: [script]}
+      - {text: flowing copperplate script, tags: [script]}
+      - {text: casual marker script, tags: [script]}
+      - {text: 1950s signage script, tags: [script]}
+      - {text: sign-painter lettering, tags: [script]}
+      - {text: chalkboard lettering, tags: [hand]}
+      - {text: hand-drawn doodle letters, tags: [hand]}
+      - {text: scratchy ink handwriting, tags: [hand]}
+      - {text: blackletter gothic, tags: [display]}
+      - {text: Art Deco display, tags: [display]}
+      - {text: Art Nouveau display, tags: [display]}
+      - {text: psychedelic melting letters, tags: [display]}
+      - {text: neon tube script, tags: [display]}
+      - {text: chrome 80s metal, tags: [display]}
+      - {text: stencil military, tags: [display]}
+      - {text: graffiti wildstyle, tags: [display]}
+      - {text: bubble letters, tags: [display]}
+      - {text: cut-out ransom-note letters, tags: [display]}
+      - {text: embossed gold foil, tags: [display]}
+      - {text: carved stone inscription, tags: [display]}
+      - {text: wood type poster letters, tags: [display]}
+      - {text: comic-book lettering, tags: [display]}
+      - {text: retro arcade, tags: [display]}
+      - {text: Victorian ornamental, tags: [display]}
+      - {text: brutalist oversized, tags: [display]}
+      - {text: Japanese vertical brush calligraphy, tags: [script]}
+      - {text: Arabic-inspired calligraphic, tags: [script]}
+      - {text: minimal all-caps tracking wide, tags: [sans]}
+    # Placement: reads as its own phrase: "..., {title centered at the top}".
+    text_placement:
+      - centered at the top
+      - centered at the bottom
+      - large across the middle
+      - in the top-left corner
+      - in the bottom-right corner
+      - running vertically down the left edge
+      - curved along an arc
+      - on a banner ribbon
+      - on a sign in the scene
+      - on a shop window
+      - painted on a wall
+      - on a label on the object
+      - small caption under the image
+      - overlapping the subject
+      - behind the subject, partly hidden
+      - split top and bottom
+      - in a speech bubble

@@ -27,7 +27,7 @@ import traceback
 from typing import Tuple
 
 from .core.wildcards import MODES, split_paths
-from .wildcard_support import database_provider, get_wildcard_engine
+from .wildcard_support import database_provider, get_wildcard_engine, wildcard_nsfw_input
 
 
 class WildcardProcessor:
@@ -76,6 +76,8 @@ class WildcardProcessor:
                     "default": "",
                     "tooltip": "Extra wildcard folders, one per line, highest priority. ComfyUI/models/wildcards is always searched; this is for folders elsewhere.",
                 }),
+                # New inputs are only ever APPENDED below this line, so saved workflows keep their widget order.
+                **wildcard_nsfw_input(),
             },
         }
 
@@ -93,6 +95,8 @@ class WildcardProcessor:
         legacy_syntax: bool = True,
         use_prompt_database: bool = True,
         extra_paths: str = "",
+        nsfw: str = "off",
+        violence_filter: str = "off",
     ) -> Tuple[str, str, str, str]:
         try:
             engine = get_wildcard_engine(split_paths(extra_paths))
@@ -105,6 +109,8 @@ class WildcardProcessor:
                 cycle_index=int(index),
                 legacy=bool(legacy_syntax),
                 providers=providers,
+                nsfw=nsfw,
+                violence=violence_filter,
             )
 
             report_lines = [resolution.summary()]
@@ -113,6 +119,12 @@ class WildcardProcessor:
                     f"combination {int(index) % max(1, resolution.combination_space) + 1} of {resolution.combination_space}"
                 )
             report_lines.append("search folders: " + "; ".join(engine.library.search_paths))
+            library = engine.library
+            report_lines.append(
+                f"NSFW level: {nsfw}; lookup: {library.pool_mode}; "
+                f"entries removed by the content filter so far: {library.blocked_entries}; "
+                f"LoRA tags stripped so far: {library.stripped_lora_tags}"
+            )
 
             return (
                 resolution.text,

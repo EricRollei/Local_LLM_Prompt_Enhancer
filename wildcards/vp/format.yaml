@@ -1,0 +1,160 @@
+# Wildcard Composer lists: Format - what the picture is.
+# Written for this package (dual licence, see LICENSE). Names: __vp/format/<list>__.
+# Entries lead the prompt and read before the subject: "a candid photograph, a middle-aged baker ...".
+# Tags: photo | painting | drawing | print | digital | 3d | film | craft (the medium family).
+vp:
+  format:
+    image_type:
+      - {text: a photograph, tags: [photo]}
+      - {text: a candid photograph, tags: [photo]}
+      - {text: a studio portrait photograph, tags: [photo]}
+      - {text: a black-and-white photograph, tags: [photo]}
+      - {text: a Polaroid snapshot, tags: [photo]}
+      - {text: a 35mm film photograph, tags: [photo, film]}
+      - {text: a cinematic film still, tags: [photo, film]}
+      - {text: a vintage daguerreotype, tags: [photo]}
+      - {text: a double-exposure photograph, tags: [photo]}
+      - {text: an oil painting, tags: [painting]}
+      - {text: a watercolour painting, tags: [painting]}
+      - {text: a gouache painting, tags: [painting]}
+      - {text: an acrylic painting, tags: [painting]}
+      - {text: a fresco, tags: [painting]}
+      - {text: an egg tempera panel painting, tags: [painting]}
+      - {text: a sumi-e ink painting, tags: [painting]}
+      - {text: a pencil sketch, tags: [drawing]}
+      - {text: a charcoal drawing, tags: [drawing]}
+      - {text: a pen-and-ink drawing, tags: [drawing]}
+      - {text: a pastel drawing, tags: [drawing]}
+      - {text: a silverpoint drawing, tags: [drawing]}
+      - {text: a technical blueprint drawing, tags: [drawing]}
+      - {text: a woodcut print, tags: [print]}
+      - {text: a linocut print, tags: [print]}
+      - {text: an etching, tags: [print]}
+      - {text: a screen print, tags: [print]}
+      - {text: a risograph print, tags: [print]}
+      - {text: a cyanotype, tags: [print, photo]}
+      - {text: a digital painting, tags: [digital]}
+      - {text: a vector illustration, tags: [digital]}
+      - {text: a pixel-art image, tags: [digital]}
+      - {text: a matte painting, tags: [digital]}
+      - {text: a 3D render, tags: [3d]}
+      - {text: a clay render, tags: [3d]}
+      - {text: an isometric 3D illustration, tags: [3d]}
+      - {text: a claymation still, tags: [3d, craft]}
+      - {text: a paper-cut collage, tags: [craft]}
+      - {text: a stained-glass window, tags: [craft]}
+      - {text: a mosaic, tags: [craft]}
+      - {text: an embroidered textile, tags: [craft]}
+      - {text: a marble sculpture, tags: [craft, 3d]}
+      - {text: a bronze sculpture, tags: [craft, 3d]}
+      - {text: a steel engraving, tags: [print]}
+      - {text: a 19th century academic painting, tags: [painting]}
+      - {text: a spaghetti western film still, tags: [photo, film]}
+    photo_genre:
+      - street photography
+      - documentary photography
+      - photojournalism
+      - fashion editorial
+      - beauty close-up photography
+      - environmental portrait
+      - headshot
+      - wedding photography
+      - fine-art photography
+      - landscape photography
+      - astrophotography
+      - wildlife photography
+      - macro photography
+      - aerial drone photography
+      - underwater photography
+      - architectural photography
+      - interior design photography
+      - real-estate photography
+      - product photography
+      - still life photography
+      - food photography
+      - sports action photography
+      - concert photography
+      - travel photography
+      - night photography
+      - infrared photography
+      - long-exposure photography
+      - lifestyle photography
+      - editorial magazine photography
+      - paparazzi snapshot
+      - surveillance camera still
+      - scientific specimen photography
+      - school yearbook photo
+      - passport-style photo
+      - boudoir photography
+      - high-fashion runway photography
+      - analog film photography
+      - tintype portrait
+    illustration_type:
+      - children's book illustration
+      - editorial illustration
+      - concept art
+      - character design sheet
+      - comic book panel
+      - manga panel
+      - graphic novel page
+      - storyboard frame
+      - botanical illustration
+      - scientific illustration
+      - anatomical plate
+      - technical cutaway drawing
+      - architectural rendering
+      - fashion illustration
+      - vintage travel poster illustration
+      - pulp magazine cover art
+      - tarot card illustration
+      - playing card design
+      - map illustration
+      - infographic illustration
+      - flat vector illustration
+      - line art illustration
+      - woodblock-style illustration
+      - art nouveau illustration
+      - mid-century modern illustration
+      - retro advertising illustration
+      - picture-book watercolour illustration
+      - game card art
+      - fantasy book cover art
+      - courtroom sketch
+      - fantasy paperback cover art
+      - golden age of illustration plate
+      - animated film still
+      - western animation cel
+      - colouring book page
+      - game sprite sheet
+      - modern comic book art
+      - 1980s anime cel
+      - modern anime key visual
+    design_format:
+      - a poster
+      - a film poster
+      - a concert poster
+      - a propaganda-style poster
+      - an album cover
+      - a book cover
+      - a magazine cover
+      - a vinyl record sleeve
+      - a postage stamp
+      - a sticker
+      - a die-cut sticker sheet
+      - a product label
+      - a wine label
+      - a packaging design
+      - a cereal box design
+      - a greeting card
+      - a postcard
+      - a menu design
+      - a flyer
+      - a billboard
+      - a book spread
+      - a trading card
+      - an enamel pin design
+      - a T-shirt graphic
+      - an app icon
+      - a logo mark
+      - a banner
+      - an event ticket

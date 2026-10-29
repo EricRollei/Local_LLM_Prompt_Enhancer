@@ -28,7 +28,7 @@ from .core.wildcards import split_paths
 from .variability_support import (
     EMBEDDER_CHOICES, available_embedders, direction_choices, get_embedder, get_variator,
 )
-from .wildcard_support import database_provider
+from .wildcard_support import database_provider, wildcard_nsfw_input
 
 
 class SemanticVariation:
@@ -106,6 +106,7 @@ class SemanticVariation:
                         "The report shows each slot's lean so you can see whether an axis bites on a given list."
                     ),
                 }),
+                **wildcard_nsfw_input(),
             },
         }
 
@@ -123,7 +124,8 @@ class SemanticVariation:
         return ""
 
     def vary(self, text, seed, variation, strength, far_jumps, far_strength, embedder, avoid_recent,
-             clip=None, legacy_syntax=True, extra_paths="", direction="none", direction_amount=0.0) -> Tuple[str, str, str, str]:
+             clip=None, legacy_syntax=True, extra_paths="", direction="none", direction_amount=0.0, nsfw="off",
+             violence_filter="off") -> Tuple[str, str, str, str]:
         try:
             chosen_embedder, notes = get_embedder(embedder, clip)
             variator = get_variator(chosen_embedder, split_paths(extra_paths))
@@ -134,7 +136,7 @@ class SemanticVariation:
             )
             result = variator.vary(
                 text, int(seed), settings,
-                legacy=bool(legacy_syntax), providers={"db": database_provider},
+                legacy=bool(legacy_syntax), providers={"db": database_provider}, nsfw=nsfw, violence=violence_filter,
             )
             result.notes = notes + result.notes
             report = result.report()

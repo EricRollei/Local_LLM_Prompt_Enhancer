@@ -4,6 +4,32 @@ All notable changes to Eric's Prompt Enhancers for ComfyUI.
 
 ---
 
+## [2.2.0] - 2026-10-28
+
+### Added - prompt builder nodes
+
+- **Wildcard Prompt Composer** (`EricPromptBuilder`) and **Wildcard Character Composer** (`EricCharacterBuilder`):
+  build a prompt section by section with clickable pills instead of typed wildcard syntax. The Composer holds every
+  section (Format, Subject, Action, Setting, Light & atmosphere, Composition, Camera, Style & finish, plus optional
+  Text) in the order the chosen platform profile wants; sections can be locked while the seed re-rolls, reordered by
+  drag, and saved as templates. The Character Composer is the same node limited to the Subject section for a reusable
+  character. Web panel in `web/prompt_builder.js`; section definitions in `builders/`.
+- Documented in `docs/PROMPT_BUILDER_GUIDE.md`.
+
+### Added - wildcard review tool
+
+- `tools/wildcard_review`: a local browser tool (`wildcard_review.bat`, served at http://127.0.0.1:8766) for curating
+  your wildcard library. Per list you can keep or rename it (old names keep working through `_catalog_user.yaml`
+  aliases), place it on Composer buttons, merge similar lists with a line-by-line preview, drop bad lines (single or
+  by pattern), and extend a short list with the local LLM. **Apply** performs renames, merges and moves after a
+  preview; every change writes a manifest under `tools/wildcard_review/manifests/` that
+  `python tools/wildcard_review/server.py --undo <manifest>` reverses.
+- Reads the library folder from `LIBRARY_ROOT` at the top of `server.py` (default `A:\Models\wildcards`, overridable
+  with the `WCR_ROOT` environment variable). LLM features use LM Studio at `http://localhost:1234`.
+- Documented in `README.md` (Wildcards → Reviewing and cleaning) and `docs/WILDCARD_GUIDE.md`.
+
+---
+
 ## [2.1.0] - 2026-09-21
 
 ### Added - surreal engine (Phase 3)

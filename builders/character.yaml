@@ -1,0 +1,16 @@
+# Wildcard Character Composer: the Subject section only.
+#
+# It extends prompt.yaml, so it uses that file's subject (and action) slot buttons; change them there,
+# or copy this file to builders_user/character.yaml to give the Wildcard Character Composer its own.
+# See docs/PROMPT_BUILDER_GUIDE.md.
+
+id: character
+label: Wildcard Character Composer
+description: One character's look, written as a phrase you control, for the Subject section.
+extends: prompt
+
+parts:
+  - section: subject
+    label: Subject
+    slots: [subject, action]
+    starter: "a {age} {occupation} with {hair_color} hair and {eyes} eyes, {expression}"

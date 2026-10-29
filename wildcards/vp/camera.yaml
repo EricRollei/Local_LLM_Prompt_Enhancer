@@ -1,0 +1,50 @@
+# Wildcard Composer lists: Camera.
+# Written for this package (dual licence, see LICENSE). Names: __vp/camera/<list>__.
+vp:
+  camera:
+    # Aperture & focus: reads as its own phrase: "..., {shallow depth of field}".
+    aperture:
+      - shallow depth of field
+      - very shallow depth of field, f/1.2
+      - f/1.4 creamy bokeh
+      - f/2.8
+      - f/8 sharp throughout
+      - f/16 deep focus
+      - deep focus, everything sharp
+      - soft focus
+      - dreamy soft-focus filter
+      - selective focus on the eyes
+      - focus on the foreground, background melted
+      - focus on the background, blurred foreground
+      - rack focus
+      - split diopter focus
+      - tilt-shift miniature focus
+      - swirly vintage-lens bokeh
+      - bokeh balls of city lights
+      - cat's-eye bokeh
+      - anamorphic oval bokeh
+      - pinhole softness
+      - slightly out of focus
+      - razor-sharp macro focus
+    # Shutter & motion: reads as its own phrase: "..., {long exposure light trails}".
+    shutter:
+      - frozen action, 1/4000s
+      - fast shutter, droplets frozen mid-air
+      - long exposure light trails
+      - long exposure, silky water
+      - long exposure, streaking clouds
+      - star trails
+      - motion blur
+      - panning shot, sharp subject and streaked background
+      - intentional camera movement blur
+      - ghosting figures
+      - slow shutter with rear-curtain flash
+      - zoom burst
+      - light painting
+      - blurred crowds, one still figure
+      - handheld shake
+      - strobe multiple exposure
+      - spinning light orbs
+      - car headlight streaks
+      - waterfall smoothed to mist
+      - freeze-frame of a jump

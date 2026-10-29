@@ -1,0 +1,963 @@
+# Wildcard Prompt Composer: every section of an image or video prompt in one node.
+#
+# parts:  one composer per prompt section, shown in the platform's order (or the node's own).
+#         Sections and their order: dev/PROMPT_TAXONOMY_SPEC.md.
+#         slots: which sections' buttons the part shows ([] = its own)
+#         multi: true lets "+ Subject" add Subject 2, 3 ...
+#         hint:  what belongs there; also what the LLM is asked to write when "LLM fills" is on
+#         optional: true = shown only when added with "+ Section"
+# slots:  grouped by the section whose palette shows them.
+#         match: regexes, FULL match against a list's leaf name (last path segment, lower case,
+#                spaces/hyphens as _, pack prefixes like cops_wc_ / cyber_ / bk_ removed).
+#                Earlier patterns rank first, then lists of short entries, then bigger lists.
+#         avoid: regexes searched anywhere in the key; a hit drops the list.
+#         lists: keys pinned first (the package's own curated lists are pinned here).
+#         kinds: subject types the button serves (person, animal, creature, object, vehicle, food);
+#                subject buttons without kinds serve Person when in a person group, else every type.
+#         group: palette heading.
+#
+# Copy to builders_user/prompt.yaml to change it; that copy replaces this one.
+# character.yaml extends this file, so slot changes here reach the Wildcard Character Composer too.
+# See docs/PROMPT_BUILDER_GUIDE.md.
+
+id: prompt
+label: Wildcard Prompt Composer
+description: A whole prompt, section by section, in the platform's order.
+
+parts:
+  - section: format
+    label: Format
+    hint: 'what the picture is: a photograph, an oil painting, a poster, a 3D render'
+    starter: ""
+  - section: subject
+    label: Subject
+    multi: true
+    hint: 'who or what the picture is about, and how they look'
+    starter: "a {age} {occupation} with {hair_color} hair and {eyes} eyes, {expression}"
+  - section: action
+    label: Action
+    hint: 'what the subject is doing, pose and gesture'
+    starter: "{pose}"
+  - section: setting
+    label: Setting
+    hint: 'where it happens, the place, era, season, weather and time of day'
+    starter: "in {location}, {time_of_day}"
+  - section: lighting
+    label: 'Light & atmosphere'
+    hint: 'the light - source, direction, quality and colour - and the air: fog, dust, rain, mood'
+    starter: "{light_setup}"
+  - section: composition
+    label: Composition
+    hint: 'shot size, framing, layout, depth layers and perspective'
+    starter: ""
+  - section: camera
+    label: Camera
+    hint: 'camera angle, lens, aperture and depth of field, camera and film stock'
+    starter: ""
+  - section: style
+    label: 'Style & finish'
+    hint: 'art style, movement or artist, colour palette and grade, texture and finish'
+    starter: ""
+  - section: text
+    label: Text
+    optional: true
+    hint: 'words shown in the picture, in quotes, with their lettering and placement'
+    starter: ""
+  - section: prompt
+    label: Prompt
+    optional: true
+    hint: 'a whole prompt from your prompt files (_prompts): Browse prompts picks a file or a whole theme folder'
+    starter: ""
+
+slots:
+  - section: format
+    slots:
+      - id: medium
+        label: Art medium
+        lists: ['art/mediums']
+        match:
+          - 'mediums?|art_mediums|photo_medium'
+          - 'medium_.*'
+        avoid: ['hair', 'breast', 'animals', 'machines', 'distance']
+
+      - id: image_type
+        label: Image type
+        tooltip: 'What the picture is: a photograph, an oil painting, a 3D render, a film still ...'
+        lists: ['vp/format/image_type']
+        match:
+          - 'image_types?|types?_of_images?|picture_types?|imagetypes?'
+          - 'image_(format|kind)s?'
+
+      - id: photo_genre
+        label: Photo genre
+        tooltip: 'street, fashion editorial, documentary, macro, aerial, product, food photography ...'
+        lists: ['vp/format/photo_genre']
+        match:
+          - 'photo(graphy)?_(genres?|types?|styles?)|photographic_styles?|photography_genres?'
+
+      - id: illustration_type
+        label: Illustration type
+        lists: ['vp/format/illustration_type']
+        match:
+          - 'illustration_(types?|styles?)|illustrations?|types?_of_illustrations?'
+
+      - id: design_format
+        label: Design format
+        tooltip: 'poster, album cover, book cover, sticker, label, packaging ...'
+        lists: ['vp/format/design_format']
+        match:
+          - 'design_formats?|posters?|poster_(types?|styles?)|covers?|album_covers?|book_covers?|stickers?|packaging'
+        avoid: ['cover_up', 'covered']
+
+  - section: subject
+    slots:
+      - id: age
+        label: Age
+        group: Person
+        lists: ['vp/subject/age']
+        match:
+          - 'ages?'
+          - 'age_(groups?|ranges?)'
+          - '(fe)?male_age(_sfw)?'
+        avoid: ['object_age', 'age_of_', 'body_traits', 'jewelry', 'steampunk']
+
+      - id: person
+        label: Person
+        group: Person
+        tooltip: 'Who the subject is (woman, old man, knight...).'
+        match:
+          - 'person|people|persons|subjects?'
+          - '(fe)?male_(characters?|persons?|subjects?)|gender'
+          - 'characters?'
+        avoid: ['two_person', 'multi_character', 'hugging']
+
+      - id: group
+        label: Group / count
+        group: Person
+        kinds: ['person']
+        tooltip: 'a couple, three friends, a crowd, a family of four ...'
+        lists: ['vp/subject/group']
+        match:
+          - 'groups?|group_(sizes?|types?)|crowds?|couples?|number_of_people|people_count'
+        avoid: ['blood_group', 'age_group', 'ethnic_group', 'group_interactions']
+
+      - id: name
+        label: Name
+        group: Person
+        tooltip: First names. Woman / Man picks lists of female or male names; set the pill to Exact to keep the name as written.
+        match:
+          - 'names?|first_?names?|given_names?|names?(fe)?male|(fe)?male_?names?'
+          - '.*_(first_?)?names'
+          - 'surnames?(_\w+)?|last_?names?'
+        folders: ['(^|/)names?$', 'peoplename', 'firstnames?']
+        avoid: ['note names', 'colou?rname', 'company', 'product', 'postname', 'code_name', 'placesin', 'artist', 'brand']
+
+      - id: occupation
+        label: Occupation
+        group: Person
+        match:
+          - '(character_)?occupations?'
+          - 'professions?|jobs'
+          - 'profession_(fantasy|scifi|cyberpunk|magic|fictional)'
+        avoid: ['image']
+
+      - id: nationality
+        label: Nationality
+        group: Person
+        match:
+          - '(all_|populair_)?nationalit(y|ies)'
+          - 'nationalities_short'
+
+      - id: ethnicity
+        label: Ethnicity
+        group: Person
+        match:
+          - 'ethnicit(y|ies)|ethnics'
+          - 'races?'
+          - 'beautiful_(mixed_)?races_with_description.*'
+        avoid: ['demon', 'racetrack', 'racer', 'clothes', 'detail', 'nodetail', 'hairstyle', 'armor']
+
+      - id: species
+        label: Fantasy race
+        group: Person
+        kinds: ['person', 'creature']
+        match:
+          - '(fantasy|exotic|dark)_races(_male)?'
+          - 'races_and_species|elder_scrolls_races|fantasy_creatures?'
+
+      - id: body
+        label: Body type
+        group: Person
+        match:
+          - 'body_types?(_(fe)?male)?|body_shapes?|bodyshapes?|body_fit'
+          - 'build(_(fe)?male)?|builds|physique'
+          - '.*buildabody_body_shape'
+
+      - id: skin
+        label: Skin
+        group: 'Face & hair'
+        match:
+          - 'skin_colou?rs?(_human|_normal)?|skin_?tones|skin'
+          - 'skin_(features|texture.*|freckles|condition)'
+        avoid: ['abnormal', 'fur', 'deepone', 'refraction', 'succubus', 'vampir', 'tight']
+
+      - id: freckles
+        label: 'Freckles & marks'
+        group: 'Face & hair'
+        lists: ['vp/subject/freckles']
+        match:
+          - 'freckles?|moles?|birthmarks?|beauty_marks?|scars?|skin_marks?'
+
+      - id: face
+        label: Face
+        group: 'Face & hair'
+        match:
+          - 'face_?shapes?|.*visage_faceshape'
+          - 'face(_features?)?|facial_features'
+        avoid: ['makeup', 'surface', 'interface', 'emot', 'smile', 'smug', 'drawing', 'accessor', 'teeth', 'neck', 'ear.?shapes?', 'eyelash', 'eye.?shapes?', 'mouth', 'apparence/face', 'lashes', '2000wildcards/face$']
+
+      - id: hair_style
+        label: Hair style
+        group: 'Face & hair'
+        match:
+          - 'hair_?styles?(_(fe)?male)?|haircuts?(_(fe)?male)?|hair_cut'
+          - 'hair(_(fe)?male)?'
+          - 'hair_(length|texture)|hairlength'
+        avoid: ['accessor', 'facial_hair', 'body_hair', 'no_hair', 'color', 'ethnicity']
+
+      - id: hair_color
+        label: Hair color
+        group: 'Face & hair'
+        match:
+          - 'hair_?colou?rs?'
+          - 'hair_?colou?rs?_.*|.*haircolor_natural.*'
+
+      - id: hair_texture
+        label: Hair texture
+        group: 'Face & hair'
+        lists: ['vp/subject/hair_texture']
+        match: ['hair_textures?|curls?|curl_types?|hair_curl']
+
+      - id: eyes
+        label: Eyes
+        group: 'Face & hair'
+        match:
+          - 'eyes?_?colou?rs?|eyes_iris_colors'
+          - 'eyes|eyes_shape|eye_types'
+        avoid: ['makeup', 'liner', 'lash', 'eyebrow', '(^|[/_])brows?($|[/_])', 'wear', 'closed', 'gaze']
+
+      - id: expression
+        label: Expression
+        group: 'Face & hair'
+        match:
+          - '(facial_)?expressions?|expression_basic'
+          - 'face_emotions|facial_expressions_and_mood|emotions?'
+        avoid: ['expressionism', 'withouttheir', 'withtheir', 'lora', 'etoanima', 'etoexpression', 'psycholog']
+
+      - id: gaze
+        label: Gaze
+        group: 'Face & hair'
+        tooltip: 'Where the subject looks: over the shoulder, eyes closed, past the camera ...'
+        lists: ['vp/subject/gaze']
+        match:
+          - 'gazes?|eye_contact|looking(_at|_direction)?|eye_direction|gaze_direction'
+
+      - id: makeup
+        label: Makeup
+        group: 'Face & hair'
+        match: ['makeup(_styles)?|makeup_styles_creative|styles_makeup_styles']
+        avoid: ['cosplay', 'goth']
+
+      - id: outfit
+        label: Outfit
+        group: Clothing
+        match:
+          - 'outfits?|clothing|clothes|costumes?'
+          - '(wo)?men_outfits|(fe)?male_outfits|.*_outfits?'
+          - 'wardrobes?|attires?|garments?'
+        avoid: ['stripclub', 'bustier', 'miniskirt', 'image', 'fully_clothed', 'noclothing', 'dpachartester']
+
+      - id: fashion_style
+        label: Fashion style
+        group: Clothing
+        tooltip: 'punk, preppy, cottagecore, streetwear, avant-garde ...'
+        lists: ['vp/subject/fashion_style']
+        match:
+          - 'fashion_styles?|fashion|subcultures?|clothing_styles?|style_of_dress'
+
+      - id: top
+        label: Top
+        group: Clothing
+        match:
+          - 'tops?|top_casual|clothing_upper_body|clothing_(fe)?male_top|attire_shirts_and_topwear'
+          - '(girl|guy)?tops?\d?(_detail)?'
+        avoid: ['rooftop', 'stop', 'hair_styles_top', 'dystopia']
+
+      - id: bottom
+        label: Bottom
+        group: Clothing
+        match:
+          - 'bottoms?|bottomwear|clothing_(fe)?male_bottom|attire_pants_and_bottomwear'
+          - 'pants|skirts?|.*_bottoms|creator_(pants|skirts)'
+        avoid: ['bikini', 'swimsuit', 'cutout', 'enhancer', 'body_features', 'sexy']
+
+      - id: outerwear
+        label: Outerwear
+        group: Clothing
+        match: ['outerwear|coats?|jackets?|.*_jackets?|.*_coats?']
+        avoid: ['coat_of_arms', 'coating', 'paint_coat']
+
+      - id: footwear
+        label: Footwear
+        group: Clothing
+        match:
+          - 'footwear|shoes'
+          - 'creator_shoes|.*_footwear|modernfootwear|attire_shoes_and_footwear'
+
+      - id: headwear
+        label: Headwear
+        group: Accessories
+        match:
+          - 'hats?|headwear|headgear'
+          - 'headwear_.*|.*_hats'
+
+      - id: accessories
+        label: Accessories
+        group: Accessories
+        match:
+          - 'accessor(y|ies)|jewelry|clothing_accessories|jewelry_and_accessories'
+          - '.*_accessories'
+        avoid: ['access_', 'accessible', 'hair_', 'eyes_', 'properties']
+
+      - id: hair_length
+        label: Hair length
+        group: 'Face & hair'
+        match: ['hair_?length|hairlength|hair_(long|short|medium)']
+
+      - id: facial_hair
+        label: Facial hair
+        group: 'Face & hair'
+        match: ['facial_hair|beards?|mustaches?|moustaches?']
+
+      - id: lips
+        label: Lips
+        group: 'Face & hair'
+        match: ['lips?|lipstick|lip_colou?rs?']
+
+      - id: nose
+        label: Nose
+        group: 'Face & hair'
+        match: ['noses?|nose_shapes?']
+
+      - id: tattoo
+        label: Tattoo
+        group: 'Face & hair'
+        match: ['tattoos?|.*_tattoos?']
+
+      - id: dress
+        label: Dress
+        group: Clothing
+        match:
+          - 'dress(es)?|gowns?'
+          - '.*_dress(es)?|.*_gowns?'
+        avoid: ['dress_code', 'undress']
+
+      - id: uniform
+        label: Uniform
+        group: Clothing
+        match:
+          - 'uniforms?'
+          - '.*_uniforms?'
+        avoid: ['school']
+
+      - id: armor
+        label: Armor
+        group: Clothing
+        match:
+          - 'armou?rs?'
+          - '.*_armou?rs?'
+
+      - id: swimwear
+        label: Swimwear
+        group: Clothing
+        match: ['swim(wear|suits?)|bikinis?|beachwear']
+
+      - id: legwear
+        label: Legwear
+        group: Clothing
+        match: ['legwear|socks|stockings|tights|hosiery']
+
+      - id: fabric
+        label: Fabric
+        group: Clothing
+        match:
+          - 'fabrics?|textiles?'
+          - 'clothing_materials?|usualclothesmaterialbasic'
+        avoid: ['building', 'surface', 'render']
+
+      - id: pattern
+        label: Pattern
+        group: Clothing
+        match: ['patterns?|prints|fabric_patterns?']
+        avoid: ['background', 'bg/']
+
+      - id: eyewear
+        label: Eyewear
+        group: Accessories
+        match: ['eyewear|glasses|sunglasses|goggles']
+
+      - id: jewelry
+        label: Jewelry
+        group: Accessories
+        match: ['jewel(le)?ry|necklaces?|earrings?|bracelets?']
+        avoid: ['properties', 'jeweler']
+
+      - id: neckwear
+        label: Neckwear
+        group: Accessories
+        match: ['neckwear|scarf|scarves|neckties?|chokers?']
+
+      - id: bag
+        label: Bag
+        group: Accessories
+        match: ['bags?|handbags?|purses?|backpacks?']
+
+      - id: gloves
+        label: Gloves
+        group: Accessories
+        match: ['gloves?|handwear|.*_gloves?']
+
+      - id: piercing
+        label: Piercing
+        group: Accessories
+        match: ['piercings?|.*_piercings?']
+
+      - id: mask
+        label: Mask
+        group: Accessories
+        match: ['masks?|facewear|face_masks?|.*_masks?']
+        avoid: ['face_mask_(sheet|skin)', 'masking']
+
+      - id: underwear
+        label: Underwear
+        group: Clothing
+        match:
+          - 'underwear|lingerie|bras?|panties|underwear_(top|bottom)|.*_lingerie|.*_underwear'
+
+      - id: eyebrows
+        label: Eyebrows
+        group: 'Face & hair'
+        match: ['eyebrows?|brows?|eyebrow_shapes?']
+
+      - id: wings
+        label: Wings
+        group: Person
+        kinds: ['person', 'creature']
+        match: ['wings?|.*_wings?']
+        avoid: ['building', 'hospital', 'chicken']
+
+      - id: creature
+        label: Creature
+        group: Person
+        kinds: ['creature']
+        tooltip: 'Monsters, dragons, mythical and fantasy creatures as the subject.'
+        match:
+          - 'creatures?|monsters?|beasts?|cryptids?'
+          - 'mythical_creatures?|fantasy_creatures?|.*_creatures?|.*_monsters?|dragons?|dinosaurs?'
+        avoid: ['creature_feature', 'crea_']
+
+      - id: animal
+        label: Animal
+        group: Animal
+        kinds: ['animal']
+        match:
+          - 'animals?|animal_(types?|species)|wildlife|.*_animals?'
+          - 'birds?|breeds?|dog_breeds?|cat_breeds?|horses?|fish|sea_life|insects?|reptiles?'
+        avoid: ['animal_interaction', 'animal_print', 'animal_ears']
+
+      - id: animal_coat
+        label: 'Coat & markings'
+        group: Animal
+        kinds: ['animal']
+        lists: ['vp/subject/animal_coat']
+        match:
+          - 'coats?_(colou?rs?|patterns?)|fur_(colou?rs?|patterns?)|markings|animal_markings'
+
+      - id: object
+        label: Object
+        group: Object
+        kinds: ['object']
+        match:
+          - 'objects?|items?|products?|gadgets?|tools?|.*_objects?|.*_items?|random_objects?'
+        avoid: ['held_item', 'items_held', 'rpg']
+
+      - id: product
+        label: Product
+        group: Object
+        kinds: ['object']
+        tooltip: 'a wristwatch, a perfume bottle, wireless headphones, a ceramic mug ... (for product shots)'
+        lists: ['vp/subject/product']
+        match:
+          - 'product_(categor(y|ies)|types?|names?)|consumer_products?|merchandise|commercial_products?'
+
+      - id: object_condition
+        label: Condition
+        group: Object
+        kinds: ['object', 'vehicle']
+        tooltip: 'brand new, weathered, rusted, hand-painted, broken ...'
+        lists: ['vp/subject/object_condition']
+        match:
+          - 'conditions?|object_conditions?|wear_and_tear|states?_of_(repair|wear)'
+
+      - id: subject_vehicle
+        label: Vehicle
+        group: Vehicle
+        kinds: ['vehicle']
+        match:
+          - 'vehicles?|cars?|car_(types?|models?)|aircraft|airplanes?|ships?|boats?|motorcycles?|trains?|.*_vehicles?|spaceships?'
+        avoid: ['car_interior', 'carpet']
+
+      - id: dish
+        label: Dish
+        group: Food
+        kinds: ['food']
+        match:
+          - 'dishes|foods?|meals?|cuisines?|desserts?|.*_dishes|.*_foods?|foods?_.*|pastr(y|ies)|cakes?'
+        avoid: ['food_play', 'foodporn']
+
+      - id: drink
+        label: Drink
+        group: Food
+        kinds: ['food']
+        match:
+          - 'drinks?|beverages?|cocktails?|.*_drinks?|drinks?_.*|coffee|teas?|wines?'
+
+      - id: plating
+        label: Plating
+        group: Food
+        kinds: ['food']
+        tooltip: 'on a slate board, in a bento box, family style ...'
+        lists: ['vp/subject/plating']
+        match: ['platings?|food_presentation|servings?|tableware|dishware']
+
+  - section: action
+    slots:
+      - id: pose
+        label: Pose
+        tooltip: Krea 2 wants each subject grouped with its own actions; FLUX.2 lists action right after the subject.
+        match:
+          - 'poses?|poses_general|pose_action|action_pose'
+          - 'posture_poses|postures?_and_poses|standing_poses|sitting_poses'
+        avoid: ['stripclub', 'sexy', 'profile_pose', 'rear_pose']
+
+      - id: gesture
+        label: Gesture
+        lists: ['vp/action/gesture', 'gestures']
+        match:
+          - 'gestures?|hand_gestures|pose_hand_gestures'
+          - 'gestures_.*'
+        avoid: ['fellatio']
+
+      - id: activity
+        label: Activity
+        lists: ['action']
+        match:
+          - 'actions?|activities|all_activities|human_activities'
+          - 'actions_.*|.*_actions'
+        avoid: ['sexy', 'stripclub', 'fire_', 'food_', 'hair_', 'headwear_', 'neck', 'plant_', 'sleeves', 'tree_', 'legwear', 'multi_character']
+
+      - id: interaction
+        label: Interaction
+        lists: ['vp/action/interaction']
+        match:
+          - 'interactions?|group_interactions|item_interaction|animal_interaction'
+          - 'multi_character_action_.*'
+        avoid: ['intimate']
+
+      - id: held_item
+        label: Holding
+        lists: ['vp/action/holding']
+        match:
+          - 'holding|held_items?|items_held'
+          - 'props?|hand_props?'
+
+      - id: weapon
+        label: Weapon
+        match:
+          - 'weapons?|swords?|guns?|blades?'
+          - '.*_weapons?'
+
+      - id: companion
+        label: Animal / pet
+        match:
+          - 'pets?|companions?|animals?'
+          - '.*_pets?|.*_animals?'
+        avoid: ['animal_interaction', 'animals_types']
+
+  - section: setting
+    slots:
+      - id: location
+        label: Location
+        group: Place
+        lists: ['location']
+        match:
+          - 'locations?|places|places_sceneries|scenery|scenes?'
+          - 'location_.*|.*_locations|random_?places'
+          - 'settings?|environments?'
+        avoid: ['background', 'piercing', 'posture', 'knee', 'leg_location', 'stripclub', 'lora', 'eto', 'breast', 'color', 'pattern', '0\d_']
+
+      - id: background
+        label: Background
+        group: Place
+        tooltip: 'Backgrounds and backdrops (every list with "background" in its name or folder).'
+        search: background
+        match: ['backgrounds?|backdrops?|.*_backgrounds?|background_.*']
+        avoid: ['background_(character|people|person)s?$']
+
+      - id: studio_backdrop
+        label: Studio backdrop
+        group: Place
+        tooltip: 'seamless grey paper, painted canvas backdrop, white cyclorama ...'
+        lists: ['vp/setting/studio_backdrop']
+        match:
+          - 'studio_backdrops?|backdrops?|studio_backgrounds?|photo_backdrops?'
+
+      - id: food
+        label: 'Food & drink'
+        group: Things
+        match:
+          - 'foods?|dishes|drinks?|beverages?|fruits?|desserts?|meals?|cuisines?|.*_foods?|.*_drinks?'
+          - 'foods?_.*|drinks?_.*'
+        avoid: ['food_play', 'foodporn']
+
+      - id: plants
+        label: 'Plants & flowers'
+        group: Things
+        match:
+          - 'plants?|flowers?|trees?|flora|.*_flowers?|.*_plants?|.*_trees?'
+        avoid: ['power_plant', 'planter']
+
+      - id: interior
+        label: Interior
+        group: Place
+        match:
+          - 'interiors?|interior_design|interior_setting|rooms'
+          - 'living_room|bedroom|kitchen|library_interior|random_room'
+        avoid: ['breast', 'train_interior_yawning']
+
+      - id: landscape
+        label: Landscape
+        group: Place
+        match:
+          - 'landscapes?|random_landscape|landscape_basic'
+          - '.*_landscapes?'
+        avoid: ['composition', 'aesthetic_styles', 'abstract']
+
+      - id: architecture
+        label: Architecture
+        group: Place
+        match:
+          - 'architecture2?|architectural|architecture_list|buildings?'
+          - '.*_architecture|.*_buildings|architecturebuildings'
+        avoid: ['burning', 'alcove', 'scale', 'telephoto', 'detail']
+
+      - id: landmark
+        label: Landmark
+        group: Place
+        tooltip: 'Famous buildings, monuments and places around the world.'
+        match:
+          - 'landmarks?|famous_(buildings|places|landmarks|locations|monuments)|location_famous'
+          - 'monuments?|wonders|world_wonders|wonders_of_.*|tourist_attractions?|attractions'
+          - 'places_?in_?(asia|america|europe|africa|the_world|\w+)'
+
+      - id: city
+        label: City / street
+        group: Place
+        match:
+          - 'city|city_streets?|random_city'
+          - '.*_city|cityscape|futuristic_cityscape'
+
+      - id: era
+        label: Era
+        group: Time
+        lists: ['vp/setting/era']
+        match: ['era|eras|decades?|time_period|timeperiods|time_era']
+        avoid: ['camera']
+
+      - id: season
+        label: Season
+        group: Time
+        match: ['seasons?|scene_season_sfw']
+
+      - id: time_of_day
+        label: Time of day
+        group: Time
+        lists: ['time']
+        match: ['time_of_day|timeofday|daytime|time']
+        avoid: ['travel', 'signature', 'magic', 'warp', 'distortion', 'portrait', 'part_timer']
+
+      - id: weather
+        label: Weather
+        group: Time
+        lists: ['weather']
+        match:
+          - 'weather|scene_weather_sfw|weatherseason|sky_condition'
+          - '.*_weather'
+        avoid: ['weathering', 'flowers', 'kyubi']
+
+      - id: room
+        label: Room
+        group: Place
+        match:
+          - 'rooms?|random_room'
+          - '(living|dining|bed|bath|class|ball|game|hotel|meeting|throne|locker)_?room'
+        avoid: ['mushroom', 'stripclub', 'storage']
+
+      - id: furniture
+        label: Furniture
+        group: Things
+        match: ['furniture|furnishings?']
+
+      - id: vehicle
+        label: Vehicle
+        group: Things
+        match:
+          - 'vehicles?|cars?'
+          - '.*_vehicles?'
+
+      - id: culture
+        label: Culture
+        group: Place
+        match: ['cultures?|cultural']
+
+      - id: props
+        label: 'Props & set dressing'
+        group: Things
+        lists: ['vp/setting/props']
+        match:
+          - 'set_dressing|decor|decorations?|scene_props|props_(scene|set)|set_props|.*_decor'
+        avoid: ['decorative_(border|frame)']
+
+  - section: lighting
+    slots:
+      - id: light_setup
+        label: Light setup
+        lists: ['light/setups']
+        match:
+          - 'lighting|lightings|light|studiolight|cinematiclight'
+          - 'lighting_(indoor|outdoor|mood|elements)|variouslights'
+        avoid: ['lightning', 'stripclub', 'body_light', 'flight', 'strangelight', 'interaction', 'body.?type', 'species', 'profession', 'magical/types']
+
+      - id: light_quality
+        label: Light quality
+        lists: ['light/quality']
+        match: ['light_quality|lighting_quality|lighting_mood']
+
+      - id: light_direction
+        label: Light direction
+        tooltip: 'backlit, rim light, side light, top light ...'
+        lists: ['vp/lighting/light_direction']
+        match:
+          - 'light_directions?|lighting_directions?|backlight(ing)?|rim_light(ing)?|direction_of_light'
+
+      - id: studio_setup
+        label: Studio setup
+        tooltip: 'Rembrandt, butterfly, clamshell, split lighting ...'
+        lists: ['vp/lighting/studio_setup']
+        match:
+          - 'studio_(lighting|setups?|light_setups?)|lighting_(setups?|patterns?|techniques?)|portrait_lighting'
+
+      - id: colour_temperature
+        label: Colour temperature
+        lists: ['vp/lighting/colour_temperature']
+        match:
+          - 'colou?r_temperatures?|light_temperatures?|kelvin|white_balance'
+
+      - id: golden
+        label: Time light
+        match: ['golden_hour|lighitingtime|.*timelighting.*|weather&lights']
+
+      - id: atmosphere
+        label: 'Atmosphere & effects'
+        tooltip: 'morning fog, dust motes, rain streaks, smoke, heat haze ...'
+        lists: ['vp/lighting/atmosphere']
+        match:
+          - 'atmospheres?|atmospheric_effects?|atmosphere_(effects?|elements?)|fog|mist|haze|particles?|weather_effects?'
+          - 'effects?|light_effects?|visual_effects?'
+        avoid: ['sound', 'audio', 'sfx', 'effect_on', 'special_effects_makeup']
+
+      - id: mood
+        label: Mood
+        match: ['moods?|atmosphere_moods?']
+        avoid: ['lighting_mood']
+
+  - section: composition
+    slots:
+      - id: shot
+        label: Shot size
+        lists: ['camera/shots']
+        match:
+          - 'shots?|shot_type|shotstyle(_simple)?|camera_distance|framing|body_framing'
+        avoid: ['pantyshot', 'artistic']
+
+      - id: composition
+        label: Framing
+        lists: ['vp/composition/framing']
+        match:
+          - 'compositions?|photo_composition|composition_techniques|framing_techniques'
+          - 'frame_composition|rule_of_thirds|layouts?'
+
+      - id: layout
+        label: 'Layout & space'
+        tooltip: 'negative space, leading lines, subject small in the frame ...'
+        lists: ['vp/composition/layout']
+        match:
+          - 'layout_space|negative_space|leading_lines|visual_(balance|flow)|spatial_layout'
+
+      - id: depth_layers
+        label: Depth layers
+        lists: ['vp/composition/depth_layers']
+        match:
+          - 'depth_layers?|foreground(_elements?)?|layering|depth_(cues|effects?)'
+
+      - id: perspective
+        label: Perspective
+        lists: ['vp/composition/perspective']
+        match: ['perspectives?|views?|pov|viewpoints?|camera_perspectives?']
+        avoid: ['review', 'preview', 'interview', 'overview']
+
+  - section: camera
+    slots:
+      - id: angle
+        label: Angle
+        match: ['camera_angles?|angles?|view_angle']
+        avoid: ['strength']
+
+      - id: lens
+        label: Lens
+        lists: ['camera/lenses']
+        match: ['lens|lenses|photo_lens|focal_length']
+
+      - id: camera_body
+        label: Camera
+        match: ['cameras?|camera_models|cameratype']
+
+      - id: film_stock
+        label: Film stock
+        lists: ['camera/film_stocks']
+        match: ['film_?types?|film_stocks?|film']
+
+      - id: aperture
+        label: 'Aperture & focus'
+        tooltip: 'shallow depth of field, f/1.4 bokeh, deep focus ...'
+        lists: ['vp/camera/aperture']
+        match:
+          - 'apertures?|depth_of_field|dof|bokeh|focus|f_stops?|focus_(types?|effects?)'
+
+      - id: shutter
+        label: 'Shutter & motion blur'
+        tooltip: 'long exposure light trails, motion blur, frozen action ...'
+        lists: ['vp/camera/shutter']
+        match:
+          - 'shutter(_speeds?)?|long_exposures?|motion_blur|exposure_(types?|effects?)'
+
+  - section: style
+    slots:
+      - id: movement
+        label: Art movement
+        group: Look
+        lists: ['art/movements']
+        match: ['art_?movements?|styles_art_movements|movement']
+
+      - id: art_style
+        label: Art style
+        group: Look
+        match:
+          - 'art_?styles?|artstyles|random_artstyle|general_art_style'
+          - 'styles_(digital|game)_art_styles|random_(depiction|image|animation)_styles'
+        avoid: ['hair']
+
+      - id: color_grade
+        label: Colour grade
+        group: Colour
+        lists: ['vp/style/colour_grade']
+        match: ['colou?r_grading|filters_colourgrading|colou?r_grades?']
+
+      - id: colour_palette
+        label: Colour palette
+        group: Colour
+        tooltip: 'teal and orange, muted earth tones, monochrome red, pastel ...'
+        lists: ['vp/style/colour_palette']
+        match:
+          - 'colou?r_palettes?|palettes?|colou?r_schemes?|colou?r_combinations?|accent_palette|.*_palettes?'
+
+      - id: photographer
+        label: Photographer
+        group: Look
+        lists: ['vp/style/photographer']
+        match: ['photographers?|artist_photographer']
+
+      - id: artist
+        label: Artist
+        group: Look
+        match:
+          - 'artists?|painters?'
+          - 'artist_(fineart|fantasy|scifi|anime|cartoon|botanical|black_white|horror)'
+        avoid: ['nudity', 'photographer', 'profession']
+
+      - id: color
+        label: Colour
+        group: Colour
+        match: ['colou?rs?|colou?r_names|colors_basic']
+        avoid: ['hair', 'eye', 'skin', 'danbooru']
+
+      - id: material
+        label: Material / texture
+        group: Finish
+        match:
+          - 'materials?|textures?|surfaces?|.*_materials?|.*_textures?'
+          - 'metals?|woods?|stones?|minerals?|gemstones?'
+        avoid: ['clothing', 'fabric', 'hair', 'skin', 'building_material']
+
+      - id: texture_finish
+        label: 'Texture & finish'
+        group: Finish
+        tooltip: 'film grain, matte, halftone dots, glossy ...'
+        lists: ['vp/style/texture_finish']
+        match:
+          - 'finish(es)?|surface_finish|grain|film_grain|image_texture|print_texture|textures?_(effects?|overlays?)'
+
+      - id: theme
+        label: Theme
+        group: Look
+        match: ['themes?|.*_themes?|motifs?|concepts?']
+        avoid: ['theme_color']
+
+      - id: era_aesthetic
+        label: Era aesthetic
+        group: Look
+        tooltip: '1980s VHS, Y2K, Victorian daguerreotype ...'
+        lists: ['vp/style/era_aesthetic']
+        match:
+          - 'era_aesthetics?|decade_aesthetics?|retro_styles?|vintage_styles?|aesthetics?_by_era'
+
+      - id: rendering
+        label: Render / quality
+        group: Finish
+        match:
+          - 'rendering|renders?|render_(styles?|engines?)|quality(_tags)?|detail_level|details?_level'
+        avoid: ['lighting_quality', 'light_quality']
+
+  - section: text
+    slots:
+      - id: typography
+        label: Typography
+        tooltip: 'bold condensed sans serif, hand-lettered brush script ...'
+        lists: ['vp/text/typography']
+        match:
+          - 'typography|fonts?|font_(styles?|types?)|typefaces?|lettering(_styles?)?'
+
+      - id: text_placement
+        label: Placement
+        lists: ['vp/text/text_placement']
+        match: ['text_(placement|positions?)|placement']

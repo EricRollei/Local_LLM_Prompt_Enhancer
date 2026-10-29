@@ -32,6 +32,16 @@
         }
     },
     "wildcards": {
-        "path": "models/wildcards"
+        "path": "models/wildcards",
+        "pool_mode": "scoped",
+        "strip_lora": true,
+        "catalog": true,
+        "content_filter": true
+    },
+    "lora_suggest": {
+        "catalog": "L:/Models/loras/_lora_catalog.sqlite",
+        "vocab": "A:/LoRA_Catalog/vocab.yaml",
+        "block_real_person_nsfw": true,
+        "platforms": {}
     }
 }

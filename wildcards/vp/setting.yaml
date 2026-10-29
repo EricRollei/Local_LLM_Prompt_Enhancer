@@ -1,0 +1,97 @@
+# Wildcard Composer lists: Setting.
+# Written for this package (dual licence, see LICENSE). Names: __vp/setting/<list>__.
+# Era entries read after "in": "in {the 1970s}".
+vp:
+  setting:
+    era:
+      - {text: ancient Egypt, tags: [ancient]}
+      - {text: ancient Greece, tags: [ancient]}
+      - {text: ancient Rome, tags: [ancient]}
+      - {text: the Viking age, tags: [medieval]}
+      - {text: the Middle Ages, tags: [medieval]}
+      - {text: the Renaissance, tags: [early-modern]}
+      - {text: the Baroque era, tags: [early-modern]}
+      - {text: Edo-period Japan, tags: [early-modern]}
+      - {text: the 18th century, tags: [early-modern]}
+      - {text: the Regency era, tags: [19th-century]}
+      - {text: the Victorian era, tags: [19th-century]}
+      - {text: the American Wild West, tags: [19th-century]}
+      - {text: the Belle Époque, tags: [19th-century]}
+      - {text: the Edwardian era, tags: [20th-century]}
+      - {text: the 1920s, tags: [20th-century]}
+      - {text: the 1930s, tags: [20th-century]}
+      - {text: the 1940s, tags: [20th-century]}
+      - {text: the 1950s, tags: [20th-century]}
+      - {text: the 1960s, tags: [20th-century]}
+      - {text: the 1970s, tags: [20th-century]}
+      - {text: the 1980s, tags: [20th-century]}
+      - {text: the 1990s, tags: [20th-century]}
+      - {text: the early 2000s, tags: [21st-century]}
+      - {text: the present day, tags: [21st-century]}
+      - {text: the near future, tags: [future]}
+      - {text: a distant future, tags: [future]}
+      - {text: a post-apocalyptic future, tags: [future]}
+      - {text: a prehistoric age, tags: [ancient]}
+    # Studio backdrop: reads after "against": "against {seamless grey paper}".
+    studio_backdrop:
+      - seamless white paper
+      - seamless grey paper
+      - seamless black paper
+      - a pure white cyclorama
+      - an infinite black void
+      - a hand-painted canvas backdrop
+      - a mottled Old Master backdrop
+      - a pastel pink backdrop
+      - a mustard yellow backdrop
+      - a deep teal backdrop
+      - a burnt orange backdrop
+      - a gradient blue backdrop
+      - a colour-gel wash on white
+      - a crumpled muslin backdrop
+      - a velvet curtain
+      - a sequinned curtain
+      - a wall of dried flowers
+      - a tiled bathroom wall
+      - a concrete wall
+      - a whitewashed brick wall
+      - a sheet of corrugated metal
+      - a wall of monstera leaves
+      - a draped silk backdrop
+      - a hanging bedsheet
+      - a chroma-key green screen
+      - a mirrored wall
+    # Props & set dressing: reads after "with": "a kitchen with {copper pots hanging from hooks}".
+    props:
+      - copper pots hanging from hooks
+      - stacks of old books
+      - dried flowers in glass bottles
+      - fairy lights strung overhead
+      - a vintage record player
+      - potted plants on every surface
+      - a cluttered workbench
+      - maps pinned to the wall
+      - a chalkboard menu
+      - a neon sign
+      - candles in wine bottles
+      - a steaming kettle
+      - an old typewriter
+      - a globe on a stand
+      - paper lanterns
+      - a hanging birdcage
+      - bunting across the ceiling
+      - a rotary telephone
+      - a CRT television
+      - a clawfoot bathtub
+      - an ornate gilded mirror
+      - a Persian rug
+      - a bicycle leaning on the wall
+      - a string of drying laundry
+      - crates of fruit
+      - an unmade bed
+      - a half-finished jigsaw
+      - scattered Polaroids
+      - an easel with a canvas
+      - a mid-century armchair
+      - a stack of suitcases
+      - a wall of clocks
+      - a hat stand
